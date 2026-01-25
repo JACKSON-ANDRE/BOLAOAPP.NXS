@@ -13,8 +13,8 @@ const MyPools: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (profile) fetchData();
-  }, [profile, activeTab]);
+    if (profile?.id) fetchData();
+  }, [profile?.id, activeTab]);
 
   const fetchData = async () => {
     setLoading(true);
