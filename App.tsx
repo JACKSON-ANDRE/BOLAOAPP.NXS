@@ -16,6 +16,7 @@ import MyPools from './pages/MyPools';
 
 // Components
 import Layout from './components/Layout';
+import ReloadPrompt from './components/ReloadPrompt';
 
 const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
@@ -30,11 +31,14 @@ const AppContent: React.FC = () => {
 
   return (
     <HashRouter>
+      <ReloadPrompt />
       <Routes>
         <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
         <Route path="/register" element={!user ? <Register /> : <Navigate to="/" />} />
 
-        <Route path="/" element={<Layout><Home /></Layout>} />
+        {/* PROTECTED ROOT ROUTE: Redirects to /login if not authenticated */}
+        <Route path="/" element={user ? <Layout><Home /></Layout> : <Navigate to="/login" />} />
+
         <Route path="/pools/new" element={user ? <Layout><CreatePool /></Layout> : <Navigate to="/login" />} />
         <Route path="/pools/:id" element={<Layout><PoolDetails /></Layout>} />
         <Route path="/pools/:id/edit" element={user ? <Layout><EditPool /></Layout> : <Navigate to="/login" />} />
