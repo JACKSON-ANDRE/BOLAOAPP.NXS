@@ -17,7 +17,7 @@ const MyPools: React.FC = () => {
   }, [profile?.id, activeTab]);
 
   const fetchData = async () => {
-    setLoading(true);
+    if (pools.length === 0) setLoading(true);
     let data: any[] | null = null;
 
     if (activeTab === 'created') {
