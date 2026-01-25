@@ -65,7 +65,7 @@ const Register: React.FC = () => {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-[#10B981] transition-colors"
-                  placeholder="Jackson André"
+                  placeholder="João da Silva"
                 />
               </div>
             </div>
@@ -101,7 +101,7 @@ const Register: React.FC = () => {
             </div>
 
             <div className="flex items-start gap-3 py-2">
-              <button 
+              <button
                 type="button"
                 onClick={() => setTermsAccepted(!termsAccepted)}
                 className={`mt-0.5 rounded flex-shrink-0 transition-colors ${termsAccepted ? 'text-[#10B981]' : 'text-zinc-600'}`}
