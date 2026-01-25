@@ -128,6 +128,15 @@ const Profile: React.FC = () => {
         </div>
       </div>
 
+      {/* MOBILE LOGOUT BUTTON */}
+      <button
+        onClick={handleLogout}
+        className="w-full bg-[#1C1C21] border border-red-500/20 hover:bg-red-500/10 text-red-500 font-bold py-4 rounded-3xl flex items-center justify-center gap-2 transition md:hidden"
+      >
+        <LogOut size={20} />
+        SAIR DA CONTA
+      </button>
+
       {/* GRID INFERIOR */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto pb-20">
 
