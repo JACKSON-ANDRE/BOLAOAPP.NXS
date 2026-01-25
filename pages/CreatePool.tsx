@@ -48,6 +48,11 @@ const CreatePool: React.FC = () => {
       }
     }
 
+    // Prevent Duplicate Teams
+    if (isValid && formData.teamA.trim().toLowerCase() === formData.teamB.trim().toLowerCase()) {
+      isValid = false;
+    }
+
     setIsFormValid(isValid);
   }, [formData]);
 
@@ -219,6 +224,16 @@ const CreatePool: React.FC = () => {
                 <Info className="text-red-500 shrink-0" size={20} />
                 <p className="text-xs text-red-200">
                   Atenção: O prazo de apostas deve ser ANTERIOR à data do evento.
+                </p>
+              </div>
+            )}
+
+            {/* Duplicate Teams Validation */}
+            {formData.teamA && formData.teamB && formData.teamA.trim().toLowerCase() === formData.teamB.trim().toLowerCase() && (
+              <div className="bg-red-500/10 border border-red-500/50 p-4 rounded-xl flex gap-3">
+                <Info className="text-red-500 shrink-0" size={20} />
+                <p className="text-xs text-red-200">
+                  Atenção: Os nomes dos times/lados devem ser diferentes.
                 </p>
               </div>
             )}

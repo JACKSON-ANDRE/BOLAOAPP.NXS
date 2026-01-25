@@ -62,8 +62,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       .select(`
         id,
         created_at,
-        message,
-        admin_messages ( message )
+        message
       `)
       .eq('user_id', user.id)
       .is('deleted_at', null)
@@ -73,7 +72,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       setNotifications(
         data.map((n: any) => ({
           id: n.id,
-          message: n.message || n.admin_messages?.message || 'Nova notificação',
+          message: n.message || 'Nova notificação',
           created_at: n.created_at,
         }))
       );

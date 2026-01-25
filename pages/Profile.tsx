@@ -1,17 +1,25 @@
 import React, { useState } from "react";
+import { useNavigate } from 'react-router-dom';
 import {
   Mail,
   Phone,
   ShieldCheck,
   Calendar,
   KeyRound,
-  Save
+  Save,
+  LogOut
 } from "lucide-react";
 import { useAuth } from '../src/contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 
 const Profile: React.FC = () => {
-  const { profile } = useAuth();
+  const { profile, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/login');
+  };
 
 
 
