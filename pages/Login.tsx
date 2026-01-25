@@ -2,7 +2,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { TrendingUp, Mail, Lock, Loader2 } from 'lucide-react';
+import { TrendingUp, Mail, Lock, Loader2, Download } from 'lucide-react';
+import { usePWAInstall } from '../src/hooks/usePWAInstall';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -10,6 +11,7 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { isInstallable, installApp } = usePWAInstall();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,6 +95,17 @@ const Login: React.FC = () => {
               Crie uma agora
             </Link>
           </div>
+
+          {/* PWA INSTALL BUTTON */}
+          {isInstallable && (
+            <button
+              onClick={installApp}
+              className="mt-6 w-full border border-[#27272A] hover:border-[#10B981] text-zinc-400 hover:text-[#10B981] font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 text-sm"
+            >
+              <Download size={16} />
+              Instalar App no Celular
+            </button>
+          )}
         </div>
       </div>
     </div>
