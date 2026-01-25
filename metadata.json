@@ -1,0 +1,7 @@
+{
+  "name": "Bolão App",
+  "description": "Plataforma profissional de apostas entre usuários com foco em segurança financeira e transparência, integrando Supabase e IA Gemini.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
