@@ -304,256 +304,260 @@ const WalletPage: React.FC = () => {
             <button onClick={copyPix} className="text-[#10B981] hover:text-white"><Copy size={16} /></button>
           </div>
 
-          <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
             <input
               type="number"
-              placeholder="Valor (R$)"
+              placeholder="R$ 0,00"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-xl p-4 text-white text-center font-bold text-lg focus:border-[#10B981] outline-none"
+              className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-xl p-3 md:p-4 text-white text-center font-bold text-sm md:text-lg focus:border-[#10B981] outline-none"
             />
 
-            <label className={`border border-dashed border-[#27272A] rounded-xl p-4 text-center cursor-pointer block hover:bg-[#27272A] transition ${receiptFile ? 'border-[#10B981] bg-[#10B981]/5' : ''}`}>
-              <Upload className={`mx-auto mb-2 ${receiptFile ? 'text-[#10B981]' : 'text-zinc-500'}`} size={20} />
-              <span className="text-xs text-zinc-400">{receiptFile ? receiptFile.name : 'Anexar Comprovante'}</span>
+            <label className={`border border-dashed border-[#27272A] rounded-xl p-3 md:p-4 text-center cursor-pointer flex flex-col items-center justify-center hover:bg-[#27272A] transition ${receiptFile ? 'border-[#10B981] bg-[#10B981]/5' : ''}`}>
+              <Upload className={`mb-1 ${receiptFile ? 'text-[#10B981]' : 'text-zinc-500'}`} size={16} />
+              <span className="text-[10px] text-zinc-400 truncate max-w-full">{receiptFile ? 'Alterar' : 'Comprovante'}</span>
               <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => { if (e.target.files?.[0]) setReceiptFile(e.target.files[0]); }} />
             </label>
+          </div>
 
-            {maintenanceMode && profile?.role !== 'admin' ? (
-              <div className="bg-yellow-500/10 border border-yellow-500/50 p-4 rounded-xl flex gap-3">
-                <AlertCircle className="text-yellow-500 shrink-0" size={20} />
-                <p className="text-xs text-yellow-200 font-bold">
-                  Depósitos suspensos temporariamente.
-                </p>
-              </div>
-            ) : (
-              <button
-                onClick={handleDeposit}
-                disabled={loading}
-                className="w-full bg-[#10B981] hover:bg-[#059669] text-black font-black py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-[#10B981]/10 transition-all"
+          {maintenanceMode && profile?.role !== 'admin' ? (
+            <div className="bg-yellow-500/10 border border-yellow-500/50 p-4 rounded-xl flex gap-3">
+              <AlertCircle className="text-yellow-500 shrink-0" size={20} />
+              <p className="text-xs text-yellow-200 font-bold">
+                Depósitos suspensos temporariamente.
+              </p>
+            </div>
+          ) : (
+            <button
+              onClick={handleDeposit}
+              disabled={loading}
+              className="w-full bg-[#10B981] hover:bg-[#059669] text-black font-black py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-[#10B981]/10 transition-all"
+            >
+              {loading ? <Loader2 className="animate-spin" /> : 'ENVIAR DEPÓSITO'}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* HISTORY & REPORT COLUMN */}
+      <div className="lg:col-span-2 space-y-6">
+
+        {/* MONTHLY REPORT CARD */}
+        <div className="bg-[#141417] border border-[#27272A] rounded-3xl p-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <div className="flex items-center gap-2 text-white font-bold">
+              <PieChart size={20} className="text-[#10B981]" />
+              Resumo Financeiro
+            </div>
+
+            <div className="flex items-center gap-3">
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                className="bg-[#0A0A0B] text-white text-xs font-bold px-3 py-2 rounded-lg border border-[#27272A] focus:border-[#10B981] outline-none"
               >
-                {loading ? <Loader2 className="animate-spin" /> : 'ENVIAR DEPÓSITO'}
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <option key={i} value={i}>{new Date(0, i).toLocaleString('pt-BR', { month: 'long' }).toUpperCase()}</option>
+                ))}
+              </select>
+
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(Number(e.target.value))}
+                className="bg-[#0A0A0B] text-white text-xs font-bold px-3 py-2 rounded-lg border border-[#27272A] focus:border-[#10B981] outline-none"
+              >
+                {[2024, 2025, 2026, 2027].map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+
+              <button
+                onClick={handleDownloadReport}
+                className="bg-[#27272A] hover:bg-[#3F3F46] text-white p-2 rounded-lg border border-[#27272A] transition-colors"
+                title="Baixar Relatório PDF"
+              >
+                <Download size={16} />
               </button>
-            )}
+            </div>
+          </div>
+
+          {/* GRAPH & STATS */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div className="p-4 bg-[#0A0A0B] rounded-xl border border-[#27272A] flex justify-between items-center">
+                <span className="text-xs text-zinc-400">Total Apostado</span>
+                <span className="text-sm font-bold text-orange-400">R$ {stats.totalBet.toFixed(2)}</span>
+              </div>
+              <div className="p-4 bg-[#0A0A0B] rounded-xl border border-[#27272A] flex justify-between items-center">
+                <span className="text-xs text-zinc-400">Total Ganho</span>
+                <span className="text-sm font-bold text-[#10B981]">R$ {stats.totalWon.toFixed(2)}</span>
+              </div>
+              <div className="p-4 bg-[#0A0A0B] rounded-xl border border-[#27272A] flex justify-between items-center">
+                <span className="text-xs text-zinc-400">Saldo do Mês</span>
+                <span className={`text-sm font-bold ${stats.totalWon - stats.totalBet >= 0 ? 'text-[#10B981]' : 'text-red-500'}`}>
+                  {stats.totalWon - stats.totalBet >= 0 ? '+' : ''} R$ {(stats.totalWon - stats.totalBet).toFixed(2)}
+                </span>
+              </div>
+            </div>
+
+
+            <div className="w-full relative" style={{ height: '160px' }}>
+              {mounted ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData}>
+                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#71717a' }} axisLine={false} tickLine={false} />
+                    <YAxis hide />
+                    <RechartsTooltip
+                      contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '8px' }}
+                      itemStyle={{ color: '#fff', fontSize: '12px' }}
+                      cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                    />
+                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                      {chartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : null}
+            </div>
           </div>
         </div>
 
-        {/* HISTORY & REPORT COLUMN */}
-        <div className="lg:col-span-2 space-y-6">
-
-          {/* MONTHLY REPORT CARD */}
-          <div className="bg-[#141417] border border-[#27272A] rounded-3xl p-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-              <div className="flex items-center gap-2 text-white font-bold">
-                <PieChart size={20} className="text-[#10B981]" />
-                Resumo Financeiro
-              </div>
-
-              <div className="flex items-center gap-3">
-                <select
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                  className="bg-[#0A0A0B] text-white text-xs font-bold px-3 py-2 rounded-lg border border-[#27272A] focus:border-[#10B981] outline-none"
-                >
-                  {Array.from({ length: 12 }).map((_, i) => (
-                    <option key={i} value={i}>{new Date(0, i).toLocaleString('pt-BR', { month: 'long' }).toUpperCase()}</option>
-                  ))}
-                </select>
-
-                <select
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(Number(e.target.value))}
-                  className="bg-[#0A0A0B] text-white text-xs font-bold px-3 py-2 rounded-lg border border-[#27272A] focus:border-[#10B981] outline-none"
-                >
-                  {[2024, 2025, 2026, 2027].map(y => (
-                    <option key={y} value={y}>{y}</option>
-                  ))}
-                </select>
-
-                <button
-                  onClick={handleDownloadReport}
-                  className="bg-[#27272A] hover:bg-[#3F3F46] text-white p-2 rounded-lg border border-[#27272A] transition-colors"
-                  title="Baixar Relatório PDF"
-                >
-                  <Download size={16} />
-                </button>
-              </div>
-            </div>
-
-            {/* GRAPH & STATS */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="p-4 bg-[#0A0A0B] rounded-xl border border-[#27272A] flex justify-between items-center">
-                  <span className="text-xs text-zinc-400">Total Apostado</span>
-                  <span className="text-sm font-bold text-orange-400">R$ {stats.totalBet.toFixed(2)}</span>
-                </div>
-                <div className="p-4 bg-[#0A0A0B] rounded-xl border border-[#27272A] flex justify-between items-center">
-                  <span className="text-xs text-zinc-400">Total Ganho</span>
-                  <span className="text-sm font-bold text-[#10B981]">R$ {stats.totalWon.toFixed(2)}</span>
-                </div>
-                <div className="p-4 bg-[#0A0A0B] rounded-xl border border-[#27272A] flex justify-between items-center">
-                  <span className="text-xs text-zinc-400">Saldo do Mês</span>
-                  <span className={`text-sm font-bold ${stats.totalWon - stats.totalBet >= 0 ? 'text-[#10B981]' : 'text-red-500'}`}>
-                    {stats.totalWon - stats.totalBet >= 0 ? '+' : ''} R$ {(stats.totalWon - stats.totalBet).toFixed(2)}
-                  </span>
-                </div>
-              </div>
-
-
-              <div className="w-full relative" style={{ height: '160px' }}>
-                {mounted ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartData}>
-                      <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#71717a' }} axisLine={false} tickLine={false} />
-                      <YAxis hide />
-                      <RechartsTooltip
-                        contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '8px' }}
-                        itemStyle={{ color: '#fff', fontSize: '12px' }}
-                        cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                      />
-                      <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                        {chartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : null}
-              </div>
-            </div>
+        <div className="bg-[#141417] border border-[#27272A] rounded-3xl p-8">
+          <div className="flex items-center gap-2 text-white font-bold mb-6 pb-4 border-b border-[#27272A]">
+            <History size={20} className="text-[#10B981]" />
+            Extrato de Movimentações
           </div>
 
-          <div className="bg-[#141417] border border-[#27272A] rounded-3xl p-8">
-            <div className="flex items-center gap-2 text-white font-bold mb-6 pb-4 border-b border-[#27272A]">
-              <History size={20} className="text-[#10B981]" />
-              Extrato de Movimentações
+          {loadingHistory ? (
+            <div className="flex flex-col items-center justify-center py-20 text-zinc-500 gap-4">
+              <Loader2 className="animate-spin text-[#10B981]" size={32} />
+              <p className="text-sm">Carregando extrato...</p>
             </div>
+          ) : filteredItems.length === 0 ? (
+            <div className="text-center py-20 bg-[#0A0A0B] rounded-2xl border border-[#27272A]">
+              <History className="mx-auto text-zinc-700 mb-4" size={48} />
+              <p className="text-zinc-500 text-sm">Nenhuma movimentação neste período.</p>
+            </div>
+          ) : (
+            <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+              {filteredItems.map((item: any) => (
+                <div
+                  key={`${item.source}-${item.id}`}
+                  onClick={() => setSelectedTransaction(item)}
+                  className="flex items-center justify-between p-3 bg-[#0A0A0B] border border-[#27272A] rounded-xl hover:border-[#10B981]/50 hover:bg-[#10B981]/5 transition-all cursor-pointer group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center border border-white/5 flex-shrink-0 ${item.category === 'credit' ? 'bg-[#10B981]/10 text-[#10B981]' :
+                      item.status === 'pending' ? 'bg-yellow-500/10 text-yellow-500' :
+                        'bg-red-500/10 text-red-500'
+                      }`}>
+                      {getIconForType(item.type)}
+                    </div>
+                    <div>
+                      <p className="font-bold text-white text-xs md:text-sm group-hover:text-[#10B981] transition-colors line-clamp-1">{getLabelForType(item.type)}</p>
+                      <div className="flex gap-2 items-center mt-0.5">
+                        <span className="text-[10px] text-zinc-500">{new Date(item.created_at).toLocaleDateString()}</span>
+                        {item.status === 'rejected' && (
+                          <span className="text-[10px] text-red-500 flex items-center gap-1 bg-red-500/10 px-1.5 py-0.5 rounded">
+                            <AlertCircle size={10} /> Recusado
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
 
-            {loadingHistory ? (
-              <div className="flex flex-col items-center justify-center py-20 text-zinc-500 gap-4">
-                <Loader2 className="animate-spin text-[#10B981]" size={32} />
-                <p className="text-sm">Carregando extrato...</p>
-              </div>
-            ) : filteredItems.length === 0 ? (
-              <div className="text-center py-20 bg-[#0A0A0B] rounded-2xl border border-[#27272A]">
-                <History className="mx-auto text-zinc-700 mb-4" size={48} />
-                <p className="text-zinc-500 text-sm">Nenhuma movimentação neste período.</p>
-              </div>
-            ) : (
-              <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-                {filteredItems.map((item: any) => (
-                  <div
-                    key={`${item.source}-${item.id}`}
-                    onClick={() => setSelectedTransaction(item)}
-                    className="flex items-center justify-between p-4 bg-[#0A0A0B] border border-[#27272A] rounded-xl hover:border-[#10B981]/50 hover:bg-[#10B981]/5 transition-all cursor-pointer group"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center border border-white/5 ${item.category === 'credit' ? 'bg-[#10B981]/10 text-[#10B981]' :
+                  <div className="text-right flex items-center gap-3">
+                    <div>
+                      <p className={`font-black text-base ${item.category === 'credit' ? 'text-[#10B981]' :
+                        item.status === 'rejected' ? 'text-zinc-500 line-through' :
+                          item.category === 'debit' ? 'text-white' :
+                            'text-white'
+                        }`}>
+                        {item.category === 'credit' ? '+' : '-'} R$ {item.amount.toFixed(2)}
+                      </p>
+                      <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase inline-block mt-1 ${item.status === 'approved' || item.status === 'completed' ? 'bg-[#10B981]/10 text-[#10B981]' :
                         item.status === 'pending' ? 'bg-yellow-500/10 text-yellow-500' :
                           'bg-red-500/10 text-red-500'
                         }`}>
-                        {getIconForType(item.type)}
-                      </div>
-                      <div>
-                        <p className="font-bold text-white text-sm group-hover:text-[#10B981] transition-colors">{getLabelForType(item.type)}</p>
-                        <div className="flex gap-2 items-center mt-1">
-                          <span className="text-[10px] text-zinc-500">{new Date(item.created_at).toLocaleString()}</span>
-                          {item.status === 'rejected' && (
-                            <span className="text-[10px] text-red-500 flex items-center gap-1 bg-red-500/10 px-1.5 py-0.5 rounded">
-                              <AlertCircle size={10} /> Recusado
-                            </span>
-                          )}
-                        </div>
-                      </div>
+                        {item.status === 'approved' ? 'Aprovado' : item.status === 'rejected' ? 'Rejeitado' : 'Pendente'}
+                      </span>
                     </div>
-
-                    <div className="text-right flex items-center gap-3">
-                      <div>
-                        <p className={`font-black text-base ${item.category === 'credit' ? 'text-[#10B981]' :
-                          item.status === 'rejected' ? 'text-zinc-500 line-through' :
-                            item.category === 'debit' ? 'text-white' :
-                              'text-white'
-                          }`}>
-                          {item.category === 'credit' ? '+' : '-'} R$ {item.amount.toFixed(2)}
-                        </p>
-                        <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase inline-block mt-1 ${item.status === 'approved' || item.status === 'completed' ? 'bg-[#10B981]/10 text-[#10B981]' :
-                          item.status === 'pending' ? 'bg-yellow-500/10 text-yellow-500' :
-                            'bg-red-500/10 text-red-500'
-                          }`}>
-                          {item.status === 'approved' ? 'Aprovado' : item.status === 'rejected' ? 'Rejeitado' : 'Pendente'}
-                        </span>
-                      </div>
-                      <ChevronRight size={16} className="text-zinc-600 group-hover:text-[#10B981] transition-colors" />
-                    </div>
+                    <ChevronRight size={16} className="text-zinc-600 group-hover:text-[#10B981] transition-colors" />
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Transaction Details Modal */}
-      {selectedTransaction && (
-        <TransactionDetailsModal
-          transaction={selectedTransaction}
-          onClose={() => setSelectedTransaction(null)}
-        />
-      )}
+      {
+        selectedTransaction && (
+          <TransactionDetailsModal
+            transaction={selectedTransaction}
+            onClose={() => setSelectedTransaction(null)}
+          />
+        )
+      }
 
       {/* Withdrawal Modal */}
-      {showWithdrawModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-          <div className="bg-[#141417] border border-[#27272A] rounded-3xl p-8 max-w-md w-full space-y-6 relative">
-            <button onClick={() => setShowWithdrawModal(false)} className="absolute top-4 right-4 text-zinc-500 hover:text-white">
-              <X size={24} />
-            </button>
-
-            <div>
-              <h3 className="text-2xl font-black text-white mb-2">Solicitar Saque</h3>
-              <p className="text-sm text-zinc-400">O valor será transferido para a chave PIX informada.</p>
-            </div>
-
-            <div className="bg-[#0A0A0B] p-4 rounded-xl border border-[#27272A]">
-              <p className="text-xs text-zinc-500 uppercase font-bold mb-1">Disponível para Saque</p>
-              <p className="text-2xl font-black text-[#10B981]">R$ {profile?.withdrawable_balance?.toFixed(2)}</p>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="text-xs font-bold text-zinc-400 block mb-2 uppercase">Valor (R$)</label>
-                <input
-                  type="number"
-                  placeholder="0.00"
-                  value={withdrawAmount}
-                  onChange={(e) => setWithdrawAmount(e.target.value)}
-                  className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-xl p-4 text-white focus:border-[#10B981] outline-none font-bold"
-                />
-              </div>
+      {
+        showWithdrawModal && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+            <div className="bg-[#141417] border border-[#27272A] rounded-3xl p-8 max-w-md w-full space-y-6 relative">
+              <button onClick={() => setShowWithdrawModal(false)} className="absolute top-4 right-4 text-zinc-500 hover:text-white">
+                <X size={24} />
+              </button>
 
               <div>
-                <label className="text-xs font-bold text-zinc-400 block mb-2 uppercase">Chave PIX</label>
-                <input
-                  type="text"
-                  placeholder="CPF, e-mail, telefone..."
-                  value={withdrawPixKey}
-                  onChange={(e) => setWithdrawPixKey(e.target.value)}
-                  className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-xl p-4 text-white focus:border-[#10B981] outline-none"
-                />
+                <h3 className="text-2xl font-black text-white mb-2">Solicitar Saque</h3>
+                <p className="text-sm text-zinc-400">O valor será transferido para a chave PIX informada.</p>
               </div>
-            </div>
 
-            <button
-              onClick={handleWithdrawRequest}
-              disabled={withdrawLoading}
-              className="w-full bg-[#10B981] hover:bg-[#059669] text-black font-black py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-[#10B981]/10 transition-all"
-            >
-              {withdrawLoading ? <Loader2 className="animate-spin" /> : 'CONFIRMAR SAQUE'}
-            </button>
+              <div className="bg-[#0A0A0B] p-4 rounded-xl border border-[#27272A]">
+                <p className="text-xs text-zinc-500 uppercase font-bold mb-1">Disponível para Saque</p>
+                <p className="text-2xl font-black text-[#10B981]">R$ {profile?.withdrawable_balance?.toFixed(2)}</p>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs font-bold text-zinc-400 block mb-2 uppercase">Valor (R$)</label>
+                  <input
+                    type="number"
+                    placeholder="0.00"
+                    value={withdrawAmount}
+                    onChange={(e) => setWithdrawAmount(e.target.value)}
+                    className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-xl p-4 text-white focus:border-[#10B981] outline-none font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-zinc-400 block mb-2 uppercase">Chave PIX</label>
+                  <input
+                    type="text"
+                    placeholder="CPF, e-mail, telefone..."
+                    value={withdrawPixKey}
+                    onChange={(e) => setWithdrawPixKey(e.target.value)}
+                    className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-xl p-4 text-white focus:border-[#10B981] outline-none"
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={handleWithdrawRequest}
+                disabled={withdrawLoading}
+                className="w-full bg-[#10B981] hover:bg-[#059669] text-black font-black py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-[#10B981]/10 transition-all"
+              >
+                {withdrawLoading ? <Loader2 className="animate-spin" /> : 'CONFIRMAR SAQUE'}
+              </button>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 };
 

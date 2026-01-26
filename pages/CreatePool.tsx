@@ -208,8 +208,8 @@ const CreatePool: React.FC = () => {
 
             <div>
               <label className="text-[10px] md:text-xs text-zinc-400">DATA DO EVENTO *</label>
-              <div className="relative">
-                <Calendar className="absolute right-3 top-2.5 text-zinc-500" size={14} />
+              <div className="relative mt-1">
+                <Calendar className="absolute right-3 top-2.5 text-zinc-500 pointer-events-none" size={14} />
                 <input
                   type="datetime-local"
                   value={formData.scheduled_at}
@@ -263,100 +263,104 @@ const CreatePool: React.FC = () => {
         </div>
 
         {/* FEE CONFIRMATION MODAL */}
-        {showConfirmModal && (
-          <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
-            <div className="bg-[#141417] border border-[#27272A] rounded-3xl w-full max-w-lg p-8 space-y-6 relative max-h-[90vh] overflow-y-auto">
+        {
+          showConfirmModal && (
+            <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
+              <div className="bg-[#141417] border border-[#27272A] rounded-3xl w-full max-w-lg p-8 space-y-6 relative max-h-[90vh] overflow-y-auto">
 
-              <div className="text-center">
-                <div className="w-16 h-16 bg-[#10B981]/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Info className="text-[#10B981]" size={32} />
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-[#10B981]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Info className="text-[#10B981]" size={32} />
+                  </div>
+                  <h2 className="text-2xl font-black text-white">VALORES</h2>
                 </div>
-                <h2 className="text-2xl font-black text-white">VALORES</h2>
-              </div>
 
-              <div className="bg-[#0A0A0B] border border-[#27272A] rounded-2xl overflow-hidden">
-                <div className="bg-[#27272A] px-4 py-3 text-xs font-bold text-zinc-300 uppercase flex justify-between">
-                  <span>Faixa de Arrecadação</span>
-                  <span>VALORES</span>
+                <div className="bg-[#0A0A0B] border border-[#27272A] rounded-2xl overflow-hidden">
+                  <div className="bg-[#27272A] px-4 py-3 text-xs font-bold text-zinc-300 uppercase flex justify-between">
+                    <span>Faixa de Arrecadação</span>
+                    <span>VALORES</span>
+                  </div>
+                  <div className="divide-y divide-[#27272A]">
+                    {getFeeTable().map((row, i) => (
+                      <div key={i} className="px-4 py-3 flex justify-between text-sm text-zinc-400 hover:bg-[#27272A]/50 transition">
+                        <span>{row.range}</span>
+                        <span className="font-bold text-white">{row.fee}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="divide-y divide-[#27272A]">
-                  {getFeeTable().map((row, i) => (
-                    <div key={i} className="px-4 py-3 flex justify-between text-sm text-zinc-400 hover:bg-[#27272A]/50 transition">
-                      <span>{row.range}</span>
-                      <span className="font-bold text-white">{row.fee}</span>
-                    </div>
-                  ))}
+
+                <div className="bg-[#10B981]/10 border border-[#10B981]/20 p-4 rounded-2xl flex gap-3">
+                  <CheckCircle className="text-[#10B981] shrink-0" size={20} />
+                  <p className="text-xs text-zinc-300 leading-relaxed">
+                    Ao clicar em "Concordo", você declara estar ciente dos valores, e que serão descontados automaticamente do prêmio total antes do pagamento aos vencedores.
+                  </p>
                 </div>
+
+                <div className="space-y-3">
+                  <button
+                    onClick={handleAgreeFee}
+                    className="w-full bg-[#10B981] hover:bg-[#059669] text-[#0A0A0B] font-black py-4 rounded-2xl flex items-center justify-center gap-2"
+                  >
+                    CONCORDO E AVANÇAR
+                  </button>
+
+                  <button
+                    onClick={() => setShowConfirmModal(false)}
+                    className="w-full text-zinc-500 hover:text-white font-bold py-3 text-sm"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+
               </div>
-
-              <div className="bg-[#10B981]/10 border border-[#10B981]/20 p-4 rounded-2xl flex gap-3">
-                <CheckCircle className="text-[#10B981] shrink-0" size={20} />
-                <p className="text-xs text-zinc-300 leading-relaxed">
-                  Ao clicar em "Concordo", você declara estar ciente dos valores, e que serão descontados automaticamente do prêmio total antes do pagamento aos vencedores.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <button
-                  onClick={handleAgreeFee}
-                  className="w-full bg-[#10B981] hover:bg-[#059669] text-[#0A0A0B] font-black py-4 rounded-2xl flex items-center justify-center gap-2"
-                >
-                  CONCORDO E AVANÇAR
-                </button>
-
-                <button
-                  onClick={() => setShowConfirmModal(false)}
-                  className="w-full text-zinc-500 hover:text-white font-bold py-3 text-sm"
-                >
-                  Cancelar
-                </button>
-              </div>
-
             </div>
-          </div>
-        )}
+          )
+        }
 
         {/* ORGANIZER COMMITMENT MODAL */}
-        {showCommitmentModal && (
-          <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
-            <div className="bg-[#141417] border border-[#27272A] rounded-3xl w-full max-w-md p-8 space-y-6 relative">
+        {
+          showCommitmentModal && (
+            <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
+              <div className="bg-[#141417] border border-[#27272A] rounded-3xl w-full max-w-md p-8 space-y-6 relative">
 
-              <div className="text-center">
-                <div className="w-16 h-16 bg-yellow-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Scale className="text-yellow-500" size={32} />
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-yellow-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Scale className="text-yellow-500" size={32} />
+                  </div>
+                  <h2 className="text-xl font-black text-white">Compromisso do Organizador</h2>
                 </div>
-                <h2 className="text-xl font-black text-white">Compromisso do Organizador</h2>
+
+                <div className="bg-[#0A0A0B] p-5 rounded-2xl border border-yellow-500/20">
+                  <p className="text-zinc-300 text-sm leading-relaxed text-center font-medium">
+                    Você se compromete a encerrar o bolão e declarar o vencedor assim que a partida/jogo/disputa finalizar?
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <button
+                    onClick={handleConfirmCreate}
+                    disabled={loading}
+                    className="w-full bg-[#10B981] hover:bg-[#059669] text-[#0A0A0B] font-black py-4 rounded-2xl flex items-center justify-center gap-2"
+                  >
+                    {loading ? <Loader2 className="animate-spin" /> : 'SIM, EU ME COMPROMETO'}
+                  </button>
+
+                  <button
+                    onClick={() => setShowCommitmentModal(false)}
+                    className="w-full text-zinc-500 hover:text-white font-bold py-3 text-sm"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+
               </div>
-
-              <div className="bg-[#0A0A0B] p-5 rounded-2xl border border-yellow-500/20">
-                <p className="text-zinc-300 text-sm leading-relaxed text-center font-medium">
-                  Você se compromete a encerrar o bolão e declarar o vencedor assim que a partida/jogo/disputa finalizar?
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <button
-                  onClick={handleConfirmCreate}
-                  disabled={loading}
-                  className="w-full bg-[#10B981] hover:bg-[#059669] text-[#0A0A0B] font-black py-4 rounded-2xl flex items-center justify-center gap-2"
-                >
-                  {loading ? <Loader2 className="animate-spin" /> : 'SIM, EU ME COMPROMETO'}
-                </button>
-
-                <button
-                  onClick={() => setShowCommitmentModal(false)}
-                  className="w-full text-zinc-500 hover:text-white font-bold py-3 text-sm"
-                >
-                  Cancelar
-                </button>
-              </div>
-
             </div>
-          </div>
-        )}
+          )
+        }
 
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
 
