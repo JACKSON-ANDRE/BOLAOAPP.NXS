@@ -5,6 +5,8 @@ import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 // Pages
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import UpdatePassword from './pages/UpdatePassword';
 import Home from './pages/Home';
 import ProfilePage from './pages/Profile';
 import Wallet from './pages/Wallet';
@@ -37,6 +39,8 @@ const AppContent: React.FC = () => {
       <Routes>
         <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
         <Route path="/register" element={!user ? <Register /> : <Navigate to="/" />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/update-password" element={<UpdatePassword />} />
 
         {/* PROTECTED ROOT ROUTE: Redirects to /login if not authenticated */}
         <Route path="/" element={user ? <Layout><Home /></Layout> : <Navigate to="/login" />} />
