@@ -116,6 +116,9 @@ const PoolChat: React.FC<PoolChatProps> = ({ poolId, category, hasBet, isAdmin }
 
             if (error) {
                 alert('Erro ao apagar: ' + error.message);
+            } else {
+                // Optimistic Update: Remove immediately from UI
+                setMessages((prev) => prev.filter(msg => msg.id !== messageId));
             }
         }
     };
