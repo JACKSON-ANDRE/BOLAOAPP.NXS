@@ -115,7 +115,14 @@ const NotificationGuard: React.FC<NotificationGuardProps> = ({ children }) => {
         );
     }
 
-    return <>{children}</>;
+    return (
+        <>
+            <div className="bg-red-500 text-white text-[10px] font-bold text-center fixed top-0 w-full z-[10000]">
+                DEBUG: Sub={hasSubscription ? 'TRUE' : 'FALSE'} | User={session?.user?.email}
+            </div>
+            {children}
+        </>
+    );
 };
 
 export default NotificationGuard;
