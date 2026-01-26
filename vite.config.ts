@@ -21,6 +21,7 @@ export default defineConfig(({ mode }) => {
           enabled: true,
           type: 'module', // Required for dev
         },
+        manifestFilename: 'manifest.json', // FORCE output as manifest.json to fix 404s/caching issues
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
         manifest: {
           name: 'Bolão App - Apostas Esportivas',
