@@ -52,24 +52,35 @@ export async function subscribeToPushNotifications(userId: string, silent = fals
                 applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
             };
             pushSubscription = await registration.pushManager.subscribe(subscribeOptions);
+
+            // 4. Save to Database
+            const { error } = await supabase
+                .from('user_push_subscriptions')
+                .upsert({
+                    user_id: userId,
+                    subscription: pushSubscription,
+                    user_agent: navigator.userAgent
+                }, { onConflict: 'user_id' });
+
+            if (error) throw error;
+            if (!silent) console.log('Web Push OK (New)!', pushSubscription);
+            return true;
         } else {
             // If already subscribed, just update DB to be sure
             if (!silent) console.log('Existing subscription found, syncing...');
+
+            const { error } = await supabase
+                .from('user_push_subscriptions')
+                .upsert({
+                    user_id: userId,
+                    subscription: pushSubscription,
+                    user_agent: navigator.userAgent
+                }, { onConflict: 'user_id' });
+
+            if (error) throw error;
+            if (!silent) console.log('Web Push OK (Synced)!', pushSubscription);
+            return 'EXISTING';
         }
-
-        // 4. Save to Database
-        const { error } = await supabase
-            .from('user_push_subscriptions')
-            .upsert({
-                user_id: userId,
-                subscription: pushSubscription,
-                user_agent: navigator.userAgent
-            }, { onConflict: 'user_id' });
-
-        if (error) throw error;
-
-        if (!silent) console.log('Web Push OK!', pushSubscription);
-        return true;
 
     } catch (error: any) {
         if (silent) {

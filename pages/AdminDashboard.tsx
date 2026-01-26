@@ -44,8 +44,10 @@ type AdminTab =
   | 'users'
   | 'history'
   | 'pix'
+  | 'pwa'
   | 'messages'
-  | 'fake_users';
+  | 'fake_users'
+  | 'notifications';
 
 type DepositFilter = 'pending' | 'archived' | 'all';
 type WithdrawFilter = 'pending' | 'archived' | 'all';
@@ -168,6 +170,8 @@ const AdminDashboard: React.FC = () => {
   const [newQrFile, setNewQrFile] = useState<File | null>(null);
   const [savingPix, setSavingPix] = useState(false);
   const [fakeUserCount, setFakeUserCount] = useState<number>(0);
+  const [supabaseUrl, setSupabaseUrl] = useState('');
+  const [serviceRoleKey, setServiceRoleKey] = useState('');
 
   // History State
   const [selectedPoolHistory, setSelectedPoolHistory] = useState<{
@@ -276,6 +280,8 @@ const AdminDashboard: React.FC = () => {
       setPixKey(data.pix_key || '');
       setPixQrUrl(data.pix_qrcode_url || '');
       setFakeUserCount(data.fake_user_count || 0);
+      setSupabaseUrl(data.supabase_url || '');
+      setServiceRoleKey(data.service_role_key || '');
     }
   };
 
@@ -662,7 +668,7 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  const handleSavePixSettings = async () => {
+  const handleSaveAppSettings = async (context: string) => {
     setSavingPix(true);
     try {
       let finalQrUrl = pixQrUrl;
@@ -693,6 +699,8 @@ const AdminDashboard: React.FC = () => {
           pix_key: pixKey,
           pix_qrcode_url: finalQrUrl,
           fake_user_count: fakeUserCount,
+          supabase_url: supabaseUrl,
+          service_role_key: serviceRoleKey,
           updated_at: new Date().toISOString(),
         });
 
@@ -700,7 +708,7 @@ const AdminDashboard: React.FC = () => {
 
       setPixQrUrl(finalQrUrl);
       setNewQrFile(null);
-      alert('Configurações PIX salvas com sucesso!');
+      alert(`${context} salvas com sucesso!`);
 
     } catch (err: any) {
       console.error(err);
@@ -960,6 +968,7 @@ const AdminDashboard: React.FC = () => {
           ['pix', 'Config. PIX'],
           ['fake_users', 'USU/FAKE'],
           ['messages', 'Mensagens'],
+          ['notifications', 'Notificações Push'],
         ].map(([id, label]) => (
           <button
             key={id}
@@ -1454,7 +1463,7 @@ const AdminDashboard: React.FC = () => {
 
               <div className="pt-4 border-t border-[#27272A]">
                 <button
-                  onClick={handleSavePixSettings}
+                  onClick={() => handleSaveAppSettings('Configurações PIX')}
                   disabled={savingPix}
                   className="w-full bg-[#10B981] hover:bg-[#059669] text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition"
                 >
@@ -1524,24 +1533,15 @@ const AdminDashboard: React.FC = () => {
                               if (!confirmUpload) return;
 
                               try {
-                                // Upload to Supabase Storage (Public assets bucket)
-                                // We use a fixed name 'pwa-icon.png' to keep URL stable for manifest
-                                // In a real prod PWA, we'd need to invalidate cache.
-                                // Here we upload to 'app_assets' bucket.
-                                setSavingPix(true); // Reusing loading state for simplicity or create new one
-
-                                // 1. Upload Original
+                                setSavingPix(true);
                                 const { error: uploadError } = await supabase.storage
                                   .from('app_assets')
                                   .upload('pwa-icon.png', file, { upsert: true, cacheControl: '0' });
 
                                 if (uploadError) throw uploadError;
-
-                                // 2. Update Settings (Optional, primarily to trigger re-renders if we used state)
                                 await supabase.from('app_settings').upsert({ id: 1, pwa_icon_updated_at: new Date().toISOString() });
 
                                 alert('Ícone enviado com sucesso! A atualização pode demorar um pouco para propagar.');
-                                // Force reload to try and fetch new icon
                                 window.location.reload();
 
                               } catch (err: any) {
@@ -1563,6 +1563,66 @@ const AdminDashboard: React.FC = () => {
               </div>
             </div>
           )
+        }
+
+        {/* NOTIFICATIONS TAB */}
+        {activeTab === 'notifications' && (
+          <div className="space-y-8 max-w-2xl">
+            <div className="bg-[#0A0A0B] border border-[#27272A] rounded-2xl p-6">
+              <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                <ShieldAlert className="text-[#10B981]" />
+                Configurações de Notificações (Backend)
+              </h3>
+
+              <div className="bg-[#141417] p-4 rounded-xl border border-yellow-500/20 text-yellow-200 text-xs mb-6">
+                <p className="flex items-center gap-2 font-bold mb-1">
+                  <AlertCircle size={16} />
+                  Configuração Crítica
+                </p>
+                Estes dados são necessários para que o servidor envie notificações push automáticas mesmo com o app fechado.
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm text-zinc-400 block mb-2 font-bold">Supabase URL</label>
+                  <input
+                    type="text"
+                    value={supabaseUrl}
+                    onChange={(e) => setSupabaseUrl(e.target.value)}
+                    placeholder="https://your-project.supabase.co"
+                    className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-xl px-4 py-3 text-white focus:border-[#10B981] outline-none font-mono text-xs"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm text-zinc-400 block mb-2 font-bold">Service Role Key (Secret)</label>
+                  <input
+                    type="password"
+                    value={serviceRoleKey}
+                    onChange={(e) => setServiceRoleKey(e.target.value)}
+                    placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpX..."
+                    className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-xl px-4 py-3 text-white focus:border-[#10B981] outline-none font-mono text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-6">
+                <button
+                  onClick={() => handleSaveAppSettings('Configurações de Notificação')}
+                  disabled={savingPix}
+                  className="w-full bg-[#10B981] hover:bg-[#059669] text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition"
+                >
+                  {savingPix ? 'Salvando...' : (
+                    <>
+                      <Save size={20} />
+                      SALVAR CONFIGURAÇÕES DE NOTIFICAÇÃO
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )
         }
 
         {/* FAKE USERS TAB */}
@@ -1592,7 +1652,7 @@ const AdminDashboard: React.FC = () => {
 
                 <div className="pt-4 border-t border-[#27272A]">
                   <button
-                    onClick={handleSavePixSettings}
+                    onClick={() => handleSaveAppSettings('Configurações de Usuários Fake')}
                     disabled={savingPix}
                     className="w-full bg-[#10B981] hover:bg-[#059669] text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition"
                   >

@@ -339,8 +339,9 @@ const Profile: React.FC = () => {
           <button
             onClick={async () => {
               if (profile) {
-                const success = await subscribeToPushNotifications(profile.id);
-                if (success) alert('Notificações ativadas com sucesso!');
+                const result = await subscribeToPushNotifications(profile.id);
+                if (result === 'EXISTING') alert('Notificações já estão ativadas!');
+                else if (result === true) alert('Notificações ativadas com sucesso!');
                 else alert('Erro ou permissão negada. Verifique as configurações do navegador.');
               }
             }}

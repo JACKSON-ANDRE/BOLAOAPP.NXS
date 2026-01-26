@@ -1,5 +1,5 @@
 {
-  "name": "bolão-app",
+  "name": "bolao-app",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -20,7 +20,8 @@
     "react-dom": "^19.2.3",
     "react-router-dom": "^7.12.0",
     "recharts": "^3.7.0",
-    "web-push": "^3.6.7"
+    "web-push": "^3.6.7",
+    "workbox-window": "^7.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
