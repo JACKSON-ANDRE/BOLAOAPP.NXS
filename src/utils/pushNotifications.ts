@@ -83,17 +83,38 @@ export async function subscribeToPushNotifications(userId: string, silent = fals
         }
 
     } catch (error: any) {
+        // --- AUTO-RECOVERY LOGIC FOR KEY CHANGE ---
+        // If the browser holds an old key diff than expected, it throws invalidaccesserror or explicit message
+        if (
+            error.name === 'InvalidAccessError' ||
+            error.name === 'InvalidStateError' ||
+            error.message?.includes('different applicationServerKey')
+        ) {
+            if (!silent) console.warn('Key mismatch detected! Attempting auto-recovery...');
+
+            try {
+                const registration = await navigator.serviceWorker.ready;
+                const sub = await registration.pushManager.getSubscription();
+                if (sub) {
+                    await sub.unsubscribe();
+                    if (!silent) console.log('Old subscription removed. Retrying...');
+                    // Recursive call to create new
+                    return await subscribeToPushNotifications(userId, silent);
+                }
+            } catch (recoveryErr) {
+                console.error('Recovery failed:', recoveryErr);
+            }
+        }
+
         if (silent) {
             // Log for developers but don't alert or spam
-            console.warn('Silent Push Sync skipped:', error.name);
+            console.warn('Silent Push Sync skipped:', error.name, error.message);
             return false;
         }
 
         console.error('Push Error:', error);
 
-        if (error.message?.includes('different applicationServerKey')) {
-            alert('CONFLITO DE CHAVES: O navegador está travado com uma chave antiga. \n\nCOMO RESOLVER:\n1. Feche o App.\n2. Abra o Chrome normal.\n3. Vá em "Limpar dados de navegação" ou clique no cadeado e "Redefinir permissões".');
-        } else if (error.name === 'AbortError' || error.message?.includes('incognito')) {
+        if (error.name === 'AbortError' || error.message?.includes('incognito')) {
             alert('Atenção: Notificações não funcionam em Modo Incógnito/Anônimo.');
         } else if (error.name === 'NotAllowedError') {
             alert('Permissão Negada! Ative no cadeado do navegador.');
