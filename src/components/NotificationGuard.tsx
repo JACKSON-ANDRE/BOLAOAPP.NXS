@@ -9,17 +9,22 @@ interface NotificationGuardProps {
 }
 
 const NotificationGuard: React.FC<NotificationGuardProps> = ({ children }) => {
-    const { session } = useAuth();
+    const { session, loading: authLoading } = useAuth();
     const [hasSubscription, setHasSubscription] = useState<boolean | null>(null);
-    const [loading, setLoading] = useState(false);
+    const [checking, setChecking] = useState(false);
+    const [activationLoading, setActivationLoading] = useState(false); // This `loading` is for the button, not auth.
 
     useEffect(() => {
+        if (authLoading) return; // Wait for auth
+
         if (!session?.user) {
-            setHasSubscription(true); // Don't block unauthenticated users (login/register pages)
+            setHasSubscription(true); // Don't block public pages
             return;
         }
+
+        setChecking(true);
         checkSubscription();
-    }, [session?.user]);
+    }, [session?.user, authLoading]);
 
     const checkSubscription = async () => {
         try {
@@ -38,12 +43,14 @@ const NotificationGuard: React.FC<NotificationGuardProps> = ({ children }) => {
             console.error('Error checking sub:', err);
             // In case of error, default to true to avoid soft-locking if DB fails
             setHasSubscription(true);
+        } finally {
+            setChecking(false);
         }
     };
 
     const handleActivate = async () => {
         if (!session?.user) return;
-        setLoading(true);
+        setActivationLoading(true);
         try {
             // Force registration
             const success = await subscribeToPushNotifications(session.user.id);
@@ -55,15 +62,15 @@ const NotificationGuard: React.FC<NotificationGuardProps> = ({ children }) => {
                 }, 1500);
             } else {
                 alert('Não foi possível ativar. Verifique se as permissões do navegador estão bloqueadas.');
-                setLoading(false);
+                setActivationLoading(false);
             }
         } catch (err: any) {
             alert('Erro: ' + err.message);
-            setLoading(false);
+            setActivationLoading(false);
         }
     };
 
-    if (hasSubscription === null) {
+    if (authLoading || checking || hasSubscription === null) {
         // Initial loading state
         return (
             <div className="min-h-screen bg-[#0A0A0B] flex items-center justify-center">
@@ -101,10 +108,10 @@ const NotificationGuard: React.FC<NotificationGuardProps> = ({ children }) => {
 
                     <button
                         onClick={handleActivate}
-                        disabled={loading}
+                        disabled={activationLoading}
                         className="w-full bg-[#10B981] hover:bg-[#059669] text-[#0A0A0B] font-black py-4 rounded-xl flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02]"
                     >
-                        {loading ? <Loader2 className="animate-spin" /> : 'ATIVAR E LIBERAR ACESSO'}
+                        {activationLoading ? <Loader2 className="animate-spin" /> : 'ATIVAR E LIBERAR ACESSO'}
                     </button>
 
                     <p className="text-[10px] text-zinc-600 mt-4">
