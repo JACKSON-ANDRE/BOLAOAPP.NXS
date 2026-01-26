@@ -78,36 +78,36 @@ const Community: React.FC = () => {
 
             {/* HERO SECTION */}
             <div className="text-center space-y-4">
-                <div className="w-24 h-24 bg-[#10B981]/10 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce">
-                    <Users className="text-[#10B981]" size={48} />
+                <div className="w-16 h-16 md:w-24 md:h-24 bg-[#10B981]/10 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce">
+                    <Users className="text-[#10B981] w-8 h-8 md:w-12 md:h-12" />
                 </div>
 
-                <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter">
+                <h1 className="text-4xl md:text-7xl font-black text-white tracking-tighter">
                     {loading ? '...' : userCount}
                 </h1>
 
-                <p className="text-xl md:text-2xl text-zinc-400 font-medium">
+                <p className="text-lg md:text-2xl text-zinc-400 font-medium">
                     Apostadores Ativos
                 </p>
 
-                <div className="pt-8 max-w-lg mx-auto">
-                    <p className="text-center text-zinc-500 text-sm leading-relaxed">
+                <div className="pt-4 md:pt-8 max-w-lg mx-auto px-4">
+                    <p className="text-center text-zinc-500 text-xs md:text-sm leading-relaxed">
                         Nossa comunidade não para de crescer! Cada novo membro torna os bolões mais disputados e os prêmios maiores.
                     </p>
                 </div>
             </div>
 
             {/* REAL STATS GRID */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl mt-12">
-                <div className="bg-[#141417] p-6 rounded-2xl border border-[#27272A] text-center hover:border-[#10B981]/50 transition duration-300">
-                    <Target className="mx-auto text-[#10B981] mb-2" />
-                    <p className="text-zinc-500 text-xs uppercase font-bold">Bolões Realizados</p>
-                    <p className="text-2xl text-white font-black">{stats.total_pools}</p>
+            <div className="grid grid-cols-2 gap-3 md:gap-4 w-full max-w-2xl mt-8 md:mt-12 px-4">
+                <div className="bg-[#141417] p-4 md:p-6 rounded-2xl border border-[#27272A] text-center hover:border-[#10B981]/50 transition duration-300">
+                    <Target className="mx-auto text-[#10B981] mb-2 w-5 h-5 md:w-6 md:h-6" />
+                    <p className="text-zinc-500 text-[10px] md:text-xs uppercase font-bold">Bolões Realizados</p>
+                    <p className="text-lg md:text-2xl text-white font-black">{stats.total_pools}</p>
                 </div>
-                <div className="bg-[#141417] p-6 rounded-2xl border border-[#27272A] text-center hover:border-[#10B981]/50 transition duration-300">
-                    <Trophy className="mx-auto text-yellow-500 mb-2" />
-                    <p className="text-zinc-500 text-xs uppercase font-bold">Prêmios Pagos</p>
-                    <p className="text-2xl text-white font-black">R$ {stats.total_paid.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                <div className="bg-[#141417] p-4 md:p-6 rounded-2xl border border-[#27272A] text-center hover:border-[#10B981]/50 transition duration-300">
+                    <Trophy className="mx-auto text-yellow-500 mb-2 w-5 h-5 md:w-6 md:h-6" />
+                    <p className="text-zinc-500 text-[10px] md:text-xs uppercase font-bold">Prêmios Pagos</p>
+                    <p className="text-lg md:text-2xl text-white font-black">R$ {stats.total_paid.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                 </div>
             </div>
 
