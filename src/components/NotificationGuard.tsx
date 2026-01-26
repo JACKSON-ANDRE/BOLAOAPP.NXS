@@ -12,61 +12,88 @@ const NotificationGuard: React.FC<NotificationGuardProps> = ({ children }) => {
     const { session, loading: authLoading } = useAuth();
     const [hasSubscription, setHasSubscription] = useState<boolean | null>(null);
     const [checking, setChecking] = useState(false);
-    const [activationLoading, setActivationLoading] = useState(false); // This `loading` is for the button, not auth.
+    const [activationLoading, setActivationLoading] = useState(false);
     const [directUserEmail, setDirectUserEmail] = useState<string>('');
 
     useEffect(() => {
-        // Direct Check for debugging
-        supabase.auth.getUser().then(({ data }) => {
-            if (data.user) setDirectUserEmail(data.user.email || 'No Email');
-            else setDirectUserEmail('No User');
-        });
+        const verifyAndBlock = async () => {
+            // 1. Get Real User (Direct) to bypass potential Context lags
+            const { data: { user: directUser } } = await supabase.auth.getUser();
 
-        if (authLoading) return; // Wait for auth
+            // Updates debug info
+            if (directUser) {
+                setDirectUserEmail(directUser.email || 'No Email');
+            } else {
+                setDirectUserEmail('No User');
+            }
 
-        if (!session?.user) {
-            setHasSubscription(true); // Don't block public pages
-            return;
+            // 2. Decide if we should check subscription
+            // If Context is loading, we wait. UNLESS direct user is already found, then we can proceed.
+            // Actually, waiting for authLoading is safer to avoid flicker, but if Context is dead, we rely on directUser.
+
+            const effectiveUser = directUser || session?.user;
+
+            if (!effectiveUser) {
+                if (!authLoading) {
+                    setHasSubscription(true); // Truly logged out and finished loading
+                }
+                return;
+            }
+
+            // 3. User detected! Check DB
+            setChecking(true);
+            try {
+                const { data, error } = await supabase
+                    .from('user_push_subscriptions')
+                    .select('id')
+                    .eq('user_id', effectiveUser.id)
+                    .maybeSingle();
+
+                if (data && data.id) {
+                    setHasSubscription(true);
+                } else {
+                    setHasSubscription(false); // BLOCK!
+                }
+            } catch (err) {
+                console.error('Error checking sub:', err);
+                setHasSubscription(true);
+            } finally {
+                setChecking(false);
+            }
+        };
+
+        if (!authLoading || directUserEmail) {
+            verifyAndBlock();
         }
 
-        setChecking(true);
-        checkSubscription();
+        // Polling backup just in case
+        const interval = setInterval(() => {
+            if (hasSubscription === null) verifyAndBlock();
+        }, 3000);
+
+        return () => clearInterval(interval);
+
     }, [session?.user, authLoading]);
 
-    const checkSubscription = async () => {
-        try {
-            const { data, error } = await supabase
-                .from('user_push_subscriptions')
-                .select('id')
-                .eq('user_id', session?.user.id)
-                .maybeSingle();
-
-            // Strict check: Must have ID
-            if (data && data.id) {
-                setHasSubscription(true);
-            } else {
-                setHasSubscription(false);
-            }
-        } catch (err) {
-            console.error('Error checking sub:', err);
-            setHasSubscription(true); // Fail open if DB error
-        } finally {
-            setChecking(false);
-        }
-    };
-
     const handleActivate = async () => {
-        if (!session?.user) return;
+        let targetId = session?.user?.id;
+
+        // Fallback to direct check if session missing
+        if (!targetId) {
+            const { data } = await supabase.auth.getUser();
+            targetId = data.user?.id;
+        }
+
+        if (!targetId) return;
+
         setActivationLoading(true);
         try {
             // Force registration
-            const success = await subscribeToPushNotifications(session.user.id);
+            const success = await subscribeToPushNotifications(targetId);
             if (success) {
-                // Double check DB
-                setTimeout(() => {
-                    checkSubscription();
-                    alert('Notificações ativadas! Acesso liberado.');
-                }, 1500);
+                // SUCCESS
+                alert('Notificações ativadas! Acesso liberado.');
+                window.location.reload();
             } else {
                 alert('Não foi possível ativar. Verifique se as permissões do navegador estão bloqueadas.');
                 setActivationLoading(false);
@@ -77,8 +104,9 @@ const NotificationGuard: React.FC<NotificationGuardProps> = ({ children }) => {
         }
     };
 
-    if (authLoading || checking || hasSubscription === null) {
-        // Initial loading state
+    // If we are checking, OR if we haven't decided yet (null), show spinner
+    // EXCEPTION: If auth is loading, we show spinner.
+    if (authLoading && hasSubscription === null) {
         return (
             <div className="min-h-screen bg-[#0A0A0B] flex items-center justify-center">
                 <Loader2 className="animate-spin text-[#10B981]" size={32} />
@@ -86,6 +114,7 @@ const NotificationGuard: React.FC<NotificationGuardProps> = ({ children }) => {
         );
     }
 
+    // IF we decided False => BLOCK
     if (hasSubscription === false) {
         return (
             <div className="fixed inset-0 z-[9999] bg-[#0A0A0B] flex flex-col items-center justify-center p-6 text-center">
@@ -124,20 +153,21 @@ const NotificationGuard: React.FC<NotificationGuardProps> = ({ children }) => {
                     <p className="text-[10px] text-zinc-600 mt-4">
                         Ao clicar, permita as notificações no navegador.
                     </p>
-                </div>
 
-                {/* Debug inside blocker to see why it appeared if necessary */}
-                <div className="text-red-500 text-[10px] mt-4 font-mono">
-                    User: {session?.user?.email} | Direct: {directUserEmail}
+                    {/* Debug inside blocker */}
+                    <div className="text-red-500 text-[10px] mt-4 font-mono">
+                        User: {session?.user?.email} | Direct: {directUserEmail}
+                    </div>
                 </div>
             </div>
         );
     }
 
+    // Pass through
     return (
         <>
             <div className="bg-red-500 text-white text-[10px] font-bold text-center fixed top-0 w-full z-[10000]">
-                CTX_Load: {authLoading ? 'T' : 'F'} | User: {session?.user?.id ? 'OK' : 'NULL'} | Direct: {directUserEmail} | Sub: {hasSubscription ? 'T' : 'F'}
+                CTX_Load: {authLoading ? 'T' : 'F'} | User: {session?.user?.email ? 'OK' : 'NULL'} | Direct: {directUserEmail} | Sub: {hasSubscription === null ? 'NULL' : hasSubscription ? 'T' : 'F'}
             </div>
             {children}
         </>
