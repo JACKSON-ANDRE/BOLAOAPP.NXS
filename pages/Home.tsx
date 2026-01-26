@@ -284,7 +284,7 @@ const Home: React.FC = () => {
 
                       {/* ALWAYS RENDER FOR DEBUG - IF NULL show placeholder */}
                       <div className="flex items-center justify-between text-xs text-zinc-400 border-t border-zinc-800 pt-1 mt-1">
-                        <span className="shrink-0 text-red-500 font-bold">⛔ Encerra:</span>
+                        <span className="shrink-0 text-red-500 font-bold">Fim das apostas:</span>
                         <span className="text-white font-medium text-right">
                           {pool.bets_deadline
                             ? `${new Date(pool.bets_deadline).toLocaleDateString('pt-BR')} ${new Date(pool.bets_deadline).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
