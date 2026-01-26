@@ -118,6 +118,7 @@ import {
   generateFinancialListReport
 } from '../utils/ReportGenerator';
 import { triggerCelebration } from '../src/utils/confetti';
+import { notifyAllUsers } from '../src/utils/broadcastNotification';
 
 const AdminDashboard: React.FC = () => {
   const { maintenanceMode, refreshProfile } = useAuth();
@@ -383,6 +384,11 @@ const AdminDashboard: React.FC = () => {
     });
 
     if (!error) {
+      // Broadcast Push Notification if it's a Universal Message
+      if (!targetUser) {
+        notifyAllUsers("Mensagem do Admin 📢", newMessage.trim());
+      }
+
       setNewMessage('');
       setTargetUser(null); // Reset target
       fetchMessages();
