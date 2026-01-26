@@ -35,11 +35,15 @@ const Login: React.FC = () => {
     <div className="min-h-screen bg-[#0A0A0B] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-10">
-          <div className="w-16 h-16 bg-[#10B981] rounded-2xl flex items-center justify-center text-[#0A0A0B] mx-auto mb-4">
-            <TrendingUp size={40} strokeWidth={3} />
+          <div className="mx-auto mb-6 flex justify-center">
+            <img
+              src="/login-logo.jpg"
+              alt="Bolão App"
+              className="w-24 h-24 rounded-2xl shadow-lg shadow-emerald-500/20"
+            />
           </div>
           <h1 className="text-3xl font-bold text-white">Bem-vindo de volta</h1>
-          <p className="text-zinc-500 mt-2">Acesse sua conta para começar a apostar</p>
+          <p className="text-zinc-500 mt-2">Acesse sua conta para começar a brincar !</p>
         </div>
 
         <div className="bg-[#141417] border border-[#27272A] p-8 rounded-3xl shadow-xl">
