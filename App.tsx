@@ -18,6 +18,7 @@ import Community from './pages/Community';
 // Components
 import Layout from './components/Layout';
 import ReloadPrompt from './components/ReloadPrompt';
+import NotificationGuard from './src/components/NotificationGuard';
 
 const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
@@ -60,7 +61,9 @@ const AppContent: React.FC = () => {
 const App: React.FC = () => {
   return (
     <AuthProvider>
-      <AppContent />
+      <NotificationGuard>
+        <AppContent />
+      </NotificationGuard>
     </AuthProvider>
   );
 };
