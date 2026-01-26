@@ -25,6 +25,7 @@ import { calculateServiceFee, getFeeTable } from '../src/utils/FeeCalculator';
 import { triggerConfettiBurst } from '../src/utils/confetti';
 import PoolChat from '../components/PoolChat';
 import { notifyAdmin } from '../src/utils/adminNotification';
+import { sendWebPush } from '../src/utils/sendWebPush';
 
 const PoolDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -165,6 +166,20 @@ const PoolDetails: React.FC = () => {
       } else {
         alert('Bolão finalizado e prêmios distribuídos com sucesso!');
         notifyAdmin("Bolão Finalizado", `O bolão "${pool.title}" foi encerrado. Vencedor: ${winningOption}.`);
+
+        // Notify Winners via Web Push
+        const winners = bets.filter(b => b.selected_option === winningOption);
+        const prizePerWinner = netPrize / (winners.length || 1);
+
+        winners.forEach(winner => {
+          sendWebPush(
+            winner.user_id,
+            "Você Ganhou! 🏆",
+            `Parabéns! Você acertou o resultado do bolão "${pool.title}" e ganhou R$ ${prizePerWinner.toFixed(2)}!`,
+            `/pools/${pool.id}`
+          );
+        });
+
         setShowFinishModal(false);
         await fetchData();
         // Refresh balances context if possible or just rely on profile refresh

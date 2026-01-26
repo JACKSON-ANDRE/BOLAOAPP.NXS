@@ -119,6 +119,7 @@ import {
 } from '../utils/ReportGenerator';
 import { triggerCelebration } from '../src/utils/confetti';
 import { notifyAllUsers } from '../src/utils/broadcastNotification';
+import { sendWebPush } from '../src/utils/sendWebPush';
 
 const AdminDashboard: React.FC = () => {
   const { maintenanceMode, refreshProfile } = useAuth();
@@ -387,6 +388,9 @@ const AdminDashboard: React.FC = () => {
       // Broadcast Push Notification if it's a Universal Message
       if (!targetUser) {
         notifyAllUsers("Mensagem do Admin 📢", newMessage.trim());
+      } else {
+        // Direct Push to Specific User
+        sendWebPush(targetUser.id, "Nova Mensagem do Admin 📩", newMessage.trim(), '/profile');
       }
 
       setNewMessage('');
@@ -556,7 +560,26 @@ const AdminDashboard: React.FC = () => {
       setProcessingDepositId(null);
       setConfirmAction(null);
       fetchDeposits();
-      if (action === 'approve') triggerCelebration(); // 🎉 WOW Effect
+      if (action === 'approve') {
+        triggerCelebration(); // 🎉 WOW Effect
+
+        // Notify User via Web Push
+        // We need the user_id from the deposit request
+        const deposit = deposits.find(d => d.id === id);
+        if (deposit) {
+          // Note: The schema might be deposit.user_id (check interface) - assuming it's available or we fetch via RPC
+          // Since `deposits` state has user_id (from select *), let's check interface
+          // Actually `deposits` interface above `DepositRequest` doesn't explicitly list `user_id`, but `select('*, ...')` fetches it.
+          // Let's coerce it.
+          const userId = (deposit as any).user_id;
+          sendWebPush(
+            userId,
+            "Depósito Aprovado! 🤑",
+            `Seu depósito de R$ ${deposit.amount.toFixed(2)} foi confirmado.`,
+            '/wallet'
+          );
+        }
+      }
     }
   };
 
@@ -587,7 +610,20 @@ const AdminDashboard: React.FC = () => {
     } else {
       setConfirmAction(null);
       fetchWithdraws();
-      if (action === 'approve') triggerCelebration(); // 🎉 WOW Effect
+      if (action === 'approve') {
+        triggerCelebration(); // 🎉 WOW Effect
+
+        // Notify User via Web Push
+        const withdraw = withdraws.find(w => w.id === id);
+        if (withdraw) {
+          sendWebPush(
+            withdraw.user_id,
+            "Saque Aprovado! 💸",
+            `Seu saque de R$ ${withdraw.amount.toFixed(2)} foi enviado para o PIX.`,
+            '/wallet'
+          );
+        }
+      }
     }
   };
 
