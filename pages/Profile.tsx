@@ -7,7 +7,8 @@ import {
   Calendar,
   KeyRound,
   Save,
-  LogOut
+  LogOut,
+  Camera
 } from "lucide-react";
 import { useAuth } from '../src/contexts/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -21,15 +22,13 @@ const Profile: React.FC = () => {
     navigate('/login');
   };
 
-
-
-  // State for form fields
   // State for form fields
   const [whatsapp, setWhatsapp] = useState("");
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [avatarLoading, setAvatarLoading] = useState(false);
 
   // Sync state with profile data when it loads
   React.useEffect(() => {
@@ -39,6 +38,44 @@ const Profile: React.FC = () => {
       setState(current => current || profile.state || "");
     }
   }, [profile?.id]);
+
+  // Handle Avatar Change
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!profile || !e.target.files || !e.target.files[0]) return;
+
+    setAvatarLoading(true);
+    const file = e.target.files[0];
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${profile.id}/profile.${fileExt}`;
+
+    try {
+      // 1. Upload new image (Upsert overwrites existing)
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // 2. Update profile with URL (and cache buster)
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          avatar_url: fileName,
+          updated_at: new Date()
+        })
+        .eq('id', profile.id);
+
+      if (updateError) throw updateError;
+
+      // Reload to reflect changes
+      window.location.reload();
+
+    } catch (error: any) {
+      alert("Erro ao atualizar foto: " + error.message);
+    } finally {
+      setAvatarLoading(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!profile) return;
@@ -88,13 +125,43 @@ const Profile: React.FC = () => {
   };
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-10 animate-in fade-in duration-500">
 
       {/* CARD TOPO */}
       <div className="bg-[#141417] border border-[#27272A] rounded-3xl p-10 text-center max-w-3xl mx-auto">
-        <div className="w-20 h-20 mx-auto rounded-full bg-[#0A0A0B] border border-[#10B981] flex items-center justify-center text-[#10B981] text-3xl font-black">
-          {profile?.full_name?.charAt(0) || "A"}
+
+        {/* AVATAR CLICKABLE */}
+        <div className="relative w-24 h-24 mx-auto group cursor-pointer">
+          <div className={`w-full h-full rounded-full border-2 overflow-hidden bg-[#0A0A0B] flex items-center justify-center ${!profile?.avatar_url ? 'border-red-500 animate-pulse' : 'border-[#10B981]'}`}>
+            {profile?.avatar_url ? (
+              <img
+                src={`https://vucvouxutompqoqhxzmi.supabase.co/storage/v1/object/public/avatars/${profile.avatar_url}?t=${new Date().getTime()}`}
+                alt="Avatar"
+                className={`w-full h-full object-cover ${avatarLoading ? 'opacity-50' : ''}`}
+              />
+            ) : (
+              <span className="text-zinc-500 text-3xl font-black">
+                {profile?.full_name?.charAt(0) || "U"}
+              </span>
+            )}
+          </div>
+
+          <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <Camera className="text-white" size={24} />
+          </div>
+
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleAvatarChange}
+            disabled={avatarLoading}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          />
         </div>
+
+        {!profile?.avatar_url && (
+          <p className="text-red-500 text-xs font-bold mt-2 uppercase animate-pulse">Foto Obrigatória</p>
+        )}
 
         <h1 className="mt-6 text-2xl font-black text-white">
           {profile?.full_name?.toUpperCase() || "USUÁRIO"}
@@ -242,11 +309,15 @@ const Profile: React.FC = () => {
               <ShieldCheck size={16} className="text-[#10B981]" />
               Cidade/UF para estatísticas
             </li>
+            <li className="flex gap-2 text-red-400 font-bold">
+              <Camera size={16} />
+              Foto de Perfil Obrigatória
+            </li>
           </ul>
 
           <div className="mt-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
             <p className="text-xs text-yellow-200">
-              ⚠️ Depósitos, Saques e Criação de Bolões só serão liberados após o preenchimento completo.
+              ⚠️ Depósitos, Saques e Criação de Bolões só serão liberados após o preenchimento completo (inclusive FOTO).
             </p>
           </div>
         </div>

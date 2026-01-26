@@ -36,7 +36,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             profile.whatsapp &&
             profile.whatsapp.length > 8 &&
             profile.city &&
-            profile.state
+            profile.state &&
+            profile.avatar_url // OBRIGATÓRIO: Foto de perfil
         );
     }, [profile]);
 

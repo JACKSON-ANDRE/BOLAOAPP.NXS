@@ -13,6 +13,7 @@ import EditPool from './pages/EditPool';
 import PoolDetails from './pages/PoolDetails';
 import AdminDashboard from './pages/AdminDashboard';
 import MyPools from './pages/MyPools';
+import Community from './pages/Community';
 
 // Components
 import Layout from './components/Layout';
@@ -38,6 +39,9 @@ const AppContent: React.FC = () => {
 
         {/* PROTECTED ROOT ROUTE: Redirects to /login if not authenticated */}
         <Route path="/" element={user ? <Layout><Home /></Layout> : <Navigate to="/login" />} />
+
+        {/* Community Route */}
+        <Route path="/community" element={user ? <Layout><Community /></Layout> : <Navigate to="/login" />} />
 
         <Route path="/pools/new" element={user ? <Layout><CreatePool /></Layout> : <Navigate to="/login" />} />
         <Route path="/pools/:id" element={<Layout><PoolDetails /></Layout>} />

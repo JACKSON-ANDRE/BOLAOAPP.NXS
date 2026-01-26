@@ -16,6 +16,7 @@ import {
   Trophy,
   Bell,
   Trash2,
+  Users,
 } from 'lucide-react';
 
 interface NotificationItem {
@@ -39,6 +40,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const navItems = [
     { label: 'Início', path: '/', icon: Home },
+    { label: 'Comunidade', path: '/community', icon: Users },
     { label: 'Criar Bolão', path: '/pools/new', icon: PlusSquare },
     { label: 'Meus Bolões', path: '/my-pools', icon: Trophy },
     { label: 'Carteira', path: '/wallet', icon: Wallet },

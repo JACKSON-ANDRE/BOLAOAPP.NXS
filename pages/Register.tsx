@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { TrendingUp, Mail, Lock, User, Loader2, CheckCircle2 } from 'lucide-react';
+import { TrendingUp, Mail, Lock, User, Loader2, CheckCircle2, Camera } from 'lucide-react';
 
 const Register: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -11,7 +11,17 @@ const Register: React.FC = () => {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setAvatarFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,6 +33,7 @@ const Register: React.FC = () => {
     setLoading(true);
     setError(null);
 
+    // 1. Criar usuário
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
@@ -36,8 +47,32 @@ const Register: React.FC = () => {
     if (signUpError) {
       setError(signUpError.message);
       setLoading(false);
-    } else if (data.user) {
-      // Profile is created by Trigger/Function or syncProfile hook in App.tsx
+      return;
+    }
+
+    if (data.user) {
+      // 2. Upload do Avatar (Se houver)
+      if (avatarFile) {
+        try {
+          const fileExt = avatarFile.name.split('.').pop();
+          const fileName = `${data.user.id}/profile.${fileExt}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from('avatars')
+            .upload(fileName, avatarFile, { upsert: true });
+
+          if (!uploadError) {
+            // 3. Atualizar perfil com a URL
+            await supabase
+              .from('profiles')
+              .update({ avatar_url: fileName })
+              .eq('id', data.user.id);
+          }
+        } catch (uploadErr) {
+          console.error("Erro ao subir foto, mas conta criada:", uploadErr);
+        }
+      }
+
       navigate('/');
     }
   };
@@ -55,6 +90,29 @@ const Register: React.FC = () => {
 
         <div className="bg-[#141417] border border-[#27272A] p-8 rounded-3xl shadow-xl">
           <form onSubmit={handleRegister} className="space-y-5">
+
+            {/* AVATAR UPLOAD */}
+            <div className="flex justify-center mb-4">
+              <div className="relative group cursor-pointer">
+                <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-[#27272A] group-hover:border-[#10B981] transition-colors bg-[#0A0A0B] flex items-center justify-center">
+                  {previewUrl ? (
+                    <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <User size={40} className="text-zinc-600" />
+                  )}
+                </div>
+                <div className="absolute bottom-0 right-0 bg-[#10B981] text-[#0A0A0B] rounded-full p-1.5 border-2 border-[#141417]">
+                  <Camera size={16} />
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+              </div>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-zinc-400 mb-2">Nome Completo</label>
               <div className="relative">

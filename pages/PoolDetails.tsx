@@ -49,7 +49,7 @@ const PoolDetails: React.FC = () => {
     setLoading(true);
     const [pRes, bRes] = await Promise.all([
       supabase.from('pools').select('*').eq('id', id).single(),
-      supabase.from('bets').select('*, profiles(full_name)').eq('pool_id', id)
+      supabase.from('bets').select('*, profiles(full_name, avatar_url)').eq('pool_id', id)
     ]);
 
     if (pRes.data) setPool(pRes.data);
@@ -172,9 +172,6 @@ const PoolDetails: React.FC = () => {
   };
 
   const isOrganizer = profile?.id === pool?.creator_id;
-  // Assuming profile has role. If not, we might need to fetch it or check DB. 
-  // For now, let's try assuming it's present or check logic elsewhere.
-  // Ideally useAuth provides role. If not, safe check:
   const isAdmin = (profile as any)?.role === 'admin';
   const canManage = isOrganizer || isAdmin;
 
@@ -512,15 +509,21 @@ const PoolDetails: React.FC = () => {
               ) : (
                 bets.map((bet) => (
                   <div key={bet.id} className="flex items-center gap-3 p-3 bg-[#0A0A0B] rounded-xl border border-[#27272A]">
-                    <div className="w-8 h-8 rounded-full bg-zinc-800 border border-[#27272A] flex items-center justify-center text-xs font-bold text-zinc-400">
-                      {(bet as any).profiles?.full_name?.charAt(0).toUpperCase() || 'U'}
+                    <div className="w-10 h-10 rounded-full bg-zinc-800 border-2 border-[#27272A] flex items-center justify-center text-xs font-bold text-zinc-400 overflow-hidden">
+                      {(bet as any).profiles?.avatar_url ? (
+                        <img
+                          src={`https://vucvouxutompqoqhxzmi.supabase.co/storage/v1/object/public/avatars/${(bet as any).profiles.avatar_url}`}
+                          alt="Avatar"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        (bet as any).profiles?.full_name?.charAt(0).toUpperCase() || 'U'
+                      )}
                     </div>
                     <div className="flex-1 overflow-hidden">
                       <p className="text-xs text-white truncate font-medium">{(bet as any).profiles?.full_name || 'Usuário Desconhecido'}</p>
                       <p className="text-[10px] text-zinc-500 uppercase">{bet.selected_option}</p>
                     </div>
-                    {/* Amount Hidden per User Request */}
-                    {/* <div className="text-[10px] font-bold text-[#10B981]">R$ {bet.amount.toFixed(0)}</div> */}
                   </div>
                 ))
               )}
@@ -612,8 +615,16 @@ const PoolDetails: React.FC = () => {
                 bets.filter(b => b.status === 'won').map(winner => (
                   <div key={winner.id} className="flex items-center justify-between p-4 bg-[#10B981]/10 border border-[#10B981]/20 rounded-2xl">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-[#10B981] rounded-full flex items-center justify-center text-black font-black">
-                        <Trophy size={18} />
+                      <div className="w-10 h-10 bg-[#10B981] rounded-full flex items-center justify-center text-black font-black overflow-hidden border-2 border-[#10B981]">
+                        {(winner as any).profiles?.avatar_url ? (
+                          <img
+                            src={`https://vucvouxutompqoqhxzmi.supabase.co/storage/v1/object/public/avatars/${(winner as any).profiles.avatar_url}`}
+                            alt="Avatar"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <Trophy size={18} />
+                        )}
                       </div>
                       <div>
                         <p className="font-bold text-white uppercase">{(winner as any).profiles?.full_name || 'Usuário ' + winner.user_id.slice(0, 4)}</p>
