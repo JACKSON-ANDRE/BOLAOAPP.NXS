@@ -7,15 +7,13 @@ import { triggerCelebration } from '../src/utils/confetti';
 interface CommunityStats {
     total_pools: number;
     total_paid: number;
-    biggest_prize: number;
 }
 
 const Community: React.FC = () => {
     const [userCount, setUserCount] = useState(0);
     const [stats, setStats] = useState<CommunityStats>({
         total_pools: 0,
-        total_paid: 0,
-        biggest_prize: 0
+        total_paid: 0
     });
     const [loading, setLoading] = useState(true);
 
@@ -55,8 +53,7 @@ const Community: React.FC = () => {
             } else if (statsData) {
                 setStats({
                     total_pools: statsData.total_pools || 0,
-                    total_paid: statsData.total_paid || 0,
-                    biggest_prize: statsData.biggest_prize || 0
+                    total_paid: statsData.total_paid || 0
                 });
             }
 
@@ -101,7 +98,7 @@ const Community: React.FC = () => {
             </div>
 
             {/* REAL STATS GRID */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-4xl mt-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl mt-12">
                 <div className="bg-[#141417] p-6 rounded-2xl border border-[#27272A] text-center hover:border-[#10B981]/50 transition duration-300">
                     <Target className="mx-auto text-[#10B981] mb-2" />
                     <p className="text-zinc-500 text-xs uppercase font-bold">Bolões Realizados</p>
@@ -111,11 +108,6 @@ const Community: React.FC = () => {
                     <Trophy className="mx-auto text-yellow-500 mb-2" />
                     <p className="text-zinc-500 text-xs uppercase font-bold">Prêmios Pagos</p>
                     <p className="text-2xl text-white font-black">R$ {stats.total_paid.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                </div>
-                <div className="bg-[#141417] p-6 rounded-2xl border border-[#27272A] text-center hover:border-[#10B981]/50 transition duration-300">
-                    <TrendingUp className="mx-auto text-blue-500 mb-2" />
-                    <p className="text-zinc-500 text-xs uppercase font-bold">Maior Prêmio</p>
-                    <p className="text-2xl text-white font-black">R$ {stats.biggest_prize.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                 </div>
             </div>
 
