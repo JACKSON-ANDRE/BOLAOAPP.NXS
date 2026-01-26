@@ -20,6 +20,9 @@ const PoolChat: React.FC<PoolChatProps> = ({ poolId, category, hasBet, isAdmin }
     const isCombat = ['mma', 'ufc', 'boxe', 'combate'].includes(category.toLowerCase());
     const contextTerm = isCombat ? 'Combate' : 'Jogo';
 
+    // Use a ref to track previous message count for smart scrolling
+    const prevMessagesLen = useRef(0);
+
     useEffect(() => {
         if ((hasBet || isAdmin) && profile) {
             fetchMessages();
@@ -33,7 +36,12 @@ const PoolChat: React.FC<PoolChatProps> = ({ poolId, category, hasBet, isAdmin }
     }, [poolId, hasBet, isAdmin, profile]);
 
     useEffect(() => {
-        scrollToBottom();
+        // Only scroll to bottom if we ADDED messages (new content)
+        // or if it's the first load (prev=0)
+        if (messages.length > prevMessagesLen.current) {
+            scrollToBottom();
+        }
+        prevMessagesLen.current = messages.length;
     }, [messages]);
 
     const scrollToBottom = () => {
@@ -109,16 +117,20 @@ const PoolChat: React.FC<PoolChatProps> = ({ poolId, category, hasBet, isAdmin }
 
     const handleDeleteMessage = async (messageId: string) => {
         if (window.confirm('Apagar esta mensagem?')) {
+            // 1. Optimistic Update (Remove immediately)
+            const originalMessages = [...messages];
+            setMessages((prev) => prev.filter(msg => msg.id !== messageId));
+
+            // 2. Perform Delete
             const { error } = await supabase
                 .from('pool_chat_messages')
                 .delete()
                 .eq('id', messageId);
 
+            // 3. Rollback
             if (error) {
                 alert('Erro ao apagar: ' + error.message);
-            } else {
-                // Optimistic Update: Remove immediately from UI
-                setMessages((prev) => prev.filter(msg => msg.id !== messageId));
+                setMessages(originalMessages);
             }
         }
     };
