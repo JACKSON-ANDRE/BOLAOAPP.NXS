@@ -1579,6 +1579,27 @@ const AdminDashboard: React.FC = () => {
                 className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-xl px-4 py-4 text-white min-h-[120px]"
               />
 
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={async () => {
+                    try {
+                      const res = await fetch('/api/send-broadcast-push', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title: 'Teste', message: 'Isso é um teste debug' })
+                      });
+                      const txt = await res.text();
+                      alert('Resultado do Teste: ' + txt);
+                    } catch (e: any) {
+                      alert('Erro de conexão: ' + e.message);
+                    }
+                  }}
+                  className="text-xs text-zinc-500 underline"
+                >
+                  Testar API de Push
+                </button>
+              </div>
+
               {/* TARGET USER SELECTOR */}
               <div className="relative">
                 <label className="text-xs font-bold text-zinc-500 mb-2 block uppercase">Destinatário (Opcional - Vazio = Todos)</label>
