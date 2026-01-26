@@ -780,30 +780,30 @@ const AdminDashboard: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex gap-3">
+        <div className="grid grid-cols-2 gap-2 w-full md:w-auto">
           <button
             onClick={handleToggleMaintenance}
             disabled={togglingMaintenance}
-            className={`px-4 py-2 rounded-xl font-bold flex items-center gap-2 transition ${maintenanceMode
+            className={`px-3 py-2 rounded-xl font-bold flex items-center justify-center gap-2 transition text-xs ${maintenanceMode
               ? 'bg-red-500 text-white hover:bg-red-600'
               : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
               }`}
           >
             {togglingMaintenance ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />
+              <div className="animate-spin rounded-full h-3 w-3 border-2 border-current border-t-transparent" />
             ) : (
-              <ShieldAlert size={18} />
+              <ShieldAlert size={14} />
             )}
-            {maintenanceMode ? 'DESATIVAR MANUTENÇÃO' : 'ATIVAR MANUTENÇÃO'}
+            {maintenanceMode ? 'MANUTENÇÃO ON' : 'MANUTENÇÃO'}
           </button>
 
           <button
             onClick={runHealthCheck}
             disabled={checkingHealth}
-            className="bg-[#27272A] hover:bg-[#3F3F46] text-white border border-[#27272A] px-4 py-2 rounded-xl flex items-center gap-2 font-bold transition-colors"
+            className="bg-[#27272A] hover:bg-[#3F3F46] text-white border border-[#27272A] px-3 py-2 rounded-xl flex items-center justify-center gap-2 font-bold transition-colors text-xs"
           >
-            {checkingHealth ? <Activity className="animate-spin text-[#10B981]" size={20} /> : <Activity className="text-[#10B981]" size={20} />}
-            {checkingHealth ? 'Diagnosticando...' : 'Checar Integridade'}
+            {checkingHealth ? <Activity className="animate-spin text-[#10B981]" size={14} /> : <Activity className="text-[#10B981]" size={14} />}
+            {checkingHealth ? 'VERIFICANDO...' : 'INTEGRIDADE'}
           </button>
         </div>
       </header>
@@ -881,33 +881,33 @@ const AdminDashboard: React.FC = () => {
       )
       }
 
-      <section className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-6">
-        <div className="bg-[#141417] border border-[#27272A] rounded-2xl p-4 md:p-6">
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
+        <div className="bg-[#141417] border border-[#27272A] rounded-xl p-3 md:p-6">
           <Users className="text-[#10B981] mb-2 md:mb-4 w-5 h-5 md:w-6 md:h-6" />
           <p className="text-zinc-400 text-[10px] md:text-sm uppercase font-bold">Usuários</p>
           <p className="text-xl md:text-2xl font-black text-white">{users.length}</p>
         </div>
 
-        <div className="bg-[#141417] border border-[#27272A] rounded-2xl p-4 md:p-6">
+        <div className="bg-[#141417] border border-[#27272A] rounded-xl p-3 md:p-6">
           <LayoutDashboard className="text-[#10B981] mb-2 md:mb-4 w-5 h-5 md:w-6 md:h-6" />
-          <p className="text-zinc-400 text-[10px] md:text-sm uppercase font-bold">Bolões Ativos</p>
+          <p className="text-zinc-400 text-[10px] md:text-sm uppercase font-bold">Ativos</p>
           <p className="text-xl md:text-2xl font-black text-white">{pools.filter(p => p.status === 'open').length}</p>
         </div>
 
-        <div className="bg-[#141417] border border-[#27272A] rounded-2xl p-4 md:p-6">
+        <div className="bg-[#141417] border border-[#27272A] rounded-xl p-3 md:p-6">
           <TrendingUp className="text-[#10B981] mb-2 md:mb-4 w-5 h-5 md:w-6 md:h-6" />
-          <p className="text-zinc-400 text-[10px] md:text-sm uppercase font-bold">Depósitos Pend.</p>
+          <p className="text-zinc-400 text-[10px] md:text-sm uppercase font-bold">Depósitos</p>
           <p className="text-xl md:text-2xl font-black text-white">{pendingDeposits}</p>
         </div>
 
-        <div className="bg-[#141417] border border-[#27272A] rounded-2xl p-4 md:p-6">
+        <div className="bg-[#141417] border border-[#27272A] rounded-xl p-3 md:p-6">
           <ArrowDownCircle className="text-yellow-500 mb-2 md:mb-4 w-5 h-5 md:w-6 md:h-6" />
-          <p className="text-zinc-400 text-[10px] md:text-sm uppercase font-bold">Saques Pend.</p>
+          <p className="text-zinc-400 text-[10px] md:text-sm uppercase font-bold">Saques</p>
           <p className="text-xl md:text-2xl font-black text-white">{pendingWithdraws}</p>
         </div>
       </section>
 
-      <nav className="flex flex-wrap gap-3">
+      <nav className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
         {[
           ['deposits', 'Depósitos'],
           ['withdraws', 'Saques'],
@@ -921,7 +921,7 @@ const AdminDashboard: React.FC = () => {
           <button
             key={id}
             onClick={() => setActiveTab(id as AdminTab)}
-            className={`px-5 py-2 rounded-xl text-sm font-bold transition ${activeTab === id
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex-shrink-0 ${activeTab === id
               ? 'bg-[#10B981] text-[#0A0A0B]'
               : 'bg-[#141417] text-zinc-400 border border-[#27272A]'
               }`}
@@ -1092,7 +1092,7 @@ const AdminDashboard: React.FC = () => {
               </div>
 
               {/* DATE FILTERS */}
-              <div className="flex gap-2">
+              <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
                 <input
                   type="number"
                   placeholder="Dia"
@@ -1100,21 +1100,21 @@ const AdminDashboard: React.FC = () => {
                   max={31}
                   value={financialDay}
                   onChange={(e) => setFinancialDay(e.target.value)}
-                  className="w-16 bg-[#0A0A0B] text-white font-bold px-3 py-2 rounded-xl border border-[#27272A] focus:border-[#10B981] outline-none text-center appearance-none"
+                  className="w-14 bg-[#0A0A0B] text-white text-xs font-bold px-2 py-2 rounded-xl border border-[#27272A] focus:border-[#10B981] outline-none text-center appearance-none"
                 />
                 <select
                   value={financialMonth}
                   onChange={(e) => setFinancialMonth(Number(e.target.value))}
-                  className="bg-[#0A0A0B] text-white font-bold px-4 py-2 rounded-xl border border-[#27272A] focus:border-[#10B981] outline-none appearance-none"
+                  className="bg-[#0A0A0B] text-white text-xs font-bold px-3 py-2 rounded-xl border border-[#27272A] focus:border-[#10B981] outline-none appearance-none"
                 >
                   {Array.from({ length: 12 }).map((_, i) => (
-                    <option key={i} value={i}>{new Date(0, i).toLocaleString('pt-BR', { month: 'long' }).toUpperCase()}</option>
+                    <option key={i} value={i}>{new Date(0, i).toLocaleString('pt-BR', { month: 'short' }).toUpperCase()}</option>
                   ))}
                 </select>
                 <select
                   value={financialYear}
                   onChange={(e) => setFinancialYear(Number(e.target.value))}
-                  className="bg-[#0A0A0B] text-white font-bold px-4 py-2 rounded-xl border border-[#27272A] focus:border-[#10B981] outline-none appearance-none"
+                  className="bg-[#0A0A0B] text-white text-xs font-bold px-3 py-2 rounded-xl border border-[#27272A] focus:border-[#10B981] outline-none appearance-none"
                 >
                   {[2024, 2025, 2026, 2027].map(y => (
                     <option key={y} value={y}>{y}</option>
@@ -1124,9 +1124,9 @@ const AdminDashboard: React.FC = () => {
                 <button
                   onClick={() => handleDownloadFinancialReport('deposits')}
                   className="bg-[#10B981] hover:bg-[#059669] text-black font-black px-3 py-2 rounded-xl flex items-center gap-2 transition"
-                  title="Baixar Relatório CSV"
+                  title="Baixar CSV"
                 >
-                  <Download size={20} />
+                  <Download size={16} />
                 </button>
               </div>
             </div>
