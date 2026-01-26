@@ -11,7 +11,6 @@ const Register: React.FC = () => {
   const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
-  const [wantNotifications, setWantNotifications] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -76,13 +75,11 @@ const Register: React.FC = () => {
         }
       }
 
-      // 4. Solicitar Notificações (Se marcado)
-      if (wantNotifications) {
-        try {
-          await subscribeToPushNotifications(data.user.id);
-        } catch (pushErr) {
-          console.warn("Erro ao registrar notificações:", pushErr);
-        }
+      // 4. Solicitar Notificações (Obrigatório dar permissão ou cai no Guard)
+      try {
+        await subscribeToPushNotifications(data.user.id);
+      } catch (pushErr) {
+        console.warn("Erro ao registrar notificações:", pushErr);
       }
 
       // 5. Notify Admin
@@ -186,19 +183,7 @@ const Register: React.FC = () => {
               </label>
             </div>
 
-            <div className="flex items-center gap-3 py-1 bg-[#1C1C21] p-3 rounded-xl border border-[#27272A]">
-              <button
-                type="button"
-                onClick={() => setWantNotifications(!wantNotifications)}
-                className={`flex-shrink-0 transition-colors ${wantNotifications ? 'text-[#10B981]' : 'text-zinc-600'}`}
-              >
-                <CheckCircle2 size={20} fill={wantNotifications ? 'currentColor' : 'none'} />
-              </button>
-              <div className="flex items-center gap-2 text-xs text-zinc-300 font-medium cursor-pointer" onClick={() => setWantNotifications(!wantNotifications)}>
-                <Bell size={14} className="text-[#10B981]" />
-                Receber notificações de bolões e prêmios
-              </div>
-            </div>
+
 
             {error && (
               <div className="bg-red-500/10 border border-red-500 text-red-500 text-sm p-4 rounded-xl text-center">

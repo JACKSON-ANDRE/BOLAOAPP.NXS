@@ -3,7 +3,8 @@ import { supabase } from '../../lib/supabase';
 // PREENCHA COM SUA CHAVE PÚBLICA VAPID (Gerada via web-push generate-vapid-keys)
 // Se não tiver, o navegador pode dar erro ao tentar se inscrever.
 // Para teste sem chave, em alguns casos funciona, mas o ideal é ter.
-const VAPID_PUBLIC_KEY = 'BBoQLBkl2bpJiK0_WSvog7GxUPv0h2hQQNL622Uje0X4_JdYUWhd_ubPjS4MY0B5beouYjR-3FFKtneQCbhD5Z4'; // Generated Key
+// Use a chave pública vinda do ambiente (configurada no Vercel/Env)
+const VAPID_PUBLIC_KEY = (import.meta as any).env.VITE_VAPID_PUBLIC_KEY;
 
 function urlBase64ToUint8Array(base64String: string) {
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
