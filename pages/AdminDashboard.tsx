@@ -163,6 +163,7 @@ const AdminDashboard: React.FC = () => {
   const [pixQrUrl, setPixQrUrl] = useState('');
   const [newQrFile, setNewQrFile] = useState<File | null>(null);
   const [savingPix, setSavingPix] = useState(false);
+  const [fakeUserCount, setFakeUserCount] = useState<number>(0);
 
   // History State
   const [selectedPoolHistory, setSelectedPoolHistory] = useState<{
@@ -270,6 +271,7 @@ const AdminDashboard: React.FC = () => {
     if (data) {
       setPixKey(data.pix_key || '');
       setPixQrUrl(data.pix_qrcode_url || '');
+      setFakeUserCount(data.fake_user_count || 0);
     }
   };
 
@@ -646,6 +648,7 @@ const AdminDashboard: React.FC = () => {
           id: 1,
           pix_key: pixKey,
           pix_qrcode_url: finalQrUrl,
+          fake_user_count: fakeUserCount,
           updated_at: new Date().toISOString(),
         });
 
@@ -1328,17 +1331,31 @@ const AdminDashboard: React.FC = () => {
               </h3>
 
               <div className="space-y-6">
-                <div>
-                  <label className="text-sm text-zinc-400 block mb-2 font-bold">
-                    Chave PIX (Copia e Cola)
-                  </label>
-                  <input
-                    type="text"
-                    value={pixKey}
-                    onChange={(e) => setPixKey(e.target.value)}
-                    placeholder="Ex: 000.000.000-00 ou email@pix.com"
-                    className="w-full bg-[#141417] border border-[#27272A] rounded-xl p-4 text-white focus:border-[#10B981] transition outline-none"
-                  />
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-zinc-400 text-sm mb-1 block">Chave PIX (Para Depósitos)</label>
+                    <input
+                      value={pixKey}
+                      onChange={(e) => setPixKey(e.target.value)}
+                      placeholder="Ex: CPF, Email ou Chave Aleatória"
+                      className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-xl px-4 py-3 text-white focus:border-[#10B981] outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-zinc-400 text-sm mb-1 block">Contador de Usuários (Fake / Comunidade)</label>
+                    <div className="flex gap-2 items-center">
+                      <Users size={20} className="text-[#10B981]" />
+                      <input
+                        type="number"
+                        value={fakeUserCount}
+                        onChange={(e) => setFakeUserCount(parseInt(e.target.value) || 0)}
+                        placeholder="Ex: 50"
+                        className="flex-1 bg-[#0A0A0B] border border-[#27272A] rounded-xl px-4 py-3 text-white focus:border-[#10B981] outline-none"
+                      />
+                    </div>
+                    <p className="text-xs text-zinc-500 mt-1">Defina 0 para usar o contador real. Valores acima de 0 substituem o contador da página Comunidade.</p>
+                  </div>
                 </div>
 
                 <div>

@@ -8,25 +8,33 @@ const Community: React.FC = () => {
     const [userCount, setUserCount] = useState(0);
     const [loading, setLoading] = useState(true);
 
-    // Future stats placeholders
-    // const [totalPrizes, setTotalPrizes] = useState(0);
-    // const [activePools, setActivePools] = useState(0);
-
     const fetchStats = async () => {
         try {
-            // Get count only
+            // 1. Get Real Count
             const { count, error } = await supabase
                 .from('profiles')
                 .select('*', { count: 'exact', head: true });
 
             if (error) throw error;
+            let displayCount = count || 0;
+
+            // 2. Check for Fake Count Overlay
+            const { data: settings } = await supabase
+                .from('app_settings')
+                .select('fake_user_count')
+                .eq('id', 1)
+                .single();
+
+            if (settings?.fake_user_count && settings.fake_user_count > 0) {
+                displayCount = settings.fake_user_count; // OVERRIDE
+            }
 
             setUserCount(prev => {
-                // Se o número aumentou desde a última vez, solta confete!
-                if (count && count > prev && prev !== 0) {
+                // Trigger confetti if count increased (real or fake)
+                if (displayCount > prev && prev !== 0) {
                     triggerCelebration();
                 }
-                return count || 0;
+                return displayCount;
             });
 
         } catch (error) {
