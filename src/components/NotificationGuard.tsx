@@ -164,14 +164,7 @@ const NotificationGuard: React.FC<NotificationGuardProps> = ({ children }) => {
     }
 
     // Pass through
-    return (
-        <>
-            <div className="bg-red-500 text-white text-[10px] font-bold text-center fixed top-0 w-full z-[10000]">
-                CTX_Load: {authLoading ? 'T' : 'F'} | User: {session?.user?.email ? 'OK' : 'NULL'} | Direct: {directUserEmail} | Sub: {hasSubscription === null ? 'NULL' : hasSubscription ? 'T' : 'F'}
-            </div>
-            {children}
-        </>
-    );
+    return <>{children}</>;
 };
 
 export default NotificationGuard;
