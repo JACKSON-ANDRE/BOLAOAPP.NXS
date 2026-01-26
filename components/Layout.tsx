@@ -114,12 +114,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </button>
 
       <button
-        className="fixed top-4 right-4 z-50 p-2 bg-[#141417] rounded-lg border border-[#27272A]"
+        className="fixed top-3 right-3 md:top-4 md:right-4 z-50 p-1.5 md:p-2 bg-[#141417] rounded-lg border border-[#27272A]"
         onClick={() => setNotifOpen(!isNotifOpen)}
       >
-        <Bell size={22} className="text-white" />
+        <Bell className="w-4 h-4 md:w-5 md:h-5 text-white" />
         {notifications.length > 0 && (
-          <span className="absolute -top-1 -right-1 bg-[#10B981] text-black text-xs font-bold rounded-full px-1">
+          <span className="absolute -top-1 -right-1 bg-[#10B981] text-black text-[8px] md:text-xs font-bold rounded-full px-1">
             {notifications.length}
           </span>
         )}
