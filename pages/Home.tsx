@@ -66,30 +66,55 @@ const Home: React.FC = () => {
   const withdrawBalance = profile?.withdrawable_balance ?? 0;
 
   return (
-    <div className="space-y-12">
-      <div className="rounded-2xl md:rounded-[32px] bg-gradient-to-r from-emerald-900/40 via-zinc-900 to-zinc-900 border border-zinc-800 p-6 md:p-10 flex flex-col md:flex-row justify-between items-center gap-4 md:gap-6">
-        <div className="text-center md:text-left">
-          <h1 className="text-3xl md:text-5xl font-black text-white">
-            SEJA BEM <span className="text-emerald-400">VINDO</span>
+    <div className="space-y-4 md:space-y-12">
+      {/* MOBILE HEADER (Compact) */}
+      <div className="md:hidden flex justify-between items-center bg-[#141417] p-4 rounded-2xl border border-[#27272A]">
+        <div>
+          <h1 className="text-lg font-black text-white leading-tight">
+            Olá, <span className="text-[#10B981]">{profile?.full_name?.split(' ')[0] || 'Apostador'}</span>
           </h1>
-          <p className="text-zinc-400 text-sm md:text-base mt-1 md:mt-2">Participe dos melhores bolões ou crie o seu!</p>
+          <p className="text-[10px] text-zinc-400">Bora lucrar hoje?</p>
         </div>
-
-        <div className="flex gap-2 md:gap-4 w-full md:w-auto">
+        <div className="flex gap-2">
           <button
             onClick={() => navigate('/wallet')}
-            className="flex-1 md:flex-none bg-[#27272A] hover:bg-zinc-700 text-white font-bold py-2 px-4 md:py-3 md:px-6 rounded-xl flex items-center justify-center gap-2 transition-colors text-sm md:text-base"
+            className="w-10 h-10 bg-[#27272A] rounded-xl flex items-center justify-center border border-[#10B981]/20 text-[#10B981]"
           >
-            <Wallet size={16} className="text-[#10B981] md:w-5 md:h-5" />
-            <span className="whitespace-nowrap">Add Saldo</span>
+            <Wallet size={18} />
+          </button>
+          <button
+            onClick={handleCreatePool}
+            className="w-10 h-10 bg-[#10B981] rounded-xl flex items-center justify-center text-[#0A0A0B] shadow-lg shadow-[#10B981]/20"
+          >
+            <PlusSquare size={18} />
+          </button>
+        </div>
+      </div>
+
+      {/* DESKTOP BANNER (Hidden on Mobile) */}
+      <div className="hidden md:flex rounded-[32px] bg-gradient-to-r from-emerald-900/40 via-zinc-900 to-zinc-900 border border-zinc-800 p-10 flex-col md:flex-row justify-between items-center gap-6">
+        <div>
+          <h1 className="text-5xl font-black text-white">
+            SEJA BEM <span className="text-emerald-400">VINDO</span>
+          </h1>
+          <p className="text-zinc-400 mt-2">Participe dos melhores bolões ou crie o seu!</p>
+        </div>
+
+        <div className="flex gap-4">
+          <button
+            onClick={() => navigate('/wallet')}
+            className="bg-[#27272A] hover:bg-zinc-700 text-white font-bold py-3 px-6 rounded-xl flex items-center gap-2 transition-colors"
+          >
+            <Wallet size={20} className="text-[#10B981]" />
+            Adicionar Saldo
           </button>
 
           <button
             onClick={handleCreatePool}
-            className="flex-1 md:flex-none bg-[#10B981] hover:bg-[#059669] text-[#0A0A0B] font-bold py-2 px-4 md:py-3 md:px-6 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-[#10B981]/20 text-sm md:text-base"
+            className="bg-[#10B981] hover:bg-[#059669] text-[#0A0A0B] font-bold py-3 px-6 rounded-xl flex items-center gap-2 transition-colors shadow-lg shadow-[#10B981]/20"
           >
-            <PlusSquare size={16} className="md:w-5 md:h-5" />
-            <span className="whitespace-nowrap">Criar Bolão</span>
+            <PlusSquare size={20} />
+            Criar Bolão
           </button>
         </div>
       </div>
