@@ -278,7 +278,7 @@ const Home: React.FC = () => {
 
                     <div className="flex flex-col gap-2 mb-4 bg-zinc-900/50 p-2 rounded-lg">
                       <div className="flex items-center justify-between text-xs text-zinc-400">
-                        <span className="shrink-0">📅 Jogo:</span>
+                        <span className="shrink-0">📅 {/ufc|mma|boxe|luta|vale\s*tudo/i.test(pool.modality) ? 'Luta' : 'Jogo'}:</span>
                         <span className="text-white font-medium text-right">{new Date(pool.scheduled_at).toLocaleDateString('pt-BR')} {new Date(pool.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
 
