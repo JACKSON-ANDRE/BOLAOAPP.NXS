@@ -1,6 +1,7 @@
+
+// Minimal Service Worker to stop MIME errors and allow push
 self.addEventListener('push', function (event) {
     let data = { title: 'Bolão App', body: 'Nova notificação!' };
-
     if (event.data) {
         try {
             data = event.data.json();
@@ -11,12 +12,10 @@ self.addEventListener('push', function (event) {
 
     const options = {
         body: data.body,
-        icon: '/pwa-icon-192.png',
-        badge: '/pwa-icon-192.png',
+        icon: 'https://vucvouxutompqoqhxzmi.supabase.co/storage/v1/object/public/app_assets/pwa-icon.png',
+        badge: 'https://vucvouxutompqoqhxzmi.supabase.co/storage/v1/object/public/app_assets/pwa-icon.png',
         vibrate: [100, 50, 100],
         data: {
-            dateOfArrival: Date.now(),
-            primaryKey: 1,
             url: data.url || '/'
         }
     };
@@ -28,7 +27,6 @@ self.addEventListener('push', function (event) {
 
 self.addEventListener('notificationclick', function (event) {
     event.notification.close();
-
     event.waitUntil(
         clients.openWindow(event.notification.data.url)
     );

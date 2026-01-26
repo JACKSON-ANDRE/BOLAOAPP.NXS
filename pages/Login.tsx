@@ -101,7 +101,10 @@ const Login: React.FC = () => {
                 <span className="text-sm text-zinc-400 group-hover:text-zinc-300 transition-colors">Manter conectado</span>
               </label>
 
-              <Link to="/forgot-password" className="text-sm text-[#10B981] hover:underline relative z-10">
+              <Link
+                to="/forgot-password"
+                className="text-sm text-[#10B981] hover:underline relative z-10 p-2 -m-2 inline-block"
+              >
                 Esqueceu a senha?
               </Link>
             </div>
