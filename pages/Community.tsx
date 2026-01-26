@@ -20,14 +20,14 @@ const Community: React.FC = () => {
                 .select('*', { count: 'exact', head: true });
 
             if (error) throw error;
-            setTotalUsers(prev => {
+
+            setUserCount(prev => {
                 // Se o número aumentou desde a última vez, solta confete!
                 if (count && count > prev && prev !== 0) {
                     triggerCelebration();
                 }
                 return count || 0;
             });
-            setUserCount(count || 0);
 
         } catch (error) {
             console.error('Erro ao buscar stats:', error);
@@ -96,6 +96,4 @@ const Community: React.FC = () => {
     );
 };
 
-// Helper state wrapper (oops, missed it inside component)
-// Fixed below by simplifying logiic
 export default Community;
