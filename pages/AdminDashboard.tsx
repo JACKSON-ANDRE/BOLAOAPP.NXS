@@ -44,7 +44,8 @@ type AdminTab =
   | 'users'
   | 'history'
   | 'pix'
-  | 'messages';
+  | 'messages'
+  | 'fake_users';
 
 type DepositFilter = 'pending' | 'archived' | 'all';
 type WithdrawFilter = 'pending' | 'archived' | 'all';
@@ -914,6 +915,7 @@ const AdminDashboard: React.FC = () => {
           ['history', 'Histórico de Bolões'],
           ['pwa', 'Ícone do App'],
           ['pix', 'Config. PIX'],
+          ['fake_users', 'USU/FAKE'],
           ['messages', 'Mensagens'],
         ].map(([id, label]) => (
           <button
@@ -1342,65 +1344,190 @@ const AdminDashboard: React.FC = () => {
                     />
                   </div>
 
-                  <div>
-                    <label className="text-zinc-400 text-sm mb-1 block">Contador de Usuários (Fake / Comunidade)</label>
-                    <div className="flex gap-2 items-center">
-                      <Users size={20} className="text-[#10B981]" />
-                      <input
-                        type="number"
-                        value={fakeUserCount}
-                        onChange={(e) => setFakeUserCount(parseInt(e.target.value) || 0)}
-                        placeholder="Ex: 50"
-                        className="flex-1 bg-[#0A0A0B] border border-[#27272A] rounded-xl px-4 py-3 text-white focus:border-[#10B981] outline-none"
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm text-zinc-400 block mb-2 font-bold">
+                  QR Code (Imagem)
+                </label>
+
+                <div className="flex items-start gap-6">
+                  <div className="w-40 h-40 bg-white rounded-xl flex items-center justify-center p-2 overflow-hidden border-2 border-dashed border-zinc-600">
+                    {newQrFile ? (
+                      <img
+                        src={URL.createObjectURL(newQrFile)}
+                        className="w-full h-full object-contain"
+                        alt="Novo QR"
                       />
-                    </div>
-                    <p className="text-xs text-zinc-500 mt-1">Defina 0 para usar o contador real. Valores acima de 0 substituem o contador da página Comunidade.</p>
+                    ) : pixQrUrl ? (
+                      <img
+                        src={pixQrUrl}
+                        className="w-full h-full object-contain"
+                        alt="QR Atual"
+                      />
+                    ) : (
+                      <span className="text-black text-xs text-center font-bold">Sem QR Code</span>
+                    )}
+                  </div>
+
+                  <div className="flex-1">
+                    <label className="cursor-pointer bg-[#27272A] hover:bg-[#3F3F46] text-white px-4 py-3 rounded-xl flex items-center gap-2 w-fit mb-3 transition">
+                      <Upload size={18} />
+                      <span className="font-bold text-sm">Selecionar Nova Imagem</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          if (e.target.files?.[0]) setNewQrFile(e.target.files[0]);
+                        }}
+                      />
+                    </label>
+                    <p className="text-xs text-zinc-500">
+                      Selecione uma imagem quadrada (JPG ou PNG) do QR Code gerado pelo seu banco.
+                      Essa imagem aparecerá para os usuários na hora do depósito.
+                    </p>
                   </div>
                 </div>
+              </div>
 
-                <div>
-                  <label className="text-sm text-zinc-400 block mb-2 font-bold">
-                    QR Code (Imagem)
-                  </label>
+              <div className="pt-4 border-t border-[#27272A]">
+                <button
+                  onClick={handleSavePixSettings}
+                  disabled={savingPix}
+                  className="w-full bg-[#10B981] hover:bg-[#059669] text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition"
+                >
+                  {savingPix ? (
+                    'Salvando...'
+                  ) : (
+                    <>
+                      <Save size={20} />
+                      SALVAR ALTERAÇÕES
+                    </>
+                  )}
+                </button>
+              </div>
 
-                  <div className="flex items-start gap-6">
-                    <div className="w-40 h-40 bg-white rounded-xl flex items-center justify-center p-2 overflow-hidden border-2 border-dashed border-zinc-600">
-                      {newQrFile ? (
+            </div>
+          </div>
+        )}
+
+        {/* PWA ICON TAB */}
+        {
+          activeTab === 'pwa' && (
+            <div className="space-y-8 max-w-2xl">
+              <div className="bg-[#0A0A0B] border border-[#27272A] rounded-2xl p-6">
+                <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                  <LayoutDashboard className="text-[#10B981]" />
+                  Personalizar Ícone do App (PWA)
+                </h3>
+
+                <div className="space-y-6">
+                  <div className="bg-[#141417] p-4 rounded-xl border border-blue-500/20 text-blue-300 text-sm">
+                    <p className="flex items-center gap-2 font-bold mb-1">
+                      <AlertCircle size={16} />
+                      Como funciona
+                    </p>
+                    Esta imagem será usada como ícone quando os usuários instalarem o app no celular.
+                    A atualização pode levar alguns minutos (ou horas) para aparecer para todos devido ao cache dos navegadores.
+                  </div>
+
+                  <div>
+                    <label className="text-sm text-zinc-400 block mb-2 font-bold">
+                      Ícone Atual
+                    </label>
+                    <div className="flex items-start gap-6">
+                      <div className="w-32 h-32 bg-black rounded-2xl flex items-center justify-center p-2 overflow-hidden border border-[#27272A] shadow-lg">
                         <img
-                          src={URL.createObjectURL(newQrFile)}
-                          className="w-full h-full object-contain"
-                          alt="Novo QR"
+                          src="/pwa-icon-192.png" // Points to local/public for preview
+                          onError={(e) => (e.currentTarget.src = 'https://placehold.co/192x192/0A0A0B/FFF?text=Icon')}
+                          className="w-full h-full object-contain rounded-xl"
+                          alt="Current PWA Icon"
                         />
-                      ) : pixQrUrl ? (
-                        <img
-                          src={pixQrUrl}
-                          className="w-full h-full object-contain"
-                          alt="QR Atual"
-                        />
-                      ) : (
-                        <span className="text-black text-xs text-center font-bold">Sem QR Code</span>
-                      )}
-                    </div>
+                      </div>
 
-                    <div className="flex-1">
-                      <label className="cursor-pointer bg-[#27272A] hover:bg-[#3F3F46] text-white px-4 py-3 rounded-xl flex items-center gap-2 w-fit mb-3 transition">
-                        <Upload size={18} />
-                        <span className="font-bold text-sm">Selecionar Nova Imagem</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            if (e.target.files?.[0]) setNewQrFile(e.target.files[0]);
-                          }}
-                        />
-                      </label>
-                      <p className="text-xs text-zinc-500">
-                        Selecione uma imagem quadrada (JPG ou PNG) do QR Code gerado pelo seu banco.
-                        Essa imagem aparecerá para os usuários na hora do depósito.
-                      </p>
+                      <div className="flex-1">
+                        <label className="cursor-pointer bg-[#27272A] hover:bg-[#3F3F46] text-white px-4 py-3 rounded-xl flex items-center gap-2 w-fit mb-3 transition">
+                          <Upload size={18} />
+                          <span className="font-bold text-sm">Upload Novo Ícone</span>
+                          <input
+                            type="file"
+                            accept="image/png"
+                            className="hidden"
+                            onChange={async (e) => {
+                              if (!e.target.files?.[0]) return;
+                              const file = e.target.files[0];
+                              if (file.type !== 'image/png') { alert('Por favor, use apenas imagens PNG.'); return; }
+
+                              const confirmUpload = window.confirm("Isso irá substituir o ícone atual. Confirmar?");
+                              if (!confirmUpload) return;
+
+                              try {
+                                // Upload to Supabase Storage (Public assets bucket)
+                                // We use a fixed name 'pwa-icon.png' to keep URL stable for manifest
+                                // In a real prod PWA, we'd need to invalidate cache.
+                                // Here we upload to 'app_assets' bucket.
+                                setSavingPix(true); // Reusing loading state for simplicity or create new one
+
+                                // 1. Upload Original
+                                const { error: uploadError } = await supabase.storage
+                                  .from('app_assets')
+                                  .upload('pwa-icon.png', file, { upsert: true, cacheControl: '0' });
+
+                                if (uploadError) throw uploadError;
+
+                                // 2. Update Settings (Optional, primarily to trigger re-renders if we used state)
+                                await supabase.from('app_settings').upsert({ id: 1, pwa_icon_updated_at: new Date().toISOString() });
+
+                                alert('Ícone enviado com sucesso! A atualização pode demorar um pouco para propagar.');
+                                // Force reload to try and fetch new icon
+                                window.location.reload();
+
+                              } catch (err: any) {
+                                alert('Erro ao enviar ícone: ' + (err.message || err.error_description));
+                              } finally {
+                                setSavingPix(false);
+                              }
+                            }}
+                          />
+                        </label>
+                        <p className="text-xs text-zinc-500">
+                          Recomendado: <strong>PNG Quadrado (512x512)</strong>.<br />
+                          O sistema irá redimensionar se necessário (automático para maioria dos dispositivos).
+                        </p>
+                      </div>
                     </div>
                   </div>
+                </div>
+              </div>
+            </div>
+          )
+        }
+
+        {/* FAKE USERS TAB */}
+        {activeTab === 'fake_users' && (
+          <div className="space-y-8 max-w-2xl">
+            <div className="bg-[#0A0A0B] border border-[#27272A] rounded-2xl p-6">
+              <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                <Users className="text-[#10B981]" />
+                Usuário/Fake - Controle de Público
+              </h3>
+
+              <div className="space-y-6">
+                <div>
+                  <label className="text-zinc-400 text-sm mb-1 block">Contador de Usuários (Fake / Comunidade)</label>
+                  <div className="flex gap-2 items-center">
+                    <Users size={20} className="text-[#10B981]" />
+                    <input
+                      type="number"
+                      value={fakeUserCount}
+                      onChange={(e) => setFakeUserCount(parseInt(e.target.value) || 0)}
+                      placeholder="Ex: 50"
+                      className="flex-1 bg-[#0A0A0B] border border-[#27272A] rounded-xl px-4 py-3 text-white focus:border-[#10B981] outline-none"
+                    />
+                  </div>
+                  <p className="text-xs text-zinc-500 mt-1">Defina 0 para usar o contador real. Valores acima de 0 substituem o contador da página Comunidade.</p>
                 </div>
 
                 <div className="pt-4 border-t border-[#27272A]">
@@ -1409,106 +1536,8 @@ const AdminDashboard: React.FC = () => {
                     disabled={savingPix}
                     className="w-full bg-[#10B981] hover:bg-[#059669] text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition"
                   >
-                    {savingPix ? (
-                      'Salvando...'
-                    ) : (
-                      <>
-                        <Save size={20} />
-                        SALVAR ALTERAÇÕES
-                      </>
-                    )}
+                    {savingPix ? 'Salvando...' : 'SALVAR CONTADOR'}
                   </button>
-                </div>
-
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* PWA ICON TAB */}
-        {activeTab === 'pwa' && (
-          <div className="space-y-8 max-w-2xl">
-            <div className="bg-[#0A0A0B] border border-[#27272A] rounded-2xl p-6">
-              <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                <LayoutDashboard className="text-[#10B981]" />
-                Personalizar Ícone do App (PWA)
-              </h3>
-
-              <div className="space-y-6">
-                <div className="bg-[#141417] p-4 rounded-xl border border-blue-500/20 text-blue-300 text-sm">
-                  <p className="flex items-center gap-2 font-bold mb-1">
-                    <AlertCircle size={16} />
-                    Como funciona
-                  </p>
-                  Esta imagem será usada como ícone quando os usuários instalarem o app no celular.
-                  A atualização pode levar alguns minutos (ou horas) para aparecer para todos devido ao cache dos navegadores.
-                </div>
-
-                <div>
-                  <label className="text-sm text-zinc-400 block mb-2 font-bold">
-                    Ícone Atual
-                  </label>
-                  <div className="flex items-start gap-6">
-                    <div className="w-32 h-32 bg-black rounded-2xl flex items-center justify-center p-2 overflow-hidden border border-[#27272A] shadow-lg">
-                      <img
-                        src="/pwa-icon-192.png" // Points to local/public for preview
-                        onError={(e) => (e.currentTarget.src = 'https://placehold.co/192x192/0A0A0B/FFF?text=Icon')}
-                        className="w-full h-full object-contain rounded-xl"
-                        alt="Current PWA Icon"
-                      />
-                    </div>
-
-                    <div className="flex-1">
-                      <label className="cursor-pointer bg-[#27272A] hover:bg-[#3F3F46] text-white px-4 py-3 rounded-xl flex items-center gap-2 w-fit mb-3 transition">
-                        <Upload size={18} />
-                        <span className="font-bold text-sm">Upload Novo Ícone</span>
-                        <input
-                          type="file"
-                          accept="image/png"
-                          className="hidden"
-                          onChange={async (e) => {
-                            if (!e.target.files?.[0]) return;
-                            const file = e.target.files[0];
-                            if (file.type !== 'image/png') { alert('Por favor, use apenas imagens PNG.'); return; }
-
-                            const confirmUpload = window.confirm("Isso irá substituir o ícone atual. Confirmar?");
-                            if (!confirmUpload) return;
-
-                            try {
-                              // Upload to Supabase Storage (Public assets bucket)
-                              // We use a fixed name 'pwa-icon.png' to keep URL stable for manifest
-                              // In a real prod PWA, we'd need to invalidate cache.
-                              // Here we upload to 'app_assets' bucket.
-                              setSavingPix(true); // Reusing loading state for simplicity or create new one
-
-                              // 1. Upload Original
-                              const { error: uploadError } = await supabase.storage
-                                .from('app_assets')
-                                .upload('pwa-icon.png', file, { upsert: true, cacheControl: '0' });
-
-                              if (uploadError) throw uploadError;
-
-                              // 2. Update Settings (Optional, primarily to trigger re-renders if we used state)
-                              await supabase.from('app_settings').upsert({ id: 1, pwa_icon_updated_at: new Date().toISOString() });
-
-                              alert('Ícone enviado com sucesso! A atualização pode demorar um pouco para propagar.');
-                              // Force reload to try and fetch new icon
-                              window.location.reload();
-
-                            } catch (err: any) {
-                              alert('Erro ao enviar ícone: ' + (err.message || err.error_description));
-                            } finally {
-                              setSavingPix(false);
-                            }
-                          }}
-                        />
-                      </label>
-                      <p className="text-xs text-zinc-500">
-                        Recomendado: <strong>PNG Quadrado (512x512)</strong>.<br />
-                        O sistema irá redimensionar se necessário (automático para maioria dos dispositivos).
-                      </p>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
@@ -1516,332 +1545,336 @@ const AdminDashboard: React.FC = () => {
         )}
 
         {/* MESSAGES TAB */}
-        {activeTab === 'messages' && (
-          <div className="space-y-6">
-            <textarea
-              value={newMessage}
-              onChange={e => setNewMessage(e.target.value)}
-              placeholder="Mensagem para todos os usuários..."
-              className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-xl px-4 py-4 text-white min-h-[120px]"
-            />
+        {
+          activeTab === 'messages' && (
+            <div className="space-y-6">
+              <textarea
+                value={newMessage}
+                onChange={e => setNewMessage(e.target.value)}
+                placeholder="Mensagem para todos os usuários..."
+                className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-xl px-4 py-4 text-white min-h-[120px]"
+              />
 
-            {/* TARGET USER SELECTOR */}
-            <div className="relative">
-              <label className="text-xs font-bold text-zinc-500 mb-2 block uppercase">Destinatário (Opcional - Vazio = Todos)</label>
+              {/* TARGET USER SELECTOR */}
+              <div className="relative">
+                <label className="text-xs font-bold text-zinc-500 mb-2 block uppercase">Destinatário (Opcional - Vazio = Todos)</label>
 
-              {targetUser ? (
-                <div className="flex items-center gap-3 bg-[#10B981]/10 text-[#10B981] px-4 py-3 rounded-xl border border-[#10B981]/20 animate-in fade-in zoom-in duration-200">
-                  <div className="p-2 bg-[#10B981]/20 rounded-lg">
-                    <Users size={18} />
+                {targetUser ? (
+                  <div className="flex items-center gap-3 bg-[#10B981]/10 text-[#10B981] px-4 py-3 rounded-xl border border-[#10B981]/20 animate-in fade-in zoom-in duration-200">
+                    <div className="p-2 bg-[#10B981]/20 rounded-lg">
+                      <Users size={18} />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-bold text-sm">{targetUser.full_name}</p>
+                      <p className="text-xs opacity-70">{targetUser.email}</p>
+                    </div>
+                    <button
+                      onClick={() => setTargetUser(null)}
+                      className="p-2 hover:bg-[#10B981]/20 rounded-lg transition"
+                      title="Remover destinatário"
+                    >
+                      <X size={18} />
+                    </button>
                   </div>
-                  <div className="flex-1">
-                    <p className="font-bold text-sm">{targetUser.full_name}</p>
-                    <p className="text-xs opacity-70">{targetUser.email}</p>
-                  </div>
-                  <button
-                    onClick={() => setTargetUser(null)}
-                    className="p-2 hover:bg-[#10B981]/20 rounded-lg transition"
-                    title="Remover destinatário"
-                  >
-                    <X size={18} />
-                  </button>
-                </div>
-              ) : (
-                <div className="relative group">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-[#10B981] transition" size={18} />
-                  <input
-                    type="text"
-                    value={messageSearch}
-                    onChange={e => setMessageSearch(e.target.value)}
-                    placeholder="Buscar usuário para envio direto (Nome ou Email)..."
-                    className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-xl pl-12 pr-4 py-3 text-white focus:border-[#10B981] outline-none transition font-medium"
-                  />
+                ) : (
+                  <div className="relative group">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-[#10B981] transition" size={18} />
+                    <input
+                      type="text"
+                      value={messageSearch}
+                      onChange={e => setMessageSearch(e.target.value)}
+                      placeholder="Buscar usuário para envio direto (Nome ou Email)..."
+                      className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-xl pl-12 pr-4 py-3 text-white focus:border-[#10B981] outline-none transition font-medium"
+                    />
 
-                  {/* DROPDOWN RESULTS */}
-                  {messageSearch.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-[#141417] border border-[#27272A] rounded-xl shadow-2xl z-50 max-h-[240px] overflow-y-auto custom-scrollbar">
-                      {users.filter(u =>
-                        (u.full_name?.toLowerCase() || '').includes(messageSearch.toLowerCase()) ||
-                        (u.email?.toLowerCase() || '').includes(messageSearch.toLowerCase())
-                      ).length === 0 ? (
-                        <div className="px-4 py-3 text-zinc-500 text-sm text-center">Nenhum usuário encontrado</div>
-                      ) : (
-                        users.filter(u =>
+                    {/* DROPDOWN RESULTS */}
+                    {messageSearch.length > 0 && (
+                      <div className="absolute top-full left-0 right-0 mt-2 bg-[#141417] border border-[#27272A] rounded-xl shadow-2xl z-50 max-h-[240px] overflow-y-auto custom-scrollbar">
+                        {users.filter(u =>
                           (u.full_name?.toLowerCase() || '').includes(messageSearch.toLowerCase()) ||
                           (u.email?.toLowerCase() || '').includes(messageSearch.toLowerCase())
-                        ).slice(0, 10).map(u => ( // Limit to 10 results for performance
-                          <button
-                            key={u.id}
-                            onClick={() => { setTargetUser(u); setMessageSearch(''); }}
-                            className="w-full text-left px-4 py-3 hover:bg-[#27272A] flex items-center gap-3 border-b border-[#27272A]/50 last:border-0 transition group/item"
-                          >
-                            <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-400 group-hover/item:bg-[#10B981]/20 group-hover/item:text-[#10B981] transition">
-                              {u.full_name.substring(0, 2).toUpperCase()}
-                            </div>
-                            <div>
-                              <span className="text-white font-bold text-sm block">{u.full_name}</span>
-                              <span className="text-zinc-500 text-xs block">{u.email}</span>
-                            </div>
-                          </button>
+                        ).length === 0 ? (
+                          <div className="px-4 py-3 text-zinc-500 text-sm text-center">Nenhum usuário encontrado</div>
+                        ) : (
+                          users.filter(u =>
+                            (u.full_name?.toLowerCase() || '').includes(messageSearch.toLowerCase()) ||
+                            (u.email?.toLowerCase() || '').includes(messageSearch.toLowerCase())
+                          ).slice(0, 10).map(u => ( // Limit to 10 results for performance
+                            <button
+                              key={u.id}
+                              onClick={() => { setTargetUser(u); setMessageSearch(''); }}
+                              className="w-full text-left px-4 py-3 hover:bg-[#27272A] flex items-center gap-3 border-b border-[#27272A]/50 last:border-0 transition group/item"
+                            >
+                              <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-400 group-hover/item:bg-[#10B981]/20 group-hover/item:text-[#10B981] transition">
+                                {u.full_name.substring(0, 2).toUpperCase()}
+                              </div>
+                              <div>
+                                <span className="text-white font-bold text-sm block">{u.full_name}</span>
+                                <span className="text-zinc-500 text-xs block">{u.email}</span>
+                              </div>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={sendMessage}
+                className="bg-[#10B981] text-black font-bold px-6 py-3 rounded-xl flex items-center gap-2"
+              >
+                <Send size={18} />
+                ENVIAR MENSAGEM
+              </button>
+
+              <h3 className="text-sm font-bold text-zinc-400 mt-6">
+                HISTÓRICO DE MENSAGENS
+              </h3>
+
+              <div className="space-y-3">
+                {messages.map(m => (
+                  <div
+                    key={m.id}
+                    className="flex justify-between items-start bg-[#0A0A0B] border border-[#27272A] rounded-xl p-4"
+                  >
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start mb-1">
+                        <p className="text-emerald-400 text-xs">
+                          {new Date(m.created_at).toLocaleString()}
+                        </p>
+                        {m.profiles?.full_name ? (
+                          <span className="bg-blue-500/20 text-blue-400 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase border border-blue-500/30">
+                            PARA: {m.profiles.full_name}
+                          </span>
+                        ) : (
+                          <span className="bg-zinc-800 text-zinc-400 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase border border-zinc-700">
+                            GLOBAL (TODOS)
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-white">{m.message}</p>
+                    </div>
+
+                    <button
+                      onClick={() => deleteMessage(m.id)}
+                      className="text-red-500"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        }
+
+        {/* HISTORY TAB */}
+        {/* HISTORY TAB */}
+        {
+          activeTab === 'history' && (
+            <div className="space-y-6">
+              <div className="bg-[#141417] border border-[#27272A] rounded-3xl p-6">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b border-[#27272A] pb-6">
+                  <div>
+                    <h3 className="text-white font-bold text-xl flex items-center gap-2">
+                      <FileText className="text-[#10B981]" />
+                      Relatório Mensal de Bolões
+                    </h3>
+                    <p className="text-zinc-500 text-sm">Selecione o período para gerar os indicadores.</p>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <select
+                      value={reportMonth}
+                      onChange={(e) => setReportMonth(Number(e.target.value))}
+                      className="bg-[#0A0A0B] text-white font-bold px-4 py-3 rounded-xl border border-[#27272A] focus:border-[#10B981] outline-none appearance-none"
+                    >
+                      {Array.from({ length: 12 }).map((_, i) => (
+                        <option key={i} value={i}>{new Date(0, i).toLocaleString('pt-BR', { month: 'long' }).toUpperCase()}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={reportYear}
+                      onChange={(e) => setReportYear(Number(e.target.value))}
+                      className="bg-[#0A0A0B] text-white font-bold px-4 py-3 rounded-xl border border-[#27272A] focus:border-[#10B981] outline-none appearance-none"
+                    >
+                      {[2024, 2025, 2026, 2027].map(y => (
+                        <option key={y} value={y}>{y}</option>
+                      ))}
+                    </select>
+
+                    <button
+                      onClick={handleDownloadAdminReport}
+                      className="bg-[#10B981] hover:bg-[#059669] text-black font-black px-4 py-3 rounded-xl flex items-center gap-2 transition"
+                    >
+                      <Download size={20} />
+                      BAIXAR PDF
+                    </button>
+                  </div>
+                </div>
+
+                {/* STATS CARDS */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                  <div className="bg-[#0A0A0B] p-4 rounded-xl border border-[#27272A]">
+                    <p className="text-zinc-500 text-xs font-bold uppercase mb-1">Bolões Realizados</p>
+                    <p className="text-2xl font-black text-white">{poolStats.count}</p>
+                  </div>
+                  <div className="bg-[#0A0A0B] p-4 rounded-xl border border-[#27272A]">
+                    <p className="text-zinc-500 text-xs font-bold uppercase mb-1">Volume Total (Entradas)</p>
+                    <p className="text-2xl font-black text-blue-400">R$ {poolStats.totalVolume.toFixed(2)}</p>
+                  </div>
+                  <div className="bg-[#0A0A0B] p-4 rounded-xl border border-[#27272A]">
+                    <p className="text-zinc-500 text-xs font-bold uppercase mb-1">Lucro da Casa (10%)</p>
+                    <p className="text-2xl font-black text-[#10B981]">R$ {poolStats.houseFee.toFixed(2)}</p>
+                  </div>
+                  <div className="bg-[#0A0A0B] p-4 rounded-xl border border-[#27272A]">
+                    <p className="text-zinc-500 text-xs font-bold uppercase mb-1">Prêmios Pagos</p>
+                    <p className="text-2xl font-black text-purple-400">R$ {poolStats.totalPayouts.toFixed(2)}</p>
+                  </div>
+                </div>
+
+                {/* TABLE */}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="text-zinc-500 text-xs uppercase border-b border-[#27272A]">
+                        <th className="pb-3 pl-4">Bolão</th>
+                        <th className="pb-3">Criador</th>
+                        <th className="pb-3">Data</th>
+                        <th className="pb-3">Entrada</th>
+                        <th className="pb-3">Part.</th>
+                        <th className="pb-3 text-[#10B981]">Taxa Casa</th>
+                        <th className="pb-3">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-sm text-white divide-y divide-[#27272A]">
+                      {filteredPools.length === 0 ? (
+                        <tr><td colSpan={7} className="py-8 text-center text-zinc-500">Nenhum bolão encontrado neste mês.</td></tr>
+                      ) : (
+                        filteredPools.map(pool => (
+                          <tr key={pool.id} className="hover:bg-[#0A0A0B] transition">
+                            <td className="py-4 pl-4 font-bold max-w-[200px] truncate">{(pool.name || 'Sem Nome').toUpperCase()}</td>
+                            <td className="py-4 text-zinc-400">{(pool as any).profiles?.full_name || 'Admin'}</td>
+                            <td className="py-4 text-zinc-500 text-xs">{new Date(pool.created_at).toLocaleDateString()}</td>
+                            <td className="py-4">R$ {pool.entry_fee.toFixed(2)}</td>
+                            <td className="py-4">{pool.current_participants} / {pool.max_participants}</td>
+                            <td className="py-4 font-bold text-[#10B981]">R$ {(pool.entry_fee * pool.current_participants * 0.10).toFixed(2)}</td>
+                            <td className="py-4">
+                              <button
+                                onClick={() => handleViewPoolHistory(pool)}
+                                className="bg-[#27272A] hover:bg-[#3F3F46] text-white px-3 py-1.5 rounded-lg text-xs font-bold transition"
+                              >
+                                Ver Detalhes
+                              </button>
+                            </td>
+                          </tr>
                         ))
                       )}
-                    </div>
-                  )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* DETAIL MODAL (Existing logic preserved if any, or just expanded row) */}
+              {/* DETAIL MODAL (Rich View Restored) */}
+              {selectedPoolHistory && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+                  <div className="bg-[#141417] border border-[#27272A] rounded-3xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar relative animate-in zoom-in-95 duration-200">
+                    <button onClick={() => setSelectedPoolHistory(null)} className="absolute top-6 right-6 text-zinc-500 hover:text-white transition">
+                      <X size={24} />
+                    </button>
+
+                    {(() => {
+                      const { totalGross, serviceFee, netPrize, winners, losers, prizePerWinner } = calculatePoolStats(selectedPoolHistory.pool, selectedPoolHistory.bets);
+
+                      return (
+                        <div className="space-y-8">
+                          <header>
+                            <div className="flex items-center gap-3 mb-2">
+                              <h3 className="text-3xl font-black text-white">{selectedPoolHistory.pool.name || selectedPoolHistory.pool.title || 'Bolão sem Nome'}</h3>
+                              <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase ${selectedPoolHistory.pool.status === 'finished' ? 'bg-[#10B981] text-black' : 'bg-zinc-800 text-zinc-400'}`}>
+                                {selectedPoolHistory.pool.status === 'finished' ? 'FINALIZADO' : selectedPoolHistory.pool.status}
+                              </span>
+                            </div>
+                            <p className="text-zinc-500">Criado por: <span className="text-white font-bold">{selectedPoolHistory.pool.profiles?.full_name || 'Admin'}</span> • {new Date(selectedPoolHistory.pool.created_at).toLocaleString()}</p>
+                          </header>
+
+                          {/* FINANCIAL STATS */}
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div className="bg-[#0A0A0B] p-5 rounded-2xl border border-[#27272A]">
+                              <p className="text-xs text-zinc-500 uppercase font-bold mb-1">Total Arrecadado</p>
+                              <p className="text-2xl font-black text-white">R$ {totalGross.toFixed(2)}</p>
+                            </div>
+                            <div className="bg-[#0A0A0B] p-5 rounded-2xl border border-[#27272A]">
+                              <p className="text-xs text-zinc-500 uppercase font-bold mb-1">Taxa Adm (10%)</p>
+                              <p className="text-2xl font-black text-[#10B981]">R$ {serviceFee.toFixed(2)}</p>
+                            </div>
+                            <div className="bg-[#0A0A0B] p-5 rounded-2xl border border-[#27272A]">
+                              <p className="text-xs text-zinc-500 uppercase font-bold mb-1">Prêmio Líquido</p>
+                              <p className="text-2xl font-black text-blue-400">R$ {netPrize.toFixed(2)}</p>
+                            </div>
+                            <div className="bg-[#0A0A0B] p-5 rounded-2xl border border-[#27272A]">
+                              <p className="text-xs text-zinc-500 uppercase font-bold mb-1">Participantes</p>
+                              <p className="text-2xl font-black text-white">{selectedPoolHistory.bets.length}</p>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            {/* WINNERS */}
+                            <div className="bg-[#10B981]/5 border border-[#10B981]/20 rounded-3xl p-6">
+                              <h3 className="text-lg font-bold text-[#10B981] mb-6 flex items-center gap-2">
+                                <TrendingUp size={20} />
+                                Ganhadores ({winners.length})
+                              </h3>
+                              <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                                {winners.length > 0 ? winners.map(w => (
+                                  <div key={w.id} className="flex justify-between items-center p-4 bg-[#0A0A0B] rounded-xl border border-[#10B981]/30">
+                                    <div>
+                                      <p className="font-bold text-white text-sm">{(w as any).profiles?.full_name}</p>
+                                      <p className="text-[10px] text-zinc-500 uppercase font-bold mt-1">Apostou: {w.selected_option}</p>
+                                    </div>
+                                    <div className="text-right">
+                                      <p className="text-[#10B981] font-black text-lg">+ R$ {prizePerWinner.toFixed(2)}</p>
+                                    </div>
+                                  </div>
+                                )) : <p className="text-zinc-500 italic text-center py-4">Nenhum ganhador registrado.</p>}
+                              </div>
+                            </div>
+
+                            {/* LOSERS */}
+                            <div className="bg-red-500/5 border border-red-500/20 rounded-3xl p-6">
+                              <h3 className="text-lg font-bold text-red-500 mb-6 flex items-center gap-2">
+                                <ArrowDownCircle size={20} />
+                                Perdedores ({losers.length})
+                              </h3>
+                              <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                                {losers.length > 0 ? losers.map(l => (
+                                  <div key={l.id} className="flex justify-between items-center p-4 bg-[#0A0A0B] rounded-xl border border-red-500/30">
+                                    <div>
+                                      <p className="font-bold text-white text-sm">{(l as any).profiles?.full_name}</p>
+                                      <p className="text-[10px] text-zinc-500 uppercase font-bold mt-1">Apostou: {l.selected_option}</p>
+                                    </div>
+                                    <div className="text-right">
+                                      <p className="text-red-500 font-bold">- R$ {l.amount.toFixed(2)}</p>
+                                    </div>
+                                  </div>
+                                )) : <p className="text-zinc-500 italic text-center py-4">Nenhum perdedor.</p>}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
                 </div>
               )}
             </div>
+          )
+        }
 
-            <button
-              onClick={sendMessage}
-              className="bg-[#10B981] text-black font-bold px-6 py-3 rounded-xl flex items-center gap-2"
-            >
-              <Send size={18} />
-              ENVIAR MENSAGEM
-            </button>
-
-            <h3 className="text-sm font-bold text-zinc-400 mt-6">
-              HISTÓRICO DE MENSAGENS
-            </h3>
-
-            <div className="space-y-3">
-              {messages.map(m => (
-                <div
-                  key={m.id}
-                  className="flex justify-between items-start bg-[#0A0A0B] border border-[#27272A] rounded-xl p-4"
-                >
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start mb-1">
-                      <p className="text-emerald-400 text-xs">
-                        {new Date(m.created_at).toLocaleString()}
-                      </p>
-                      {m.profiles?.full_name ? (
-                        <span className="bg-blue-500/20 text-blue-400 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase border border-blue-500/30">
-                          PARA: {m.profiles.full_name}
-                        </span>
-                      ) : (
-                        <span className="bg-zinc-800 text-zinc-400 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase border border-zinc-700">
-                          GLOBAL (TODOS)
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-white">{m.message}</p>
-                  </div>
-
-                  <button
-                    onClick={() => deleteMessage(m.id)}
-                    className="text-red-500"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* HISTORY TAB */}
-        {/* HISTORY TAB */}
-        {activeTab === 'history' && (
-          <div className="space-y-6">
-            <div className="bg-[#141417] border border-[#27272A] rounded-3xl p-6">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b border-[#27272A] pb-6">
-                <div>
-                  <h3 className="text-white font-bold text-xl flex items-center gap-2">
-                    <FileText className="text-[#10B981]" />
-                    Relatório Mensal de Bolões
-                  </h3>
-                  <p className="text-zinc-500 text-sm">Selecione o período para gerar os indicadores.</p>
-                </div>
-
-                <div className="flex gap-3">
-                  <select
-                    value={reportMonth}
-                    onChange={(e) => setReportMonth(Number(e.target.value))}
-                    className="bg-[#0A0A0B] text-white font-bold px-4 py-3 rounded-xl border border-[#27272A] focus:border-[#10B981] outline-none appearance-none"
-                  >
-                    {Array.from({ length: 12 }).map((_, i) => (
-                      <option key={i} value={i}>{new Date(0, i).toLocaleString('pt-BR', { month: 'long' }).toUpperCase()}</option>
-                    ))}
-                  </select>
-                  <select
-                    value={reportYear}
-                    onChange={(e) => setReportYear(Number(e.target.value))}
-                    className="bg-[#0A0A0B] text-white font-bold px-4 py-3 rounded-xl border border-[#27272A] focus:border-[#10B981] outline-none appearance-none"
-                  >
-                    {[2024, 2025, 2026, 2027].map(y => (
-                      <option key={y} value={y}>{y}</option>
-                    ))}
-                  </select>
-
-                  <button
-                    onClick={handleDownloadAdminReport}
-                    className="bg-[#10B981] hover:bg-[#059669] text-black font-black px-4 py-3 rounded-xl flex items-center gap-2 transition"
-                  >
-                    <Download size={20} />
-                    BAIXAR PDF
-                  </button>
-                </div>
-              </div>
-
-              {/* STATS CARDS */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                <div className="bg-[#0A0A0B] p-4 rounded-xl border border-[#27272A]">
-                  <p className="text-zinc-500 text-xs font-bold uppercase mb-1">Bolões Realizados</p>
-                  <p className="text-2xl font-black text-white">{poolStats.count}</p>
-                </div>
-                <div className="bg-[#0A0A0B] p-4 rounded-xl border border-[#27272A]">
-                  <p className="text-zinc-500 text-xs font-bold uppercase mb-1">Volume Total (Entradas)</p>
-                  <p className="text-2xl font-black text-blue-400">R$ {poolStats.totalVolume.toFixed(2)}</p>
-                </div>
-                <div className="bg-[#0A0A0B] p-4 rounded-xl border border-[#27272A]">
-                  <p className="text-zinc-500 text-xs font-bold uppercase mb-1">Lucro da Casa (10%)</p>
-                  <p className="text-2xl font-black text-[#10B981]">R$ {poolStats.houseFee.toFixed(2)}</p>
-                </div>
-                <div className="bg-[#0A0A0B] p-4 rounded-xl border border-[#27272A]">
-                  <p className="text-zinc-500 text-xs font-bold uppercase mb-1">Prêmios Pagos</p>
-                  <p className="text-2xl font-black text-purple-400">R$ {poolStats.totalPayouts.toFixed(2)}</p>
-                </div>
-              </div>
-
-              {/* TABLE */}
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="text-zinc-500 text-xs uppercase border-b border-[#27272A]">
-                      <th className="pb-3 pl-4">Bolão</th>
-                      <th className="pb-3">Criador</th>
-                      <th className="pb-3">Data</th>
-                      <th className="pb-3">Entrada</th>
-                      <th className="pb-3">Part.</th>
-                      <th className="pb-3 text-[#10B981]">Taxa Casa</th>
-                      <th className="pb-3">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-sm text-white divide-y divide-[#27272A]">
-                    {filteredPools.length === 0 ? (
-                      <tr><td colSpan={7} className="py-8 text-center text-zinc-500">Nenhum bolão encontrado neste mês.</td></tr>
-                    ) : (
-                      filteredPools.map(pool => (
-                        <tr key={pool.id} className="hover:bg-[#0A0A0B] transition">
-                          <td className="py-4 pl-4 font-bold max-w-[200px] truncate">{(pool.name || 'Sem Nome').toUpperCase()}</td>
-                          <td className="py-4 text-zinc-400">{(pool as any).profiles?.full_name || 'Admin'}</td>
-                          <td className="py-4 text-zinc-500 text-xs">{new Date(pool.created_at).toLocaleDateString()}</td>
-                          <td className="py-4">R$ {pool.entry_fee.toFixed(2)}</td>
-                          <td className="py-4">{pool.current_participants} / {pool.max_participants}</td>
-                          <td className="py-4 font-bold text-[#10B981]">R$ {(pool.entry_fee * pool.current_participants * 0.10).toFixed(2)}</td>
-                          <td className="py-4">
-                            <button
-                              onClick={() => handleViewPoolHistory(pool)}
-                              className="bg-[#27272A] hover:bg-[#3F3F46] text-white px-3 py-1.5 rounded-lg text-xs font-bold transition"
-                            >
-                              Ver Detalhes
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* DETAIL MODAL (Existing logic preserved if any, or just expanded row) */}
-            {/* DETAIL MODAL (Rich View Restored) */}
-            {selectedPoolHistory && (
-              <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-                <div className="bg-[#141417] border border-[#27272A] rounded-3xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar relative animate-in zoom-in-95 duration-200">
-                  <button onClick={() => setSelectedPoolHistory(null)} className="absolute top-6 right-6 text-zinc-500 hover:text-white transition">
-                    <X size={24} />
-                  </button>
-
-                  {(() => {
-                    const { totalGross, serviceFee, netPrize, winners, losers, prizePerWinner } = calculatePoolStats(selectedPoolHistory.pool, selectedPoolHistory.bets);
-
-                    return (
-                      <div className="space-y-8">
-                        <header>
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-3xl font-black text-white">{selectedPoolHistory.pool.name || selectedPoolHistory.pool.title || 'Bolão sem Nome'}</h3>
-                            <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase ${selectedPoolHistory.pool.status === 'finished' ? 'bg-[#10B981] text-black' : 'bg-zinc-800 text-zinc-400'}`}>
-                              {selectedPoolHistory.pool.status === 'finished' ? 'FINALIZADO' : selectedPoolHistory.pool.status}
-                            </span>
-                          </div>
-                          <p className="text-zinc-500">Criado por: <span className="text-white font-bold">{selectedPoolHistory.pool.profiles?.full_name || 'Admin'}</span> • {new Date(selectedPoolHistory.pool.created_at).toLocaleString()}</p>
-                        </header>
-
-                        {/* FINANCIAL STATS */}
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                          <div className="bg-[#0A0A0B] p-5 rounded-2xl border border-[#27272A]">
-                            <p className="text-xs text-zinc-500 uppercase font-bold mb-1">Total Arrecadado</p>
-                            <p className="text-2xl font-black text-white">R$ {totalGross.toFixed(2)}</p>
-                          </div>
-                          <div className="bg-[#0A0A0B] p-5 rounded-2xl border border-[#27272A]">
-                            <p className="text-xs text-zinc-500 uppercase font-bold mb-1">Taxa Adm (10%)</p>
-                            <p className="text-2xl font-black text-[#10B981]">R$ {serviceFee.toFixed(2)}</p>
-                          </div>
-                          <div className="bg-[#0A0A0B] p-5 rounded-2xl border border-[#27272A]">
-                            <p className="text-xs text-zinc-500 uppercase font-bold mb-1">Prêmio Líquido</p>
-                            <p className="text-2xl font-black text-blue-400">R$ {netPrize.toFixed(2)}</p>
-                          </div>
-                          <div className="bg-[#0A0A0B] p-5 rounded-2xl border border-[#27272A]">
-                            <p className="text-xs text-zinc-500 uppercase font-bold mb-1">Participantes</p>
-                            <p className="text-2xl font-black text-white">{selectedPoolHistory.bets.length}</p>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                          {/* WINNERS */}
-                          <div className="bg-[#10B981]/5 border border-[#10B981]/20 rounded-3xl p-6">
-                            <h3 className="text-lg font-bold text-[#10B981] mb-6 flex items-center gap-2">
-                              <TrendingUp size={20} />
-                              Ganhadores ({winners.length})
-                            </h3>
-                            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                              {winners.length > 0 ? winners.map(w => (
-                                <div key={w.id} className="flex justify-between items-center p-4 bg-[#0A0A0B] rounded-xl border border-[#10B981]/30">
-                                  <div>
-                                    <p className="font-bold text-white text-sm">{(w as any).profiles?.full_name}</p>
-                                    <p className="text-[10px] text-zinc-500 uppercase font-bold mt-1">Apostou: {w.selected_option}</p>
-                                  </div>
-                                  <div className="text-right">
-                                    <p className="text-[#10B981] font-black text-lg">+ R$ {prizePerWinner.toFixed(2)}</p>
-                                  </div>
-                                </div>
-                              )) : <p className="text-zinc-500 italic text-center py-4">Nenhum ganhador registrado.</p>}
-                            </div>
-                          </div>
-
-                          {/* LOSERS */}
-                          <div className="bg-red-500/5 border border-red-500/20 rounded-3xl p-6">
-                            <h3 className="text-lg font-bold text-red-500 mb-6 flex items-center gap-2">
-                              <ArrowDownCircle size={20} />
-                              Perdedores ({losers.length})
-                            </h3>
-                            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                              {losers.length > 0 ? losers.map(l => (
-                                <div key={l.id} className="flex justify-between items-center p-4 bg-[#0A0A0B] rounded-xl border border-red-500/30">
-                                  <div>
-                                    <p className="font-bold text-white text-sm">{(l as any).profiles?.full_name}</p>
-                                    <p className="text-[10px] text-zinc-500 uppercase font-bold mt-1">Apostou: {l.selected_option}</p>
-                                  </div>
-                                  <div className="text-right">
-                                    <p className="text-red-500 font-bold">- R$ {l.amount.toFixed(2)}</p>
-                                  </div>
-                                </div>
-                              )) : <p className="text-zinc-500 italic text-center py-4">Nenhum perdedor.</p>}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-      </section>
+      </section >
 
       {/* USER DETAILS MODAL */}
       {
@@ -2014,57 +2047,59 @@ const AdminDashboard: React.FC = () => {
       }
 
       {/* ADJUSTMENT MODAL */}
-      {editingUser && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in duration-200" style={{ zIndex: 9999 }}>
-          <div className="bg-[#141417] border border-[#27272A] rounded-2xl p-6 max-w-md w-full animate-in zoom-in-95">
-            <h3 className="text-xl font-bold text-white mb-1">Ajuste Manual de Saldo</h3>
-            <p className="text-zinc-500 text-sm mb-6">Editando {editType === 'balance' ? 'Saldo de Jogo' : 'Saldo de Saque'} de <span className="text-[#10B981]">{editingUser.full_name}</span></p>
+      {
+        editingUser && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in duration-200" style={{ zIndex: 9999 }}>
+            <div className="bg-[#141417] border border-[#27272A] rounded-2xl p-6 max-w-md w-full animate-in zoom-in-95">
+              <h3 className="text-xl font-bold text-white mb-1">Ajuste Manual de Saldo</h3>
+              <p className="text-zinc-500 text-sm mb-6">Editando {editType === 'balance' ? 'Saldo de Jogo' : 'Saldo de Saque'} de <span className="text-[#10B981]">{editingUser.full_name}</span></p>
 
-            <div className="space-y-4">
-              <div>
-                <label className="text-xs uppercase font-bold text-zinc-500 mb-1 block">Novo Valor (R$)</label>
-                <input
-                  type="number"
-                  value={editAmount}
-                  onChange={e => setEditAmount(e.target.value)}
-                  className="w-full bg-[#0A0A0B] text-white font-bold p-3 rounded-xl border border-[#27272A] focus:border-[#10B981] outline-none text-lg"
-                />
-                <p className="text-xs text-zinc-500 mt-1 text-right">
-                  Diferença: <span className={Number(editAmount) - (editType === 'balance' ? editingUser.balance : editingUser.withdrawable_balance) >= 0 ? 'text-[#10B981]' : 'text-red-500'}>
-                    {(Number(editAmount) - (editType === 'balance' ? editingUser.balance : editingUser.withdrawable_balance)).toFixed(2)}
-                  </span>
-                </p>
-              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs uppercase font-bold text-zinc-500 mb-1 block">Novo Valor (R$)</label>
+                  <input
+                    type="number"
+                    value={editAmount}
+                    onChange={e => setEditAmount(e.target.value)}
+                    className="w-full bg-[#0A0A0B] text-white font-bold p-3 rounded-xl border border-[#27272A] focus:border-[#10B981] outline-none text-lg"
+                  />
+                  <p className="text-xs text-zinc-500 mt-1 text-right">
+                    Diferença: <span className={Number(editAmount) - (editType === 'balance' ? editingUser.balance : editingUser.withdrawable_balance) >= 0 ? 'text-[#10B981]' : 'text-red-500'}>
+                      {(Number(editAmount) - (editType === 'balance' ? editingUser.balance : editingUser.withdrawable_balance)).toFixed(2)}
+                    </span>
+                  </p>
+                </div>
 
-              <div>
-                <label className="text-xs uppercase font-bold text-zinc-500 mb-1 block">Motivo (Obrigatório)</label>
-                <textarea
-                  value={editReason}
-                  onChange={e => setEditReason(e.target.value)}
-                  placeholder="Ex: Correção de erro no sistema..."
-                  className="w-full bg-[#0A0A0B] text-white p-3 rounded-xl border border-[#27272A] focus:border-[#10B981] outline-none text-sm h-24 resize-none"
-                />
-              </div>
+                <div>
+                  <label className="text-xs uppercase font-bold text-zinc-500 mb-1 block">Motivo (Obrigatório)</label>
+                  <textarea
+                    value={editReason}
+                    onChange={e => setEditReason(e.target.value)}
+                    placeholder="Ex: Correção de erro no sistema..."
+                    className="w-full bg-[#0A0A0B] text-white p-3 rounded-xl border border-[#27272A] focus:border-[#10B981] outline-none text-sm h-24 resize-none"
+                  />
+                </div>
 
-              <div className="flex gap-3 pt-2">
-                <button
-                  onClick={() => setEditingUser(null)}
-                  className="flex-1 bg-[#27272A] hover:bg-[#3F3F46] text-white font-bold py-3 rounded-xl transition"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleSaveAdjustment}
-                  disabled={savingAdjustment || !editAmount || !editReason}
-                  className="flex-1 bg-[#10B981] hover:bg-[#059669] disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold py-3 rounded-xl transition flex items-center justify-center gap-2"
-                >
-                  {savingAdjustment ? 'Salvando...' : 'Confirmar Ajuste'}
-                </button>
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => setEditingUser(null)}
+                    className="flex-1 bg-[#27272A] hover:bg-[#3F3F46] text-white font-bold py-3 rounded-xl transition"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleSaveAdjustment}
+                    disabled={savingAdjustment || !editAmount || !editReason}
+                    className="flex-1 bg-[#10B981] hover:bg-[#059669] disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold py-3 rounded-xl transition flex items-center justify-center gap-2"
+                  >
+                    {savingAdjustment ? 'Salvando...' : 'Confirmar Ajuste'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
     </div >
   );
 };
