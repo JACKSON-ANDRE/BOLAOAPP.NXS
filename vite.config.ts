@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => {
         manifestFilename: 'manifest.json', // FORCE output as manifest.json to fix 404s/caching issues
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
         manifest: {
-          name: 'Bolão App - Apostas Esportivas',
+          name: 'Bolão App',
           short_name: 'Bolão App',
           description: 'Participe dos melhores bolões de futebol!',
           theme_color: '#0A0A0B',
