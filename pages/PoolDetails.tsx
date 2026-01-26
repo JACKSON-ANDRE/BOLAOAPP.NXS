@@ -49,7 +49,7 @@ const PoolDetails: React.FC = () => {
     setLoading(true);
     const [pRes, bRes] = await Promise.all([
       supabase.from('pools').select('*').eq('id', id).single(),
-      supabase.from('bets').select('*, profiles(full_name, avatar_url)').eq('pool_id', id)
+      supabase.from('bets').select('*, profiles(full_name, avatar_url, role)').eq('pool_id', id)
     ]);
 
     if (pRes.data) setPool(pRes.data);
@@ -510,7 +510,11 @@ const PoolDetails: React.FC = () => {
                 bets.map((bet) => (
                   <div key={bet.id} className="flex items-center gap-3 p-3 bg-[#0A0A0B] rounded-xl border border-[#27272A]">
                     <div className="w-10 h-10 rounded-full bg-zinc-800 border-2 border-[#27272A] flex items-center justify-center text-xs font-bold text-zinc-400 overflow-hidden">
-                      {(bet as any).profiles?.avatar_url ? (
+                      {(bet as any).profiles?.role === 'admin' ? (
+                        <div className="bg-[#10B981] w-full h-full flex items-center justify-center text-black">
+                          <ShieldCheck size={20} />
+                        </div>
+                      ) : (bet as any).profiles?.avatar_url ? (
                         <img
                           src={`https://vucvouxutompqoqhxzmi.supabase.co/storage/v1/object/public/avatars/${(bet as any).profiles.avatar_url}`}
                           alt="Avatar"
@@ -521,7 +525,9 @@ const PoolDetails: React.FC = () => {
                       )}
                     </div>
                     <div className="flex-1 overflow-hidden">
-                      <p className="text-xs text-white truncate font-medium">{(bet as any).profiles?.full_name || 'Usuário Desconhecido'}</p>
+                      <p className={`text-xs truncate font-medium ${(bet as any).profiles?.role === 'admin' ? 'text-[#10B981] font-black' : 'text-white'}`}>
+                        {(bet as any).profiles?.role === 'admin' ? 'BOLÃO APP' : (bet as any).profiles?.full_name || 'Usuário Desconhecido'}
+                      </p>
                       <p className="text-[10px] text-zinc-500 uppercase">{bet.selected_option}</p>
                     </div>
                   </div>

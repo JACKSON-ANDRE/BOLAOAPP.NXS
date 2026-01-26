@@ -11,7 +11,7 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { isInstallable, installApp } = usePWAInstall();
+  const { isInstallable, install } = usePWAInstall();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,7 +99,7 @@ const Login: React.FC = () => {
           {/* PWA INSTALL BUTTON */}
           {isInstallable && (
             <button
-              onClick={installApp}
+              onClick={install}
               className="mt-6 w-full border border-[#27272A] hover:border-[#10B981] text-zinc-400 hover:text-[#10B981] font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 text-sm"
             >
               <Download size={16} />
