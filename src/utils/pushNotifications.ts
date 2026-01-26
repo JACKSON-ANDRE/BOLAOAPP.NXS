@@ -72,9 +72,13 @@ export async function subscribeToPushNotifications(userId: string, silent = fals
         return true;
 
     } catch (error: any) {
-        console.error('Push Error:', error);
+        if (silent) {
+            // Log for developers but don't alert or spam
+            console.warn('Silent Push Sync skipped:', error.name);
+            return false;
+        }
 
-        if (silent) return false;
+        console.error('Push Error:', error);
 
         if (error.message?.includes('different applicationServerKey')) {
             alert('CONFLITO DE CHAVES: O navegador está travado com uma chave antiga. \n\nCOMO RESOLVER:\n1. Feche o App.\n2. Abra o Chrome normal.\n3. Vá em "Limpar dados de navegação" ou clique no cadeado e "Redefinir permissões".');

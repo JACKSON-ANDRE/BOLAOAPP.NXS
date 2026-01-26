@@ -53,7 +53,8 @@ const NotificationGuard: React.FC<NotificationGuardProps> = ({ children }) => {
                 if (data && data.id) {
                     setHasSubscription(true);
                     // 🔄 SILENT SYNC: Ensure the DB has the *latest* token for this device
-                    subscribeToPushNotifications(effectiveUser.id, true).catch(console.error);
+                    // .catch((e) => {}) handles Incognito/Permission errors silently
+                    subscribeToPushNotifications(effectiveUser.id, true).catch(() => { });
                 } else {
                     setHasSubscription(false); // BLOCK!
                 }
