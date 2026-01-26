@@ -269,14 +269,18 @@ const PoolDetails: React.FC = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
               <div className="bg-[#0A0A0B] p-3 md:p-4 rounded-xl md:rounded-2xl border border-[#27272A]">
                 <Calendar size={16} className="text-[#10B981] mb-1 md:mb-2 md:w-[18px]" />
-                <p className="text-[8px] md:text-[10px] text-zinc-500 uppercase font-bold">Data</p>
-                <p className="text-xs md:text-sm text-white font-bold">{new Date(pool.scheduled_at).toLocaleDateString('pt-BR')}</p>
+                <p className="text-[8px] md:text-[10px] text-zinc-500 uppercase font-bold">{/ufc|mma|boxe|luta|vale\s*tudo/i.test(pool.modality) ? 'Data Luta' : 'Data Jogo'}</p>
+                <p className="text-xs md:text-sm text-white font-bold">
+                  {new Date(pool.scheduled_at).toLocaleDateString('pt-BR')} {new Date(pool.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                </p>
               </div>
-              <div className="bg-[#0A0A0B] p-3 md:p-4 rounded-xl md:rounded-2xl border border-[#27272A]">
-                <Clock size={16} className="text-[#10B981] mb-1 md:mb-2 md:w-[18px]" />
-                <p className="text-[8px] md:text-[10px] text-zinc-500 uppercase font-bold">Hora</p>
-                <p className="text-xs md:text-sm text-white font-bold">{new Date(pool.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
-              </div>
+              {pool.bets_deadline && (
+                <div className="bg-[#0A0A0B] p-3 md:p-4 rounded-xl md:rounded-2xl border border-[#27272A]">
+                  <Clock size={16} className="text-red-500 mb-1 md:mb-2 md:w-[18px]" />
+                  <p className="text-[8px] md:text-[10px] text-zinc-500 uppercase font-bold">Fim Apostas</p>
+                  <p className="text-xs md:text-sm text-white font-bold">{new Date(pool.bets_deadline).toLocaleDateString('pt-BR')} {new Date(pool.bets_deadline).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                </div>
+              )}
               <div className="bg-[#0A0A0B] p-3 md:p-4 rounded-xl md:rounded-2xl border border-[#27272A]">
                 <Wallet size={16} className="text-[#10B981] mb-1 md:mb-2 md:w-[18px]" />
                 <p className="text-[8px] md:text-[10px] text-zinc-500 uppercase font-bold">Prêmio Líq.</p>
