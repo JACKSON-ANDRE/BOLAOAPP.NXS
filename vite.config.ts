@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => {
       VitePWA({
         registerType: 'autoUpdate',
         strategies: 'injectManifest', // IMPORTANT: Allows custom SW logic
-        srcDir: 'public',
+        srcDir: 'src',
         filename: 'sw.js',
         devOptions: {
           enabled: true,
