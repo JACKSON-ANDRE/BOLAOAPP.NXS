@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { calculateServiceFee, getFeeTable } from '../src/utils/FeeCalculator';
 import { triggerConfettiBurst } from '../src/utils/confetti';
+import PoolChat from '../components/PoolChat';
 
 const PoolDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -535,6 +536,14 @@ const PoolDetails: React.FC = () => {
               )}
             </div>
           </div>
+
+          {/* POOL CHAT */}
+          <PoolChat
+            poolId={pool.id}
+            category={pool.modality}
+            hasBet={!!hasBet}
+            isAdmin={!!isAdmin}
+          />
 
           <div className="bg-[#141417] border border-[#27272A] rounded-3xl p-6">
             <h3 className="text-lg font-bold text-white mb-4">Regras Gerais</h3>
