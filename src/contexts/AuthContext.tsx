@@ -128,10 +128,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     useEffect(() => {
-        // 🔒 SAFETY BREAK: Força o fim do loading após 3 segundos caso algo trave
+        // 🔒 SAFETY BREAK: Força o fim do loading após 8 segundos caso algo trave
         const safetyTimeout = setTimeout(() => {
             setLoading(false);
-        }, 3000);
+        }, 8000);
 
         supabase.auth.getSession().then(async ({ data: { session } }) => {
             try {
