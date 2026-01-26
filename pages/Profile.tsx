@@ -8,10 +8,12 @@ import {
   KeyRound,
   Save,
   LogOut,
-  Camera
+  Camera,
+  Bell
 } from "lucide-react";
 import { useAuth } from '../src/contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+import { subscribeToPushNotifications } from '../src/utils/pushNotifications';
 
 const Profile: React.FC = () => {
   const { profile, signOut } = useAuth();
@@ -320,6 +322,30 @@ const Profile: React.FC = () => {
               ⚠️ Depósitos, Saques e Criação de Bolões só serão liberados após o preenchimento completo (inclusive FOTO).
             </p>
           </div>
+        </div>
+
+        {/* NOTIFICATIONS SECTION */}
+        <div className="bg-[#141417] border border-[#27272A] rounded-3xl p-8 h-fit">
+          <h3 className="text-white font-black mb-3 flex items-center gap-2">
+            <Bell size={18} className="text-[#10B981]" />
+            Notificações
+          </h3>
+          <p className="text-sm text-zinc-400 mb-4">
+            Ative para não perder resultados e prêmios.
+          </p>
+          <button
+            onClick={async () => {
+              if (profile) {
+                const success = await subscribeToPushNotifications(profile.id);
+                if (success) alert('Notificações ativadas com sucesso!');
+                else alert('Erro ou permissão negada. Verifique as configurações do navegador.');
+              }
+            }}
+            className="w-full bg-[#1C1C21] hover:bg-[#27272A] border border-[#27272A] text-zinc-300 font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition"
+          >
+            <Bell size={16} />
+            ATIVAR AGORA
+          </button>
         </div>
 
       </div>
