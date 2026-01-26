@@ -2,12 +2,14 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { TrendingUp, Mail, Lock, Loader2, Download } from 'lucide-react';
+import { TrendingUp, Mail, Lock, Loader2, Download, Eye, EyeOff, Check } from 'lucide-react';
 import { usePWAInstall } from '../src/hooks/usePWAInstall';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -68,14 +70,40 @@ const Login: React.FC = () => {
               <div className="relative">
                 <Lock className="absolute left-3 top-3.5 text-zinc-600" size={18} />
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-[#10B981] transition-colors"
+                  className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-xl py-3 pl-10 pr-12 text-white focus:outline-none focus:border-[#10B981] transition-colors"
                   placeholder="••••••••"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-3 text-zinc-500 hover:text-zinc-300 transition-colors"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 cursor-pointer group">
+                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${rememberMe ? 'bg-[#10B981] border-[#10B981]' : 'border-zinc-600 bg-transparent group-hover:border-zinc-500'}`}>
+                  {rememberMe && <Check size={14} className="text-black stroke-[3]" />}
+                </div>
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="hidden"
+                />
+                <span className="text-sm text-zinc-400 group-hover:text-zinc-300 transition-colors">Manter conectado</span>
+              </label>
+
+              <Link to="/forgot-password" className="text-sm text-[#10B981] hover:underline">
+                Esqueceu a senha?
+              </Link>
             </div>
 
             {error && (
