@@ -90,6 +90,7 @@ interface AdminUser {
   role: string;
   balance: number;
   withdrawable_balance: number;
+  avatar_url?: string;
   created_at: string;
 }
 
@@ -988,7 +989,20 @@ const AdminDashboard: React.FC = () => {
                 <tbody className="text-xs md:text-sm text-white divide-y divide-[#27272A]">
                   {filteredUsers.map(u => (
                     <tr key={u.id} className="hover:bg-[#0A0A0B] transition">
-                      <td className="py-3 pl-4 font-bold max-w-[100px] truncate">{u.full_name}</td>
+                      <td className="py-3 pl-4 font-bold max-w-[150px] truncate flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center overflow-hidden border border-zinc-700 flex-shrink-0">
+                          {u.avatar_url ? (
+                            <img
+                              src={`https://vucvouxutompqoqhxzmi.supabase.co/storage/v1/object/public/avatars/${u.avatar_url}`}
+                              alt={u.full_name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-zinc-500 text-xs font-bold">{u.full_name.charAt(0).toUpperCase()}</span>
+                          )}
+                        </div>
+                        <span className="truncate">{u.full_name}</span>
+                      </td>
                       <td className="py-3 text-zinc-400 max-w-[120px] truncate">{u.email}</td>
                       <td className="py-4 text-emerald-400 flex items-center gap-2 group/bal">
                         R$ {u.balance.toFixed(2)}
