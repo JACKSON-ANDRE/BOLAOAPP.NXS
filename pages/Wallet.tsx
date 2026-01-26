@@ -283,9 +283,9 @@ const WalletPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* DEPOSIT COLUMN */}
-        <div id="deposit-area" className="lg:col-span-1 bg-[#141417] border border-[#27272A] rounded-3xl p-8 space-y-6 h-fit">
+        <div id="deposit-area" className="bg-[#141417] border border-[#27272A] rounded-3xl p-8 space-y-6 h-fit">
           <div className="flex items-center gap-2 text-white font-bold pb-4 border-b border-[#27272A]">
             <QrCode size={20} className="text-[#10B981]" />
             Adicionar Saldo (PIX)
@@ -337,95 +337,10 @@ const WalletPage: React.FC = () => {
             </button>
           )}
         </div>
-      </div>
 
-      {/* HISTORY & REPORT COLUMN */}
-      <div className="lg:col-span-2 space-y-6">
-
-        {/* MONTHLY REPORT CARD */}
-        <div className="bg-[#141417] border border-[#27272A] rounded-3xl p-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-            <div className="flex items-center gap-2 text-white font-bold">
-              <PieChart size={20} className="text-[#10B981]" />
-              Resumo Financeiro
-            </div>
-
-            <div className="flex items-center gap-3">
-              <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                className="bg-[#0A0A0B] text-white text-xs font-bold px-3 py-2 rounded-lg border border-[#27272A] focus:border-[#10B981] outline-none"
-              >
-                {Array.from({ length: 12 }).map((_, i) => (
-                  <option key={i} value={i}>{new Date(0, i).toLocaleString('pt-BR', { month: 'long' }).toUpperCase()}</option>
-                ))}
-              </select>
-
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="bg-[#0A0A0B] text-white text-xs font-bold px-3 py-2 rounded-lg border border-[#27272A] focus:border-[#10B981] outline-none"
-              >
-                {[2024, 2025, 2026, 2027].map(y => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
-
-              <button
-                onClick={handleDownloadReport}
-                className="bg-[#27272A] hover:bg-[#3F3F46] text-white p-2 rounded-lg border border-[#27272A] transition-colors"
-                title="Baixar Relatório PDF"
-              >
-                <Download size={16} />
-              </button>
-            </div>
-          </div>
-
-          {/* GRAPH & STATS */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div className="p-4 bg-[#0A0A0B] rounded-xl border border-[#27272A] flex justify-between items-center">
-                <span className="text-xs text-zinc-400">Total Apostado</span>
-                <span className="text-sm font-bold text-orange-400">R$ {stats.totalBet.toFixed(2)}</span>
-              </div>
-              <div className="p-4 bg-[#0A0A0B] rounded-xl border border-[#27272A] flex justify-between items-center">
-                <span className="text-xs text-zinc-400">Total Ganho</span>
-                <span className="text-sm font-bold text-[#10B981]">R$ {stats.totalWon.toFixed(2)}</span>
-              </div>
-              <div className="p-4 bg-[#0A0A0B] rounded-xl border border-[#27272A] flex justify-between items-center">
-                <span className="text-xs text-zinc-400">Saldo do Mês</span>
-                <span className={`text-sm font-bold ${stats.totalWon - stats.totalBet >= 0 ? 'text-[#10B981]' : 'text-red-500'}`}>
-                  {stats.totalWon - stats.totalBet >= 0 ? '+' : ''} R$ {(stats.totalWon - stats.totalBet).toFixed(2)}
-                </span>
-              </div>
-            </div>
-
-
-            <div className="w-full relative" style={{ height: '160px' }}>
-              {mounted ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData}>
-                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#71717a' }} axisLine={false} tickLine={false} />
-                    <YAxis hide />
-                    <RechartsTooltip
-                      contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '8px' }}
-                      itemStyle={{ color: '#fff', fontSize: '12px' }}
-                      cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                    />
-                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                      {chartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : null}
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-[#141417] border border-[#27272A] rounded-3xl p-8">
-          <div className="flex items-center gap-2 text-white font-bold mb-6 pb-4 border-b border-[#27272A]">
+        {/* HISTORY COLUMN (MOVED UP) */}
+        <div className="bg-[#141417] border border-[#27272A] rounded-3xl p-8 h-fit max-h-[700px] flex flex-col">
+          <div className="flex items-center gap-2 text-white font-bold mb-6 pb-4 border-b border-[#27272A] flex-shrink-0">
             <History size={20} className="text-[#10B981]" />
             Extrato de Movimentações
           </div>
@@ -441,7 +356,7 @@ const WalletPage: React.FC = () => {
               <p className="text-zinc-500 text-sm">Nenhuma movimentação neste período.</p>
             </div>
           ) : (
-            <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+            <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar flex-1">
               {filteredItems.map((item: any) => (
                 <div
                   key={`${item.source}-${item.id}`}
@@ -490,6 +405,88 @@ const WalletPage: React.FC = () => {
               ))}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* MONTHLY REPORT CARD (MOVED DOWN) */}
+      <div className="bg-[#141417] border border-[#27272A] rounded-3xl p-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+          <div className="flex items-center gap-2 text-white font-bold">
+            <PieChart size={20} className="text-[#10B981]" />
+            Resumo Financeiro
+          </div>
+
+          <div className="flex items-center gap-3">
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(Number(e.target.value))}
+              className="bg-[#0A0A0B] text-white text-xs font-bold px-3 py-2 rounded-lg border border-[#27272A] focus:border-[#10B981] outline-none"
+            >
+              {Array.from({ length: 12 }).map((_, i) => (
+                <option key={i} value={i}>{new Date(0, i).toLocaleString('pt-BR', { month: 'long' }).toUpperCase()}</option>
+              ))}
+            </select>
+
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              className="bg-[#0A0A0B] text-white text-xs font-bold px-3 py-2 rounded-lg border border-[#27272A] focus:border-[#10B981] outline-none"
+            >
+              {[2024, 2025, 2026, 2027].map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+
+            <button
+              onClick={handleDownloadReport}
+              className="bg-[#27272A] hover:bg-[#3F3F46] text-white p-2 rounded-lg border border-[#27272A] transition-colors"
+              title="Baixar Relatório PDF"
+            >
+              <Download size={16} />
+            </button>
+          </div>
+        </div>
+
+        {/* GRAPH & STATS */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <div className="p-4 bg-[#0A0A0B] rounded-xl border border-[#27272A] flex justify-between items-center">
+              <span className="text-xs text-zinc-400">Total Apostado</span>
+              <span className="text-sm font-bold text-orange-400">R$ {stats.totalBet.toFixed(2)}</span>
+            </div>
+            <div className="p-4 bg-[#0A0A0B] rounded-xl border border-[#27272A] flex justify-between items-center">
+              <span className="text-xs text-zinc-400">Total Ganho</span>
+              <span className="text-sm font-bold text-[#10B981]">R$ {stats.totalWon.toFixed(2)}</span>
+            </div>
+            <div className="p-4 bg-[#0A0A0B] rounded-xl border border-[#27272A] flex justify-between items-center">
+              <span className="text-xs text-zinc-400">Saldo do Mês</span>
+              <span className={`text-sm font-bold ${stats.totalWon - stats.totalBet >= 0 ? 'text-[#10B981]' : 'text-red-500'}`}>
+                {stats.totalWon - stats.totalBet >= 0 ? '+' : ''} R$ {(stats.totalWon - stats.totalBet).toFixed(2)}
+              </span>
+            </div>
+          </div>
+
+
+          <div className="w-full relative" style={{ height: '160px' }}>
+            {mounted ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData}>
+                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#71717a' }} axisLine={false} tickLine={false} />
+                  <YAxis hide />
+                  <RechartsTooltip
+                    contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '8px' }}
+                    itemStyle={{ color: '#fff', fontSize: '12px' }}
+                    cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                  />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                    {chartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : null}
+          </div>
         </div>
       </div>
 
