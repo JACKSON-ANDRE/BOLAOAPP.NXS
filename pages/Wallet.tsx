@@ -283,7 +283,7 @@ const WalletPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* DEPOSIT COLUMN */}
         <div id="deposit-area" className="bg-[#141417] border border-[#27272A] rounded-3xl p-8 space-y-6 h-fit">
           <div className="flex items-center gap-2 text-white font-bold pb-4 border-b border-[#27272A]">
