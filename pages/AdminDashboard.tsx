@@ -881,29 +881,29 @@ const AdminDashboard: React.FC = () => {
       )
       }
 
-      <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-        <div className="bg-[#141417] border border-[#27272A] rounded-2xl p-6">
-          <Users className="text-[#10B981] mb-4" />
-          <p className="text-zinc-400 text-sm">Usuários</p>
-          <p className="text-2xl font-black text-white">{users.length}</p>
+      <section className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-6">
+        <div className="bg-[#141417] border border-[#27272A] rounded-2xl p-4 md:p-6">
+          <Users className="text-[#10B981] mb-2 md:mb-4 w-5 h-5 md:w-6 md:h-6" />
+          <p className="text-zinc-400 text-[10px] md:text-sm uppercase font-bold">Usuários</p>
+          <p className="text-xl md:text-2xl font-black text-white">{users.length}</p>
         </div>
 
-        <div className="bg-[#141417] border border-[#27272A] rounded-2xl p-6">
-          <LayoutDashboard className="text-[#10B981] mb-4" />
-          <p className="text-zinc-400 text-sm">Bolões Ativos</p>
-          <p className="text-2xl font-black text-white">{pools.filter(p => p.status === 'open').length}</p>
+        <div className="bg-[#141417] border border-[#27272A] rounded-2xl p-4 md:p-6">
+          <LayoutDashboard className="text-[#10B981] mb-2 md:mb-4 w-5 h-5 md:w-6 md:h-6" />
+          <p className="text-zinc-400 text-[10px] md:text-sm uppercase font-bold">Bolões Ativos</p>
+          <p className="text-xl md:text-2xl font-black text-white">{pools.filter(p => p.status === 'open').length}</p>
         </div>
 
-        <div className="bg-[#141417] border border-[#27272A] rounded-2xl p-6">
-          <TrendingUp className="text-[#10B981] mb-4" />
-          <p className="text-zinc-400 text-sm">Depósitos Pendentes</p>
-          <p className="text-2xl font-black text-white">{pendingDeposits}</p>
+        <div className="bg-[#141417] border border-[#27272A] rounded-2xl p-4 md:p-6">
+          <TrendingUp className="text-[#10B981] mb-2 md:mb-4 w-5 h-5 md:w-6 md:h-6" />
+          <p className="text-zinc-400 text-[10px] md:text-sm uppercase font-bold">Depósitos Pend.</p>
+          <p className="text-xl md:text-2xl font-black text-white">{pendingDeposits}</p>
         </div>
 
-        <div className="bg-[#141417] border border-[#27272A] rounded-2xl p-6">
-          <ArrowDownCircle className="text-yellow-500 mb-4" />
-          <p className="text-zinc-400 text-sm">Saques Pendentes</p>
-          <p className="text-2xl font-black text-white">{pendingWithdraws}</p>
+        <div className="bg-[#141417] border border-[#27272A] rounded-2xl p-4 md:p-6">
+          <ArrowDownCircle className="text-yellow-500 mb-2 md:mb-4 w-5 h-5 md:w-6 md:h-6" />
+          <p className="text-zinc-400 text-[10px] md:text-sm uppercase font-bold">Saques Pend.</p>
+          <p className="text-xl md:text-2xl font-black text-white">{pendingWithdraws}</p>
         </div>
       </section>
 
@@ -985,11 +985,11 @@ const AdminDashboard: React.FC = () => {
                     <th className="pb-3">Ações</th>
                   </tr>
                 </thead>
-                <tbody className="text-sm text-white divide-y divide-[#27272A]">
+                <tbody className="text-xs md:text-sm text-white divide-y divide-[#27272A]">
                   {filteredUsers.map(u => (
                     <tr key={u.id} className="hover:bg-[#0A0A0B] transition">
-                      <td className="py-4 pl-4 font-bold">{u.full_name}</td>
-                      <td className="py-4 text-zinc-400">{u.email}</td>
+                      <td className="py-3 pl-4 font-bold max-w-[100px] truncate">{u.full_name}</td>
+                      <td className="py-3 text-zinc-400 max-w-[120px] truncate">{u.email}</td>
                       <td className="py-4 text-emerald-400 flex items-center gap-2 group/bal">
                         R$ {u.balance.toFixed(2)}
                         <button
@@ -1136,55 +1136,58 @@ const AdminDashboard: React.FC = () => {
               {filteredDeposits.map(d => (
                 <div
                   key={d.id}
-                  className="flex justify-between items-center bg-[#0A0A0B] border border-[#27272A] rounded-xl p-4"
+                  className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[#0A0A0B] border border-[#27272A] rounded-xl p-4 gap-4"
                 >
-                  <div>
-                    <p className="text-white font-bold">
-                      R$ {d.amount.toFixed(2)}
-                    </p>
+                  <div className="w-full md:w-auto">
+                    <div className="flex justify-between md:block mb-2 md:mb-0">
+                      <p className="text-white font-bold text-lg md:text-base">
+                        R$ {d.amount.toFixed(2)}
+                      </p>
+                      <p className={`text-xs font-bold md:mt-1 ${d.status === 'pending' ? 'text-yellow-500' : d.status === 'approved' ? 'text-green-500' : 'text-red-500'}`}>
+                        {d.status.toUpperCase()}
+                      </p>
+                    </div>
+
                     <div className="text-xs text-zinc-400 mt-1">
                       <p className="font-bold text-white">{d.profiles?.full_name || 'Usuário Desconhecido'}</p>
-                      <p>{d.profiles?.email || 'Sem email'}</p>
+                      <p className="truncate max-w-[200px]">{d.profiles?.email || 'Sem email'}</p>
                     </div>
-                    <p className="text-xs text-zinc-500 mt-1">
+                    <p className="text-[10px] text-zinc-500 mt-1">
                       {new Date(d.created_at).toLocaleString()}
-                    </p>
-                    <p className="text-xs text-yellow-500">
-                      Status: {d.status}
                     </p>
                   </div>
 
-                  <div className="flex gap-3 items-center">
+                  <div className="flex gap-3 items-center w-full md:w-auto justify-end border-t border-zinc-800 pt-3 md:border-0 md:pt-0">
                     {d.receipt_path && (
                       <button
                         onClick={() => handleOpenReceipt(d.receipt_path)}
-                        className="flex items-center gap-2 text-[#10B981] font-bold"
+                        className="flex items-center gap-2 text-[#10B981] font-bold text-xs bg-[#10B981]/10 px-3 py-2 rounded-lg"
                       >
-                        <FileText size={18} />
-                        Comprovante
+                        <FileText size={16} />
+                        Ver Comprovante
                       </button>
                     )}
 
                     {d.status === 'pending' && (
-                      <>
+                      <div className="flex gap-2">
                         <button
                           onClick={() =>
                             setConfirmAction({ id: d.id, action: 'approve', type: 'deposit' })
                           }
-                          className="text-green-500"
+                          className="bg-green-500/10 hover:bg-green-500/20 text-green-500 p-2 rounded-lg transition"
                         >
-                          <CheckCircle size={22} />
+                          <CheckCircle size={20} />
                         </button>
 
                         <button
                           onClick={() =>
                             setConfirmAction({ id: d.id, action: 'reject', type: 'deposit' })
                           }
-                          className="text-red-500"
+                          className="bg-red-500/10 hover:bg-red-500/20 text-red-500 p-2 rounded-lg transition"
                         >
-                          <XCircle size={22} />
+                          <XCircle size={20} />
                         </button>
-                      </>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -1265,53 +1268,54 @@ const AdminDashboard: React.FC = () => {
                 filteredWithdraws.map(w => (
                   <div
                     key={w.id}
-                    className="flex justify-between items-center bg-[#0A0A0B] border border-[#27272A] rounded-xl p-4"
+                    className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[#0A0A0B] border border-[#27272A] rounded-xl p-4 gap-4"
                   >
-                    <div>
-                      <p className="text-white font-bold">
-                        R$ {w.amount.toFixed(2)}
+                    <div className="w-full md:w-auto">
+                      <div className="flex justify-between md:block mb-2 md:mb-0">
+                        <p className="text-white font-bold text-lg md:text-base">
+                          R$ {w.amount.toFixed(2)}
+                        </p>
+                        <p className={`text-xs font-bold md:mt-1 ${w.status === 'pending' ? 'text-yellow-500' :
+                          w.status === 'approved' ? 'text-green-500' :
+                            'text-red-500'
+                          }`}>
+                          {w.status.toUpperCase()}
+                        </p>
+                      </div>
+
+                      <p className="text-xs text-zinc-400 mb-1">
+                        <span className="text-white font-bold">{w.profiles?.full_name || 'Desconhecido'}</span>
                       </p>
-                      <p className="text-xs text-zinc-400">
-                        Usuário: {w.profiles?.full_name || 'Desconhecido'}
-                      </p>
-                      <p className="text-xs text-zinc-400">
-                        Chave PIX: {w.pix_key}
-                      </p>
-                      <p className="text-xs text-zinc-400">
-                        Saldo disponível: R$ {w.profiles?.withdrawable_balance?.toFixed(2) || '0.00'}
-                      </p>
-                      <p className="text-xs text-zinc-500">
+                      <div className="bg-zinc-900 p-2 rounded border border-zinc-800 mb-2">
+                        <p className="text-[10px] text-zinc-500 uppercase font-bold">Chave PIX</p>
+                        <p className="text-xs text-white font-mono break-all">{w.pix_key}</p>
+                      </div>
+                      <p className="text-[10px] text-zinc-500">
                         {new Date(w.created_at).toLocaleString()}
-                      </p>
-                      <p className={`text-xs font-bold ${w.status === 'pending' ? 'text-yellow-500' :
-                        w.status === 'approved' ? 'text-green-500' :
-                          'text-red-500'
-                        }`}>
-                        Status: {w.status}
                       </p>
                     </div>
 
-                    <div className="flex gap-3 items-center">
+                    <div className="flex gap-3 items-center w-full md:w-auto justify-end border-t border-zinc-800 pt-3 md:border-0 md:pt-0">
                       {w.status === 'pending' && (
                         <>
                           <button
                             onClick={() =>
                               setConfirmAction({ id: w.id, action: 'approve', type: 'withdraw' })
                             }
-                            className="text-green-500 hover:text-green-400"
+                            className="bg-green-500/10 hover:bg-green-500/20 text-green-500 p-2 rounded-lg transition"
                             title="Aprovar saque"
                           >
-                            <CheckCircle size={22} />
+                            <CheckCircle size={20} />
                           </button>
 
                           <button
                             onClick={() =>
                               setConfirmAction({ id: w.id, action: 'reject', type: 'withdraw' })
                             }
-                            className="text-red-500 hover:text-red-400"
+                            className="bg-red-500/10 hover:bg-red-500/20 text-red-500 p-2 rounded-lg transition"
                             title="Rejeitar saque"
                           >
-                            <XCircle size={22} />
+                            <XCircle size={20} />
                           </button>
                         </>
                       )}

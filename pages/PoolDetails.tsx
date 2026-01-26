@@ -231,48 +231,48 @@ const PoolDetails: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Info */}
         <div className="lg:col-span-2 space-y-8">
-          <div className="bg-[#141417] border border-[#27272A] rounded-3xl p-8">
-            <div className="flex justify-between items-start mb-6">
-              <span className="bg-[#10B981]/10 text-[#10B981] px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest">
+          <div className="bg-[#141417] border border-[#27272A] rounded-2xl md:rounded-3xl p-4 md:p-8">
+            <div className="flex justify-between items-start mb-4 md:mb-6">
+              <span className="bg-[#10B981]/10 text-[#10B981] px-3 py-1 md:px-4 md:py-1.5 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-widest">
                 {pool.modality}
               </span>
-              <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase ${pool.status === 'open' && (!pool.bets_deadline || new Date() < new Date(pool.bets_deadline))
+              <span className={`px-3 py-1 md:px-4 md:py-1.5 rounded-full text-[10px] md:text-xs font-bold uppercase ${pool.status === 'open' && (!pool.bets_deadline || new Date() < new Date(pool.bets_deadline))
                 ? 'bg-blue-500/10 text-blue-500'
                 : 'bg-zinc-500/10 text-zinc-500'
                 }`}>
                 {pool.status === 'open' && (!pool.bets_deadline || new Date() < new Date(pool.bets_deadline))
-                  ? 'Inscrições Abertas'
+                  ? 'Aberto'
                   : 'Encerrado'}
               </span>
             </div>
 
-            <h1 className="text-4xl font-black text-white mb-6">{pool.title}</h1>
+            <h1 className="text-2xl md:text-4xl font-black text-white mb-4 md:mb-6 leading-tight">{pool.title}</h1>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-[#0A0A0B] p-4 rounded-2xl border border-[#27272A]">
-                <Calendar size={18} className="text-[#10B981] mb-2" />
-                <p className="text-[10px] text-zinc-500 uppercase font-bold">Data</p>
-                <p className="text-sm text-white font-bold">{new Date(pool.scheduled_at).toLocaleDateString('pt-BR')}</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+              <div className="bg-[#0A0A0B] p-3 md:p-4 rounded-xl md:rounded-2xl border border-[#27272A]">
+                <Calendar size={16} className="text-[#10B981] mb-1 md:mb-2 md:w-[18px]" />
+                <p className="text-[8px] md:text-[10px] text-zinc-500 uppercase font-bold">Data</p>
+                <p className="text-xs md:text-sm text-white font-bold">{new Date(pool.scheduled_at).toLocaleDateString('pt-BR')}</p>
               </div>
-              <div className="bg-[#0A0A0B] p-4 rounded-2xl border border-[#27272A]">
-                <Clock size={18} className="text-[#10B981] mb-2" />
-                <p className="text-[10px] text-zinc-500 uppercase font-bold">Início</p>
-                <p className="text-sm text-white font-bold">{new Date(pool.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+              <div className="bg-[#0A0A0B] p-3 md:p-4 rounded-xl md:rounded-2xl border border-[#27272A]">
+                <Clock size={16} className="text-[#10B981] mb-1 md:mb-2 md:w-[18px]" />
+                <p className="text-[8px] md:text-[10px] text-zinc-500 uppercase font-bold">Hora</p>
+                <p className="text-xs md:text-sm text-white font-bold">{new Date(pool.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
               </div>
-              <div className="bg-[#0A0A0B] p-4 rounded-2xl border border-[#27272A]">
-                <Wallet size={18} className="text-[#10B981] mb-2" />
-                <p className="text-[10px] text-zinc-500 uppercase font-bold">Prêmio Líquido</p>
+              <div className="bg-[#0A0A0B] p-3 md:p-4 rounded-xl md:rounded-2xl border border-[#27272A]">
+                <Wallet size={16} className="text-[#10B981] mb-1 md:mb-2 md:w-[18px]" />
+                <p className="text-[8px] md:text-[10px] text-zinc-500 uppercase font-bold">Prêmio Líq.</p>
                 <div className="flex flex-col">
-                  <p className="text-sm text-[#10B981] font-black">R$ {netPrize.toFixed(2)}</p>
+                  <p className="text-xs md:text-sm text-[#10B981] font-black">R$ {netPrize.toFixed(2)}</p>
                   {totalGross > 0 && (
-                    <p className="text-[10px] text-zinc-600 line-through">R$ {totalGross.toFixed(2)}</p>
+                    <p className="text-[8px] md:text-[10px] text-zinc-600 line-through">R$ {totalGross.toFixed(2)}</p>
                   )}
                 </div>
               </div>
-              <div className="bg-[#0A0A0B] p-4 rounded-2xl border border-[#27272A]">
-                <Users size={18} className="text-[#10B981] mb-2" />
-                <p className="text-[10px] text-zinc-500 uppercase font-bold">Apostas</p>
-                <p className="text-sm text-white font-bold">{bets.length}</p>
+              <div className="bg-[#0A0A0B] p-3 md:p-4 rounded-xl md:rounded-2xl border border-[#27272A]">
+                <Users size={16} className="text-[#10B981] mb-1 md:mb-2 md:w-[18px]" />
+                <p className="text-[8px] md:text-[10px] text-zinc-500 uppercase font-bold">Apostas</p>
+                <p className="text-xs md:text-sm text-white font-bold">{bets.length}</p>
               </div>
             </div>
           </div>
@@ -337,22 +337,22 @@ const PoolDetails: React.FC = () => {
               Escolha seu Lado
             </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
               {pool.options.map((option) => (
                 <button
                   key={option}
                   disabled={!!hasBet || pool.status !== 'open' || (pool.bets_deadline && new Date() > new Date(pool.bets_deadline))}
                   onClick={() => setSelectedOption(option)}
                   className={`
-                    p-6 rounded-2xl border-2 transition-all text-center
+                    p-3 md:p-6 rounded-xl md:rounded-2xl border transition-all text-center flex flex-col justify-between h-full min-h-[100px]
                     ${selectedOption === option
                       ? 'border-[#10B981] bg-[#10B981]/5 text-white'
                       : 'border-[#27272A] bg-[#0A0A0B] text-zinc-400 hover:border-zinc-500'}
                     ${hasBet?.selected_option === option ? 'border-[#10B981] bg-[#10B981]/5 text-[#10B981]' : ''}
                   `}
                 >
-                  <p className="font-bold text-lg">{option}</p>
-                  <p className="text-[10px] uppercase mt-2 text-zinc-500">
+                  <p className="font-bold text-sm md:text-lg break-words leading-tight">{option}</p>
+                  <p className="text-[10px] uppercase mt-2 text-zinc-500 bg-zinc-900/50 rounded-lg py-1">
                     {bets.filter(b => b.selected_option === option).length} apostas
                   </p>
                 </button>

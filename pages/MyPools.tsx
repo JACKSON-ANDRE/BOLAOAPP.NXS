@@ -147,31 +147,35 @@ const MyPools: React.FC = () => {
       {loading ? (
         <div className="flex justify-center py-20"><Loader2 className="animate-spin text-[#10B981]" size={32} /></div>
       ) : pools.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
           {pools.map(pool => (
             <div
               key={pool.id}
               onClick={() => navigate(`/pools/${pool.id}`)}
-              className="bg-[#141417] border border-[#27272A] p-5 rounded-2xl hover:border-zinc-500 transition-colors cursor-pointer group"
+              className="bg-[#141417] border border-[#27272A] p-3 md:p-5 rounded-xl md:rounded-2xl hover:border-zinc-500 transition-colors cursor-pointer group flex flex-col justify-between min-h-[140px]"
             >
-              <div className="flex justify-between items-start mb-4">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-[#10B981] bg-[#10B981]/10 px-3 py-1 rounded-full">
-                  {pool.modality}
-                </span>
-                <StatusBadge status={pool.status} deadline={pool.bets_deadline} />
+              <div>
+                <div className="flex justify-between items-start mb-2 md:mb-4">
+                  <span className="text-[8px] md:text-[10px] font-bold uppercase tracking-widest text-[#10B981] bg-[#10B981]/10 px-2 py-0.5 md:px-3 md:py-1 rounded-full truncate max-w-[80px]">
+                    {pool.modality}
+                  </span>
+                  <div className="scale-75 origin-right">
+                    <StatusBadge status={pool.status} deadline={pool.bets_deadline} />
+                  </div>
+                </div>
+
+                <h3 className="text-sm md:text-lg font-bold text-white mb-1 group-hover:text-[#10B981] transition-colors line-clamp-2 leading-tight">{pool.title}</h3>
+                <p className="text-[10px] md:text-xs text-zinc-500 mb-2 md:mb-4">
+                  {new Date(pool.scheduled_at).toLocaleDateString('pt-BR')}
+                </p>
               </div>
 
-              <h3 className="text-lg font-bold text-white mb-1 group-hover:text-[#10B981] transition-colors">{pool.title}</h3>
-              <p className="text-xs text-zinc-500 mb-4">
-                {new Date(pool.scheduled_at).toLocaleDateString('pt-BR')} • {new Date(pool.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-              </p>
-
-              <div className="flex items-center justify-between pt-4 border-t border-[#27272A]">
+              <div className="flex items-center justify-between pt-2 md:pt-4 border-t border-[#27272A] mt-auto">
                 <div>
-                  <p className="text-[10px] text-zinc-500 uppercase font-bold">Entrada</p>
-                  <p className="text-sm font-bold text-white">R$ {pool.entry_fee.toFixed(2)}</p>
+                  <p className="text-[8px] md:text-[10px] text-zinc-500 uppercase font-bold">Entrada</p>
+                  <p className="text-xs md:text-sm font-bold text-white">R$ {pool.entry_fee.toFixed(2)}</p>
                 </div>
-                <ArrowRight size={18} className="text-zinc-600 group-hover:text-white transition-colors" />
+                <ArrowRight size={14} className="text-zinc-600 group-hover:text-white transition-colors md:w-[18px]" />
               </div>
             </div>
           ))}
