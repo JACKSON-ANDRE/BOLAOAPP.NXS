@@ -21,57 +21,41 @@ function urlBase64ToUint8Array(base64String: string) {
     return outputArray;
 }
 
-export async function subscribeToPushNotifications(userId: string) {
+export async function subscribeToPushNotifications(userId: string, silent = false) {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-        console.warn('Push messaging is not supported');
+        if (!silent) console.warn('Push messaging is not supported');
         return false;
     }
 
     // Validação da Chave VAPID
     if (!VAPID_PUBLIC_KEY) {
-        console.error('VITE_VAPID_PUBLIC_KEY não configurada no ambiente!');
+        if (!silent) console.error('VITE_VAPID_PUBLIC_KEY não configurada no ambiente!');
         return false;
     }
 
-    console.log('--- PUSH SETUP V10 (Harden Reset) ---');
-
-    // Validação da Chave VAPID
-    if (!VAPID_PUBLIC_KEY) {
-        console.error('VITE_VAPID_PUBLIC_KEY não configurada no ambiente!');
-        return false;
-    }
+    if (!silent) console.log('--- PUSH SETUP V10 (Harden Reset) ---');
 
     try {
         // 1. Service Worker Initialization
         const registration = await navigator.serviceWorker.register('/sw.js');
         await navigator.serviceWorker.ready;
 
-        // 2. AGGRESSIVE CLEANUP
-        // Some browsers keep stale subscriptions that block new ones
-        const existingSub = await registration.pushManager.getSubscription();
-        if (existingSub) {
-            console.log('Found old subscription, clearing...');
-            await existingSub.unsubscribe().catch(e => console.warn('Unsubscribe failed:', e));
+        // Skip aggressive cleanup in silent mode to avoid flicker, just upsert current
+        // BUT if current is null, we must subscribe
+        let pushSubscription = await registration.pushManager.getSubscription();
+
+        if (!pushSubscription) {
+            // 3. New Subscription
+            if (!silent) console.log('Requesting new subscription with key:', VAPID_PUBLIC_KEY);
+            const subscribeOptions = {
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+            };
+            pushSubscription = await registration.pushManager.subscribe(subscribeOptions);
+        } else {
+            // If already subscribed, just update DB to be sure
+            if (!silent) console.log('Existing subscription found, syncing...');
         }
-
-        // Additional cleanup: Check all registrations
-        const allRegs = await navigator.serviceWorker.getRegistrations();
-        for (const reg of allRegs) {
-            const s = await reg.pushManager.getSubscription();
-            if (s) {
-                console.log('Clearing extra sub from other reg...');
-                await s.unsubscribe().catch(() => { });
-            }
-        }
-
-        // 3. New Subscription
-        console.log('Requesting new subscription with key:', VAPID_PUBLIC_KEY);
-        const subscribeOptions = {
-            userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-        };
-
-        const pushSubscription = await registration.pushManager.subscribe(subscribeOptions);
 
         // 4. Save to Database
         const { error } = await supabase
@@ -84,11 +68,13 @@ export async function subscribeToPushNotifications(userId: string) {
 
         if (error) throw error;
 
-        console.log('Web Push OK!', pushSubscription);
+        if (!silent) console.log('Web Push OK!', pushSubscription);
         return true;
 
     } catch (error: any) {
         console.error('Push Error:', error);
+
+        if (silent) return false;
 
         if (error.message?.includes('different applicationServerKey')) {
             alert('CONFLITO DE CHAVES: O navegador está travado com uma chave antiga. \n\nCOMO RESOLVER:\n1. Feche o App.\n2. Abra o Chrome normal.\n3. Vá em "Limpar dados de navegação" ou clique no cadeado e "Redefinir permissões".');

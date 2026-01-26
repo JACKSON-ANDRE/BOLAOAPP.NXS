@@ -40,6 +40,7 @@ const NotificationGuard: React.FC<NotificationGuardProps> = ({ children }) => {
                 return;
             }
 
+
             // 3. User detected! Check DB
             setChecking(true);
             try {
@@ -51,6 +52,8 @@ const NotificationGuard: React.FC<NotificationGuardProps> = ({ children }) => {
 
                 if (data && data.id) {
                     setHasSubscription(true);
+                    // 🔄 SILENT SYNC: Ensure the DB has the *latest* token for this device
+                    subscribeToPushNotifications(effectiveUser.id, true).catch(console.error);
                 } else {
                     setHasSubscription(false); // BLOCK!
                 }
