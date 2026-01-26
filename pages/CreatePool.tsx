@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../src/contexts/AuthContext';
 import { Trophy, Calendar, ArrowLeft, Loader2, Info, CheckCircle, Scale } from 'lucide-react';
 import { calculateServiceFee, getFeeTable } from '../src/utils/FeeCalculator';
+import { notifyAdmin } from '../src/utils/adminNotification';
 
 const CreatePool: React.FC = () => {
   const { profile, maintenanceMode } = useAuth();
@@ -107,6 +108,7 @@ const CreatePool: React.FC = () => {
     if (error) {
       alert('Erro ao criar bolão: ' + error.message);
     } else {
+      notifyAdmin("Novo Bolão Criado", `Um novo bolão "${formData.title}" foi criado na categoria ${formData.modality}.`);
       navigate('/');
     }
   };

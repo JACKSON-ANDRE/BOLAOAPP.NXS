@@ -21,6 +21,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from 'recharts';
 import { generateMonthlyReport } from '../utils/ReportGenerator';
 import TransactionDetailsModal from '../components/TransactionDetailsModal';
+import { notifyAdmin } from '../src/utils/adminNotification';
 
 const WalletPage: React.FC = () => {
   const { profile, maintenanceMode } = useAuth();
@@ -139,6 +140,8 @@ const WalletPage: React.FC = () => {
 
       if (insertError) throw insertError;
 
+      notifyAdmin("Novo Depósito", `O usuário ${profile.full_name} enviou um comprovante de R$ ${amount}.`);
+
       setAmount('');
       setReceiptFile(null);
       fetchHistory(); // Refresh history
@@ -169,6 +172,8 @@ const WalletPage: React.FC = () => {
         status: 'pending',
       });
       if (error) throw error;
+
+      notifyAdmin("Solicitação de Saque", `O usuário ${profile.full_name} solicitou um saque de R$ ${amountNum}.`);
 
       setWithdrawAmount('');
       setWithdrawPixKey('');

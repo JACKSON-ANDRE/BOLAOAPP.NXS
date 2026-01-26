@@ -24,6 +24,7 @@ import {
 import { calculateServiceFee, getFeeTable } from '../src/utils/FeeCalculator';
 import { triggerConfettiBurst } from '../src/utils/confetti';
 import PoolChat from '../components/PoolChat';
+import { notifyAdmin } from '../src/utils/adminNotification';
 
 const PoolDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -163,6 +164,7 @@ const PoolDetails: React.FC = () => {
         alert('Erro ao finalizar bolão: ' + error.message);
       } else {
         alert('Bolão finalizado e prêmios distribuídos com sucesso!');
+        notifyAdmin("Bolão Finalizado", `O bolão "${pool.title}" foi encerrado. Vencedor: ${winningOption}.`);
         setShowFinishModal(false);
         await fetchData();
         // Refresh balances context if possible or just rely on profile refresh

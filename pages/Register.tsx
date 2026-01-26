@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { subscribeToPushNotifications } from '../src/utils/pushNotifications';
+import { notifyAdmin } from '../src/utils/adminNotification';
 import { TrendingUp, Mail, Lock, User, Loader2, CheckCircle2, Camera, Bell } from 'lucide-react';
 
 const Register: React.FC = () => {
@@ -83,6 +84,9 @@ const Register: React.FC = () => {
           console.warn("Erro ao registrar notificações:", pushErr);
         }
       }
+
+      // 5. Notify Admin
+      notifyAdmin("Novo Usuário!", `O usuário ${fullName} acabou de criar uma conta.`);
 
       navigate('/');
     }
