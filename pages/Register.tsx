@@ -2,13 +2,15 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { TrendingUp, Mail, Lock, User, Loader2, CheckCircle2, Camera } from 'lucide-react';
+import { subscribeToPushNotifications } from '../src/utils/pushNotifications';
+import { TrendingUp, Mail, Lock, User, Loader2, CheckCircle2, Camera, Bell } from 'lucide-react';
 
 const Register: React.FC = () => {
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [wantNotifications, setWantNotifications] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -70,6 +72,15 @@ const Register: React.FC = () => {
           }
         } catch (uploadErr) {
           console.error("Erro ao subir foto, mas conta criada:", uploadErr);
+        }
+      }
+
+      // 4. Solicitar Notificações (Se marcado)
+      if (wantNotifications) {
+        try {
+          await subscribeToPushNotifications(data.user.id);
+        } catch (pushErr) {
+          console.warn("Erro ao registrar notificações:", pushErr);
         }
       }
 
@@ -169,6 +180,20 @@ const Register: React.FC = () => {
               <label className="text-xs text-zinc-500 leading-relaxed cursor-pointer" onClick={() => setTermsAccepted(!termsAccepted)}>
                 Eu aceito os <span className="text-[#10B981]">Termos de Uso</span> e a <span className="text-[#10B981]">Política de Privacidade</span> do Bolão App.
               </label>
+            </div>
+
+            <div className="flex items-center gap-3 py-1 bg-[#1C1C21] p-3 rounded-xl border border-[#27272A]">
+              <button
+                type="button"
+                onClick={() => setWantNotifications(!wantNotifications)}
+                className={`flex-shrink-0 transition-colors ${wantNotifications ? 'text-[#10B981]' : 'text-zinc-600'}`}
+              >
+                <CheckCircle2 size={20} fill={wantNotifications ? 'currentColor' : 'none'} />
+              </button>
+              <div className="flex items-center gap-2 text-xs text-zinc-300 font-medium cursor-pointer" onClick={() => setWantNotifications(!wantNotifications)}>
+                <Bell size={14} className="text-[#10B981]" />
+                Receber notificações de bolões e prêmios
+              </div>
             </div>
 
             {error && (
