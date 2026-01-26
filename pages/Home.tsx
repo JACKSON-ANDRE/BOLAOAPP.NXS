@@ -276,10 +276,20 @@ const Home: React.FC = () => {
                       </div>
                     )}
 
-                    <div className="flex flex-col gap-1 md:gap-2 mb-2 md:mb-4">
-                      <div className="flex items-center justify-between text-[10px] md:text-xs text-zinc-500">
-                        <span className="shrink-0">📅 Data:</span>
-                        <span className="text-white font-medium text-right">{new Date(pool.scheduled_at).toLocaleDateString('pt-BR')}</span>
+                    <div className="flex flex-col gap-2 mb-4 bg-zinc-900/50 p-2 rounded-lg">
+                      <div className="flex items-center justify-between text-xs text-zinc-400">
+                        <span className="shrink-0">📅 Jogo:</span>
+                        <span className="text-white font-medium text-right">{new Date(pool.scheduled_at).toLocaleDateString('pt-BR')} {new Date(pool.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+
+                      {/* ALWAYS RENDER FOR DEBUG - IF NULL show placeholder */}
+                      <div className="flex items-center justify-between text-xs text-zinc-400 border-t border-zinc-800 pt-1 mt-1">
+                        <span className="shrink-0 text-red-500 font-bold">⛔ Encerra:</span>
+                        <span className="text-white font-medium text-right">
+                          {pool.bets_deadline
+                            ? `${new Date(pool.bets_deadline).toLocaleDateString('pt-BR')} ${new Date(pool.bets_deadline).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
+                            : <span className="text-zinc-600 italic">--/--</span>}
+                        </span>
                       </div>
                     </div>
 
