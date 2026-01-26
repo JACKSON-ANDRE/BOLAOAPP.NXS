@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../src/contexts/AuthContext';
-import { Send, MessageSquare, ShieldCheck, Lock } from 'lucide-react';
+import { Send, MessageSquare, ShieldCheck, Lock, Trash2 } from 'lucide-react';
 
 interface PoolChatProps {
     poolId: string;
@@ -65,15 +65,24 @@ const PoolChat: React.FC<PoolChatProps> = ({ poolId, category, hasBet, isAdmin }
                     filter: `pool_id=eq.${poolId}`,
                 },
                 async (payload) => {
-                    // We need to fetch the profile data for the new message
                     const { data } = await supabase.from('profiles').select('full_name, avatar_url, role').eq('id', payload.new.user_id).single();
-
                     const newMsg = {
                         ...payload.new,
                         profiles: data
                     };
-
                     setMessages((prev) => [...prev, newMsg]);
+                }
+            )
+            .on(
+                'postgres_changes',
+                {
+                    event: 'DELETE',
+                    schema: 'public',
+                    table: 'pool_chat_messages',
+                    filter: `pool_id=eq.${poolId}`,
+                },
+                (payload) => {
+                    setMessages((prev) => prev.filter(msg => msg.id !== payload.old.id));
                 }
             )
             .subscribe();
@@ -82,9 +91,6 @@ const PoolChat: React.FC<PoolChatProps> = ({ poolId, category, hasBet, isAdmin }
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newMessage.trim() || !profile) return;
-
-        // Client-side quick validation
-        // In a real app, we'd have a bad-words filter here or on backend
 
         const { error } = await supabase
             .from('pool_chat_messages')
@@ -98,6 +104,19 @@ const PoolChat: React.FC<PoolChatProps> = ({ poolId, category, hasBet, isAdmin }
             alert('Erro ao enviar mensagem: ' + error.message);
         } else {
             setNewMessage('');
+        }
+    };
+
+    const handleDeleteMessage = async (messageId: string) => {
+        if (window.confirm('Apagar esta mensagem?')) {
+            const { error } = await supabase
+                .from('pool_chat_messages')
+                .delete()
+                .eq('id', messageId);
+
+            if (error) {
+                alert('Erro ao apagar: ' + error.message);
+            }
         }
     };
 
@@ -141,7 +160,7 @@ const PoolChat: React.FC<PoolChatProps> = ({ poolId, category, hasBet, isAdmin }
                         const isAdminSender = msg.profiles?.role === 'admin';
 
                         return (
-                            <div key={msg.id} className={`flex gap-3 ${isMe ? 'flex-row-reverse' : ''}`}>
+                            <div key={msg.id} className={`flex gap-3 ${isMe ? 'flex-row-reverse' : ''} group`}>
 
                                 {/* Avatar */}
                                 <div className="w-8 h-8 flex-shrink-0">
@@ -169,12 +188,26 @@ const PoolChat: React.FC<PoolChatProps> = ({ poolId, category, hasBet, isAdmin }
                                         <span className="text-[8px] text-zinc-600">{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                     </div>
 
-                                    <div className={`p-3 rounded-2xl text-sm leading-relaxed break-words ${isMe
+                                    <div className="relative group">
+                                        <div className={`p-3 rounded-2xl text-sm leading-relaxed break-words ${isMe
                                             ? 'bg-[#10B981] text-[#0A0A0B] font-medium rounded-tr-none'
                                             : 'bg-[#27272A] text-zinc-200 rounded-tl-none border border-zinc-700'
-                                        }`}>
-                                        {msg.content}
+                                            }`}>
+                                            {msg.content}
+                                        </div>
+
+                                        {/* Delete Button (Only visible on hover + if isMe) */}
+                                        {isMe && (
+                                            <button
+                                                onClick={() => handleDeleteMessage(msg.id)}
+                                                className="absolute -left-8 top-1/2 -translate-y-1/2 p-1.5 text-zinc-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity bg-[#0A0A0B] rounded-full border border-[#27272A]"
+                                                title="Apagar mensagem"
+                                            >
+                                                <Trash2 size={12} />
+                                            </button>
+                                        )}
                                     </div>
+
                                 </div>
                             </div>
                         );
