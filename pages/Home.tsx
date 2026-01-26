@@ -34,7 +34,7 @@ const Home: React.FC = () => {
     // Fetch bets count to calculate prize
     const { data } = await supabase
       .from('pools')
-      .select('*, bets(count), creator:profiles(full_name)')
+      .select('*, bets(count), creator:profiles(full_name, role)')
       .order('scheduled_at', { ascending: true });
 
     if (data) {
@@ -232,9 +232,15 @@ const Home: React.FC = () => {
                     {pool.creator && (
                       <div className="flex items-center gap-1.5 mb-3">
                         <span className="text-[10px] text-zinc-500 font-medium">Criado por:</span>
-                        <span className="text-[10px] text-zinc-300 font-bold bg-zinc-800 px-2 py-0.5 rounded-md border border-zinc-700">
-                          {pool.creator.full_name}
-                        </span>
+                        {(pool.creator as any).role === 'admin' ? (
+                          <span className="text-[10px] text-black font-black bg-[#10B981] px-2 py-0.5 rounded-md border border-[#059669] flex items-center gap-1">
+                            BOLÃO APP <Trophy size={10} className="fill-black" />
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-zinc-300 font-bold bg-zinc-800 px-2 py-0.5 rounded-md border border-zinc-700">
+                            {pool.creator.full_name}
+                          </span>
+                        )}
                       </div>
                     )}
 
