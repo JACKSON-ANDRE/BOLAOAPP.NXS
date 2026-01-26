@@ -9,14 +9,17 @@ import {
   Save,
   LogOut,
   Camera,
-  Bell
+  Bell,
+  Download
 } from "lucide-react";
 import { useAuth } from '../src/contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { subscribeToPushNotifications } from '../src/utils/pushNotifications';
+import { usePWAInstall } from '../src/hooks/usePWAInstall';
 
 const Profile: React.FC = () => {
   const { profile, signOut } = useAuth();
+  const { isInstallable, install } = usePWAInstall(); // Custom Hook
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -346,6 +349,26 @@ const Profile: React.FC = () => {
             <Bell size={16} />
             ATIVAR AGORA
           </button>
+
+          {isInstallable && (
+            <>
+              <div className="h-px bg-[#27272A] my-4" /> {/* Divider */}
+              <h3 className="text-white font-black mb-3 flex items-center gap-2">
+                <Download size={18} className="text-[#10B981]" />
+                Instalar Aplicativo
+              </h3>
+              <p className="text-sm text-zinc-400 mb-4">
+                Adicione o App à sua tela inicial para acesso rápido.
+              </p>
+              <button
+                onClick={install}
+                className="w-full bg-[#10B981]/10 hover:bg-[#10B981]/20 border border-[#10B981]/50 text-[#10B981] font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition"
+              >
+                <Download size={16} />
+                INSTALAR NO DISPOSITIVO
+              </button>
+            </>
+          )}
         </div>
 
       </div>

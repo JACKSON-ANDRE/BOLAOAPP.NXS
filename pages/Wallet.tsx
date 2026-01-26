@@ -304,18 +304,18 @@ const WalletPage: React.FC = () => {
             <button onClick={copyPix} className="text-[#10B981] hover:text-white"><Copy size={16} /></button>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-4">
             <input
               type="number"
-              placeholder="R$ 0,00"
+              placeholder="Valor (R$)"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-xl p-3 md:p-4 text-white text-center font-bold text-sm md:text-lg focus:border-[#10B981] outline-none"
+              className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-xl p-4 text-white text-center font-bold text-lg focus:border-[#10B981] outline-none"
             />
 
-            <label className={`border border-dashed border-[#27272A] rounded-xl p-3 md:p-4 text-center cursor-pointer flex flex-col items-center justify-center hover:bg-[#27272A] transition ${receiptFile ? 'border-[#10B981] bg-[#10B981]/5' : ''}`}>
-              <Upload className={`mb-1 ${receiptFile ? 'text-[#10B981]' : 'text-zinc-500'}`} size={16} />
-              <span className="text-[10px] text-zinc-400 truncate max-w-full">{receiptFile ? 'Alterar' : 'Comprovante'}</span>
+            <label className={`border border-dashed border-[#27272A] rounded-xl p-4 text-center cursor-pointer block hover:bg-[#27272A] transition ${receiptFile ? 'border-[#10B981] bg-[#10B981]/5' : ''}`}>
+              <Upload className={`mx-auto mb-2 ${receiptFile ? 'text-[#10B981]' : 'text-zinc-500'}`} size={20} />
+              <span className="text-xs text-zinc-400">{receiptFile ? receiptFile.name : 'Anexar Comprovante'}</span>
               <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => { if (e.target.files?.[0]) setReceiptFile(e.target.files[0]); }} />
             </label>
           </div>
@@ -446,19 +446,19 @@ const WalletPage: React.FC = () => {
                 <div
                   key={`${item.source}-${item.id}`}
                   onClick={() => setSelectedTransaction(item)}
-                  className="flex items-center justify-between p-3 bg-[#0A0A0B] border border-[#27272A] rounded-xl hover:border-[#10B981]/50 hover:bg-[#10B981]/5 transition-all cursor-pointer group"
+                  className="flex items-center justify-between p-4 bg-[#0A0A0B] border border-[#27272A] rounded-xl hover:border-[#10B981]/50 hover:bg-[#10B981]/5 transition-all cursor-pointer group"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center border border-white/5 flex-shrink-0 ${item.category === 'credit' ? 'bg-[#10B981]/10 text-[#10B981]' :
+                  <div className="flex items-center gap-4">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center border border-white/5 ${item.category === 'credit' ? 'bg-[#10B981]/10 text-[#10B981]' :
                       item.status === 'pending' ? 'bg-yellow-500/10 text-yellow-500' :
                         'bg-red-500/10 text-red-500'
                       }`}>
                       {getIconForType(item.type)}
                     </div>
                     <div>
-                      <p className="font-bold text-white text-xs md:text-sm group-hover:text-[#10B981] transition-colors line-clamp-1">{getLabelForType(item.type)}</p>
-                      <div className="flex gap-2 items-center mt-0.5">
-                        <span className="text-[10px] text-zinc-500">{new Date(item.created_at).toLocaleDateString()}</span>
+                      <p className="font-bold text-white text-sm group-hover:text-[#10B981] transition-colors">{getLabelForType(item.type)}</p>
+                      <div className="flex gap-2 items-center mt-1">
+                        <span className="text-[10px] text-zinc-500">{new Date(item.created_at).toLocaleString()}</span>
                         {item.status === 'rejected' && (
                           <span className="text-[10px] text-red-500 flex items-center gap-1 bg-red-500/10 px-1.5 py-0.5 rounded">
                             <AlertCircle size={10} /> Recusado
