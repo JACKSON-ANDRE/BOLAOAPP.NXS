@@ -13,8 +13,15 @@ const NotificationGuard: React.FC<NotificationGuardProps> = ({ children }) => {
     const [hasSubscription, setHasSubscription] = useState<boolean | null>(null);
     const [checking, setChecking] = useState(false);
     const [activationLoading, setActivationLoading] = useState(false); // This `loading` is for the button, not auth.
+    const [directUserEmail, setDirectUserEmail] = useState<string>('');
 
     useEffect(() => {
+        // Direct Check for debugging
+        supabase.auth.getUser().then(({ data }) => {
+            if (data.user) setDirectUserEmail(data.user.email || 'No Email');
+            else setDirectUserEmail('No User');
+        });
+
         if (authLoading) return; // Wait for auth
 
         if (!session?.user) {
@@ -34,15 +41,15 @@ const NotificationGuard: React.FC<NotificationGuardProps> = ({ children }) => {
                 .eq('user_id', session?.user.id)
                 .maybeSingle();
 
-            if (data) {
+            // Strict check: Must have ID
+            if (data && data.id) {
                 setHasSubscription(true);
             } else {
                 setHasSubscription(false);
             }
         } catch (err) {
             console.error('Error checking sub:', err);
-            // In case of error, default to true to avoid soft-locking if DB fails
-            setHasSubscription(true);
+            setHasSubscription(true); // Fail open if DB error
         } finally {
             setChecking(false);
         }
@@ -118,6 +125,11 @@ const NotificationGuard: React.FC<NotificationGuardProps> = ({ children }) => {
                         Ao clicar, permita as notificações no navegador.
                     </p>
                 </div>
+
+                {/* Debug inside blocker to see why it appeared if necessary */}
+                <div className="text-red-500 text-[10px] mt-4 font-mono">
+                    User: {session?.user?.email} | Direct: {directUserEmail}
+                </div>
             </div>
         );
     }
@@ -125,7 +137,7 @@ const NotificationGuard: React.FC<NotificationGuardProps> = ({ children }) => {
     return (
         <>
             <div className="bg-red-500 text-white text-[10px] font-bold text-center fixed top-0 w-full z-[10000]">
-                DEBUG: Sub={hasSubscription ? 'TRUE' : 'FALSE'} | User={session?.user?.email}
+                CTX_Load: {authLoading ? 'T' : 'F'} | User: {session?.user?.id ? 'OK' : 'NULL'} | Direct: {directUserEmail} | Sub: {hasSubscription ? 'T' : 'F'}
             </div>
             {children}
         </>
