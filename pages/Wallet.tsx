@@ -236,47 +236,47 @@ const WalletPage: React.FC = () => {
         <p className="text-zinc-500">Gerencie seus saldos e movimentações.</p>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-6">
         {/* SALDO PARA JOGO (Green) - Primary Left (60%) */}
-        <div className="md:col-span-3 bg-gradient-to-br from-[#10B981]/20 to-[#0A0A0B] border border-[#10B981]/50 rounded-3xl p-8 relative overflow-hidden group shadow-lg shadow-[#10B981]/10">
-          <div className="absolute top-0 right-0 p-8 opacity-20 group-hover:opacity-30 transition-opacity">
-            <Wallet size={120} className="text-[#10B981]" />
+        <div className="col-span-1 md:col-span-3 bg-gradient-to-br from-[#10B981]/20 to-[#0A0A0B] border border-[#10B981]/50 rounded-2xl md:rounded-3xl p-4 md:p-8 relative overflow-hidden group shadow-lg shadow-[#10B981]/10">
+          <div className="absolute top-0 right-0 p-4 md:p-8 opacity-20 group-hover:opacity-30 transition-opacity">
+            <Wallet size={60} className="text-[#10B981] md:w-[120px] md:h-[120px]" />
           </div>
           <div className="relative z-10">
-            <p className="text-sm text-[#10B981] font-bold uppercase tracking-widest mb-2">Saldo para Jogo</p>
-            <h2 className="text-5xl font-black text-white mb-6">
+            <p className="text-[10px] md:text-sm text-[#10B981] font-bold uppercase tracking-widest mb-1 md:mb-2">Saldo Jogo</p>
+            <h2 className="text-2xl md:text-5xl font-black text-white mb-2 md:mb-6">
               R$ {profile?.balance?.toFixed(2) || '0.00'}
             </h2>
-            <p className="text-sm text-[#10B981]/80 mb-6 leading-relaxed font-bold max-w-md">
+            <p className="text-[10px] md:text-sm text-[#10B981]/80 mb-0 md:mb-6 leading-relaxed font-bold max-w-md hidden md:block">
               Saldo total disponível para apostas. (Inclui depósitos e prêmios)
             </p>
           </div>
         </div>
 
         {/* SALDO PARA SAQUE (Orange) - Secondary Right (40%) */}
-        <div className="md:col-span-2 bg-gradient-to-br from-orange-500/10 to-[#0A0A0B] border border-orange-500/20 rounded-3xl p-8 relative overflow-hidden group shadow-lg shadow-orange-500/5 flex flex-col justify-center">
-          <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
-            <Trophy size={100} className="text-orange-500" />
+        <div className="col-span-1 md:col-span-2 bg-gradient-to-br from-orange-500/10 to-[#0A0A0B] border border-orange-500/20 rounded-2xl md:rounded-3xl p-4 md:p-8 relative overflow-hidden group shadow-lg shadow-orange-500/5 flex flex-col justify-center">
+          <div className="absolute top-0 right-0 p-4 md:p-8 opacity-10 group-hover:scale-110 transition-transform">
+            <Trophy size={60} className="text-orange-500 md:w-[100px] md:h-[100px]" />
           </div>
           <div className="relative z-10">
-            <p className="text-xs text-orange-400 font-black uppercase tracking-widest mb-1 flex items-center gap-2">
-              <Trophy size={14} />
-              Saldo para Saque
+            <p className="text-[10px] md:text-xs text-orange-400 font-black uppercase tracking-widest mb-1 flex items-center gap-1 md:gap-2">
+              <Trophy size={12} className="md:w-[14px] md:h-[14px]" />
+              Saldo Saque
             </p>
-            <h2 className="text-4xl font-black text-white mb-4">R$ {profile?.withdrawable_balance?.toFixed(2) || '0.00'}</h2>
+            <h2 className="text-2xl md:text-4xl font-black text-white mb-2 md:mb-4">R$ {profile?.withdrawable_balance?.toFixed(2) || '0.00'}</h2>
 
             {maintenanceMode && profile?.role !== 'admin' ? (
-              <button disabled className="w-full bg-[#27272A] text-zinc-500 font-bold py-3 rounded-xl flex items-center justify-center gap-2 border border-white/5 cursor-not-allowed text-xs">
-                <AlertCircle size={16} />
-                SAQUES SUSPENSOS
+              <button disabled className="w-full bg-[#27272A] text-zinc-500 font-bold py-2 md:py-3 rounded-xl flex items-center justify-center gap-2 border border-white/5 cursor-not-allowed text-[10px] md:text-xs">
+                <AlertCircle size={14} className="md:w-4 md:h-4" />
+                SUSPENSO
               </button>
             ) : (
               <button
                 onClick={() => setShowWithdrawModal(true)}
-                className="w-full bg-orange-500 hover:bg-orange-600 text-black font-black py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 transition-all hover:scale-[1.02]"
+                className="w-full bg-orange-500 hover:bg-orange-600 text-black font-black py-2 md:py-3 rounded-lg md:rounded-xl flex items-center justify-center gap-1 md:gap-2 shadow-lg shadow-orange-500/20 transition-all hover:scale-[1.02] text-xs md:text-base"
               >
-                <ArrowUpCircle size={20} strokeWidth={2.5} />
-                SOLICITAR SAQUE
+                <ArrowUpCircle size={14} strokeWidth={2.5} className="md:w-5 md:h-5" />
+                SACAR
               </button>
             )}
           </div>

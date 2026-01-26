@@ -126,24 +126,24 @@ const CreatePool: React.FC = () => {
 
         <div className="bg-[#141417] border border-[#27272A] rounded-3xl overflow-hidden">
 
-          <div className="flex items-center gap-3 px-6 py-5 border-b border-[#27272A]">
-            <div className="w-10 h-10 rounded-xl bg-[#10B981]/10 flex items-center justify-center">
-              <Trophy className="text-[#10B981]" size={20} />
+          <div className="flex items-center gap-3 px-4 py-3 md:px-6 md:py-5 border-b border-[#27272A]">
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-[#10B981]/10 flex items-center justify-center">
+              <Trophy className="text-[#10B981]" size={16} />
             </div>
-            <h1 className="text-lg font-black text-white">
+            <h1 className="text-base md:text-lg font-black text-white">
               CRIAR NOVO BOLÃO
             </h1>
           </div>
 
-          <form onSubmit={handlePreSubmit} className="p-6 space-y-5">
+          <form onSubmit={handlePreSubmit} className="p-4 md:p-6 space-y-4 md:space-y-5">
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3 md:gap-4">
               <div>
-                <label className="text-xs text-zinc-400">MODALIDADE ESPORTIVA *</label>
+                <label className="text-[10px] md:text-xs text-zinc-400">MODALIDADE *</label>
                 <select
                   value={formData.modality}
                   onChange={(e) => setFormData({ ...formData, modality: e.target.value })}
-                  className="w-full mt-1 bg-[#0A0A0B] border border-[#27272A] rounded-xl p-3 text-white"
+                  className="w-full mt-1 bg-[#0A0A0B] border border-[#27272A] rounded-lg md:rounded-xl p-2 md:p-3 text-sm text-white"
                 >
                   <option>Beach Tennis</option>
                   <option>Futebol</option>
@@ -156,64 +156,65 @@ const CreatePool: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-xs text-zinc-400">NOME DO EVENTO *</label>
+                <label className="text-[10px] md:text-xs text-zinc-400">EVENTO *</label>
                 <input
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full mt-1 bg-[#0A0A0B] border border-[#27272A] rounded-xl p-3 text-white"
-                  placeholder="Ex: Final do Torneio"
+                  className="w-full mt-1 bg-[#0A0A0B] border border-[#27272A] rounded-lg md:rounded-xl p-2 md:p-3 text-sm text-white"
+                  placeholder="Ex: Torneio"
                 />
               </div>
 
               <div>
-                <label className="text-xs text-zinc-400">TIME / LADO A *</label>
+                <label className="text-[10px] md:text-xs text-zinc-400">TIME A *</label>
                 <input
                   value={formData.teamA}
                   onChange={(e) => setFormData({ ...formData, teamA: e.target.value })}
-                  className="w-full mt-1 bg-[#0A0A0B] border border-[#27272A] rounded-xl p-3 text-white"
-                  placeholder="Ex: Time Alpha"
+                  className="w-full mt-1 bg-[#0A0A0B] border border-[#27272A] rounded-lg md:rounded-xl p-2 md:p-3 text-sm text-white"
+                  placeholder="Ex: Alpha"
                 />
               </div>
 
               <div>
-                <label className="text-xs text-zinc-400">TIME / LADO B *</label>
+                <label className="text-[10px] md:text-xs text-zinc-400">TIME B *</label>
                 <input
                   value={formData.teamB}
                   onChange={(e) => setFormData({ ...formData, teamB: e.target.value })}
-                  className="w-full mt-1 bg-[#0A0A0B] border border-[#27272A] rounded-xl p-3 text-white"
-                  placeholder="Ex: Time Beta"
+                  className="w-full mt-1 bg-[#0A0A0B] border border-[#27272A] rounded-lg md:rounded-xl p-2 md:p-3 text-sm text-white"
+                  placeholder="Ex: Beta"
                 />
               </div>
 
               <div>
-                <label className="text-xs text-zinc-400">VALOR APOSTA (R$) *</label>
+                <label className="text-[10px] md:text-xs text-zinc-400">APOSTA (R$) *</label>
                 <input
+                  type="number"
                   value={formData.entry_fee}
                   onChange={(e) => setFormData({ ...formData, entry_fee: e.target.value })}
-                  className="w-full mt-1 bg-[#0A0A0B] border border-[#27272A] rounded-xl p-3 text-[#10B981]"
+                  className="w-full mt-1 bg-[#0A0A0B] border border-[#27272A] rounded-lg md:rounded-xl p-2 md:p-3 text-sm text-[#10B981] font-bold"
                 />
               </div>
 
               <div>
-                <label className="text-xs text-zinc-400">FIM DAS APOSTAS *</label>
+                <label className="text-[10px] md:text-xs text-zinc-400">FIM APOSTAS *</label>
                 <input
                   type="datetime-local"
                   value={formData.bets_deadline}
                   onChange={(e) => setFormData({ ...formData, bets_deadline: e.target.value })}
-                  className="w-full mt-1 bg-[#0A0A0B] border border-[#27272A] rounded-xl p-3 text-white"
+                  className="w-full mt-1 bg-[#0A0A0B] border border-[#27272A] rounded-lg md:rounded-xl p-2 md:p-3 text-xs md:text-sm text-white"
                 />
               </div>
             </div>
 
             <div>
-              <label className="text-xs text-zinc-400">DATA E HORA REAL DO EVENTO *</label>
+              <label className="text-[10px] md:text-xs text-zinc-400">DATA DO EVENTO *</label>
               <div className="relative">
-                <Calendar className="absolute right-3 top-3 text-zinc-500" size={16} />
+                <Calendar className="absolute right-3 top-2.5 text-zinc-500" size={14} />
                 <input
                   type="datetime-local"
                   value={formData.scheduled_at}
                   onChange={(e) => setFormData({ ...formData, scheduled_at: e.target.value })}
-                  className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-xl p-3 text-white"
+                  className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-lg md:rounded-xl p-2 md:p-3 text-xs md:text-sm text-white"
                 />
               </div>
             </div>
@@ -249,7 +250,7 @@ const CreatePool: React.FC = () => {
               <button
                 type="submit"
                 disabled={!isFormValid || loading}
-                className={`w-full font-black py-4 rounded-2xl transition-all ${isFormValid && !loading
+                className={`w-full font-black py-3 md:py-4 rounded-xl md:rounded-2xl transition-all text-sm md:text-base ${isFormValid && !loading
                   ? 'bg-[#10B981] hover:bg-[#059669] text-[#0A0A0B]'
                   : 'bg-[#27272A] text-zinc-500 cursor-not-allowed'
                   }`}
