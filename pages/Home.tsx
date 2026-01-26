@@ -283,9 +283,9 @@ const Home: React.FC = () => {
                       </div>
 
                       {/* ALWAYS RENDER FOR DEBUG - IF NULL show placeholder */}
-                      <div className="flex flex-col md:flex-row md:items-center justify-between text-[10px] md:text-xs text-zinc-400 border-t border-zinc-800 pt-1 mt-1 gap-1 md:gap-0">
-                        <span className="shrink-0 text-red-500 font-bold">Fim das apostas:</span>
-                        <span className="text-white font-medium text-left md:text-right">
+                      <div className="flex items-center justify-between text-xs text-zinc-400 border-t border-zinc-800 pt-2 mt-1">
+                        <span className="shrink-0 text-red-500 font-bold text-[10px] md:text-xs">Fim das apostas:</span>
+                        <span className="text-white font-medium text-right text-[10px] md:text-xs">
                           {pool.bets_deadline
                             ? `${new Date(pool.bets_deadline).toLocaleDateString('pt-BR')} ${new Date(pool.bets_deadline).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
                             : <span className="text-zinc-600 italic">--/--</span>}
