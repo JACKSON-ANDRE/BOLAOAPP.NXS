@@ -33,20 +33,39 @@ export async function subscribeToPushNotifications(userId: string) {
         return false;
     }
 
+    console.log('--- PUSH SETUP V10 (Harden Reset) ---');
+
+    // Validação da Chave VAPID
+    if (!VAPID_PUBLIC_KEY) {
+        console.error('VITE_VAPID_PUBLIC_KEY não configurada no ambiente!');
+        return false;
+    }
+
     try {
-        // 1. Register Service Worker if not already
+        // 1. Service Worker Initialization
         const registration = await navigator.serviceWorker.register('/sw.js');
         await navigator.serviceWorker.ready;
 
-        // 2. FORCE UNSUBSCRIBE FIRST (Handle Key Changes)
-        // Isso resolve o erro "A subscription with a different applicationServerKey already exists"
+        // 2. AGGRESSIVE CLEANUP
+        // Some browsers keep stale subscriptions that block new ones
         const existingSub = await registration.pushManager.getSubscription();
         if (existingSub) {
-            console.log('Unsubscribing old push sub to apply new keys...');
-            await existingSub.unsubscribe();
+            console.log('Found old subscription, clearing...');
+            await existingSub.unsubscribe().catch(e => console.warn('Unsubscribe failed:', e));
         }
 
-        // 3. Subscribe with new key
+        // Additional cleanup: Check all registrations
+        const allRegs = await navigator.serviceWorker.getRegistrations();
+        for (const reg of allRegs) {
+            const s = await reg.pushManager.getSubscription();
+            if (s) {
+                console.log('Clearing extra sub from other reg...');
+                await s.unsubscribe().catch(() => { });
+            }
+        }
+
+        // 3. New Subscription
+        console.log('Requesting new subscription with key:', VAPID_PUBLIC_KEY);
         const subscribeOptions = {
             userVisibleOnly: true,
             applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
@@ -61,23 +80,24 @@ export async function subscribeToPushNotifications(userId: string) {
                 user_id: userId,
                 subscription: pushSubscription,
                 user_agent: navigator.userAgent
-            }, { onConflict: 'user_id' }); // Use upsert to avoid duplicates
+            }, { onConflict: 'user_id' });
 
         if (error) throw error;
 
-        console.log('Web Push Subscribed Successfully:', pushSubscription);
+        console.log('Web Push OK!', pushSubscription);
         return true;
 
     } catch (error: any) {
-        console.error('Failed to subscribe to Web Push:', error);
+        console.error('Push Error:', error);
 
-        // Dica específica para Modo Incógnito
-        if (error.name === 'AbortError' || error.message?.includes('incognito')) {
-            alert('Atenção: Notificações não funcionam em Modo Incógnito do Chrome. Use a janela normal.');
+        if (error.message?.includes('different applicationServerKey')) {
+            alert('CONFLITO DE CHAVES: O navegador está travado com uma chave antiga. \n\nCOMO RESOLVER:\n1. Feche o App.\n2. Abra o Chrome normal.\n3. Vá em "Limpar dados de navegação" ou clique no cadeado e "Redefinir permissões".');
+        } else if (error.name === 'AbortError' || error.message?.includes('incognito')) {
+            alert('Atenção: Notificações não funcionam em Modo Incógnito/Anônimo.');
         } else if (error.name === 'NotAllowedError') {
-            alert('Permissão Negada! Por favor, clique no cadeado do navegador e ative as notificações.');
+            alert('Permissão Negada! Ative no cadeado do navegador.');
         } else {
-            alert('Erro ao ativar notificações: ' + error.message);
+            alert('Erro: ' + error.message);
         }
 
         return false;
