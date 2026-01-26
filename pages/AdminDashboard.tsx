@@ -1500,7 +1500,7 @@ const AdminDashboard: React.FC = () => {
                     <div className="flex items-start gap-6">
                       <div className="w-32 h-32 bg-black rounded-2xl flex items-center justify-center p-2 overflow-hidden border border-[#27272A] shadow-lg">
                         <img
-                          src="/pwa-icon-192.png" // Points to local/public for preview
+                          src="https://vucvouxutompqoqhxzmi.supabase.co/storage/v1/object/public/app_assets/pwa-icon.png"
                           onError={(e) => (e.currentTarget.src = 'https://placehold.co/192x192/0A0A0B/FFF?text=Icon')}
                           className="w-full h-full object-contain rounded-xl"
                           alt="Current PWA Icon"

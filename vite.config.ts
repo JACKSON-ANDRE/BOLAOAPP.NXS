@@ -34,17 +34,17 @@ export default defineConfig(({ mode }) => {
           start_url: '/',
           icons: [
             {
-              src: 'pwa-icon-192.png',
-              sizes: '192x192',
+              src: 'https://vucvouxutompqoqhxzmi.supabase.co/storage/v1/object/public/app_assets/pwa-icon.png',
+              sizes: '192x192', // We use the same source, allowing browser to scale or user to upload high res
               type: 'image/png'
             },
             {
-              src: 'pwa-icon-512.png',
+              src: 'https://vucvouxutompqoqhxzmi.supabase.co/storage/v1/object/public/app_assets/pwa-icon.png',
               sizes: '512x512',
               type: 'image/png'
             },
             {
-              src: 'pwa-icon-512.png',
+              src: 'https://vucvouxutompqoqhxzmi.supabase.co/storage/v1/object/public/app_assets/pwa-icon.png',
               sizes: '512x512',
               type: 'image/png',
               purpose: 'any maskable'
