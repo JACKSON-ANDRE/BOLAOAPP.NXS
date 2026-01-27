@@ -35,9 +35,10 @@ const Gateway: React.FC = () => {
                         <span>Logar no Navegador</span>
                     </Link>
 
-                    {/* INSTALL BUTTON (OR IOS INSTRUCTION) */}
+                    {/* INSTALL BUTTON & INSTRUCTIONS */}
                     {!isStandalone && (
-                        <>
+                        <div className="flex flex-col gap-4">
+                            {/* Primary Install Button - Shows helper if not natively installable */}
                             {isInstallable ? (
                                 <button
                                     onClick={install}
@@ -47,17 +48,26 @@ const Gateway: React.FC = () => {
                                     <span>Baixar Aplicativo</span>
                                 </button>
                             ) : (
-                                // Only show iOS instructions if actually on iOS
-                                isIOS && (
-                                    <div className="bg-[#141417] border border-[#27272A] rounded-2xl p-4 text-sm text-zinc-500 animate-in fade-in duration-700">
-                                        <p className="mb-2">Para instalar no iOS:</p>
-                                        <p className="flex items-center justify-center gap-2 font-bold text-white">
-                                            Compartilhar <Share size={16} /> &gt; Tela de Início <PlusSquare size={16} />
-                                        </p>
-                                    </div>
-                                )
+                                // Fallback Button for when prompt is unavailable (Already installed, dismissed, or iOS)
+                                <button
+                                    onClick={() => alert('Para instalar:\n\n1. Abra o menu do navegador (3 pontinhos ou Compartilhar)\n2. Selecione "Adicionar à Tela Inicial" ou "Instalar App"')}
+                                    className="w-full bg-[#10B981]/10 hover:bg-[#10B981]/20 border border-[#10B981]/50 text-[#10B981] font-bold py-4 rounded-2xl transition-all duration-200 flex items-center justify-center gap-3 text-lg"
+                                >
+                                    <Download size={22} />
+                                    <span>Baixar Aplicativo</span>
+                                </button>
                             )}
-                        </>
+
+                            {/* iOS Instructions Card (Keep visible for iOS as it's tricky) */}
+                            {isIOS && !isInstallable && (
+                                <div className="bg-[#141417] border border-[#27272A] rounded-2xl p-4 text-sm text-zinc-500 animate-in fade-in duration-700">
+                                    <p className="mb-2">Para instalar no iOS:</p>
+                                    <p className="flex items-center justify-center gap-2 font-bold text-white">
+                                        Compartilhar <Share size={16} /> &gt; Tela de Início <PlusSquare size={16} />
+                                    </p>
+                                </div>
+                            )}
+                        </div>
                     )}
                 </div>
 
