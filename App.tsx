@@ -8,6 +8,7 @@ import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import UpdatePassword from './pages/UpdatePassword';
 import Home from './pages/Home';
+import Gateway from './pages/Gateway'; // Import Gateway
 import ProfilePage from './pages/Profile';
 import Wallet from './pages/Wallet';
 import CreatePool from './pages/CreatePool';
@@ -42,8 +43,8 @@ const AppContent: React.FC = () => {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/update-password" element={<UpdatePassword />} />
 
-        {/* PROTECTED ROOT ROUTE: Redirects to /login if not authenticated */}
-        <Route path="/" element={user ? <Layout><Home /></Layout> : <Navigate to="/login" />} />
+        {/* PROTECTED ROOT ROUTE: Redirects to Gateway if not authenticated */}
+        <Route path="/" element={user ? <Layout><Home /></Layout> : <Gateway />} />
 
         {/* Community Route */}
         <Route path="/community" element={user ? <Layout><Community /></Layout> : <Navigate to="/login" />} />
@@ -56,6 +57,8 @@ const AppContent: React.FC = () => {
         <Route path="/wallet" element={user ? <Layout><Wallet /></Layout> : <Navigate to="/login" />} />
         <Route path="/admin" element={user ? <Layout><AdminDashboard /></Layout> : <Navigate to="/login" />} />
 
+
+        {/* Redirect unknown routes to root (Gateway or Home) */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </HashRouter>

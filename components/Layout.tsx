@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../src/contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+import { usePWAInstall } from '../src/hooks/usePWAInstall';
 import {
   Home,
   Wallet,
@@ -17,6 +18,7 @@ import {
   Bell,
   Trash2,
   Users,
+  Download,
 } from 'lucide-react';
 
 interface NotificationItem {
@@ -33,6 +35,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { profile, signOut, user, maintenanceMode } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const { isInstallable, install } = usePWAInstall();
 
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [isNotifOpen, setNotifOpen] = useState(false);
@@ -217,6 +220,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <MessageCircle size={20} />
               <span>Suporte</span>
             </a>
+
+            {isInstallable && (
+              <button
+                onClick={install}
+                className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-zinc-400 hover:bg-[#1C1C21] hover:text-white"
+              >
+                <Download size={20} />
+                <span>Instalar App</span>
+              </button>
+            )}
 
             <button
               onClick={handleLogout}

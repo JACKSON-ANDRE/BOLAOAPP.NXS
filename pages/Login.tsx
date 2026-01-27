@@ -131,16 +131,7 @@ const Login: React.FC = () => {
             </Link>
           </div>
 
-          {/* PWA INSTALL BUTTON */}
-          {isInstallable && (
-            <button
-              onClick={install}
-              className="mt-6 w-full border border-[#27272A] hover:border-[#10B981] text-zinc-400 hover:text-[#10B981] font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 text-sm"
-            >
-              <Download size={16} />
-              Instalar App no Celular
-            </button>
-          )}
+          {/* PWA INSTALL BUTTON REMOVED (Moved to Gateway) */}
         </div>
       </div>
     </div>
