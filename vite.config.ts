@@ -38,17 +38,17 @@ export default defineConfig(({ mode }) => {
           start_url: '/',
           icons: [
             {
-              src: 'https://vucvouxutompqoqhxzmi.supabase.co/storage/v1/object/public/app_assets/pwa-icon.png?v=2',
+              src: 'https://vucvouxutompqoqhxzmi.supabase.co/storage/v1/object/public/app_assets/pwa-icon.png?v=3',
               sizes: '192x192', // We use the same source, allowing browser to scale or user to upload high res
               type: 'image/png'
             },
             {
-              src: 'https://vucvouxutompqoqhxzmi.supabase.co/storage/v1/object/public/app_assets/pwa-icon.png?v=2',
+              src: 'https://vucvouxutompqoqhxzmi.supabase.co/storage/v1/object/public/app_assets/pwa-icon.png?v=3',
               sizes: '512x512',
               type: 'image/png'
             },
             {
-              src: 'https://vucvouxutompqoqhxzmi.supabase.co/storage/v1/object/public/app_assets/pwa-icon.png?v=2',
+              src: 'https://vucvouxutompqoqhxzmi.supabase.co/storage/v1/object/public/app_assets/pwa-icon.png?v=3',
               sizes: '512x512',
               type: 'image/png',
               purpose: 'any maskable'
