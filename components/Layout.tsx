@@ -100,7 +100,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
     // REALTIME SUBSCRIPTION
     const channel = supabase
-      .channel('schema-db-changes')
+      .channel('user-notifications-realtime') // Nome mais específico
       .on(
         'postgres_changes',
         {
@@ -109,11 +109,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           table: 'user_notifications',
           filter: `user_id=eq.${user.id}`
         },
-        () => {
+        (payload) => {
+          console.log('Notificação Realtime recebida:', payload);
           fetchNotifications();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Status da conexão Realtime:', status);
+      });
 
     return () => {
       supabase.removeChannel(channel);
