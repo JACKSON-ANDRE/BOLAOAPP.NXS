@@ -25,11 +25,11 @@ export default defineConfig(({ mode }) => {
           type: 'module', // Required for dev
         },
         manifestFilename: 'manifest.json', // FORCE output as manifest.json to fix 404s/caching issues
-        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png'],
         manifest: {
           name: 'Bolão App',
           short_name: 'Bolão App',
-          description: 'Participe dos melhores bolões de futebol!',
+          description: 'Aposte com amigos, ganhe com a comunidade.',
           theme_color: '#0A0A0B',
           background_color: '#0A0A0B',
           display: 'standalone',
@@ -38,17 +38,17 @@ export default defineConfig(({ mode }) => {
           start_url: '/',
           icons: [
             {
-              src: 'https://vucvouxutompqoqhxzmi.supabase.co/storage/v1/object/public/app_assets/pwa-icon.png?v=3',
-              sizes: '192x192', // We use the same source, allowing browser to scale or user to upload high res
+              src: 'pwa-192x192.png',
+              sizes: '192x192',
               type: 'image/png'
             },
             {
-              src: 'https://vucvouxutompqoqhxzmi.supabase.co/storage/v1/object/public/app_assets/pwa-icon.png?v=3',
+              src: 'pwa-512x512.png',
               sizes: '512x512',
               type: 'image/png'
             },
             {
-              src: 'https://vucvouxutompqoqhxzmi.supabase.co/storage/v1/object/public/app_assets/pwa-icon.png?v=3',
+              src: 'pwa-512x512.png',
               sizes: '512x512',
               type: 'image/png',
               purpose: 'any maskable'

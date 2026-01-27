@@ -1,6 +1,6 @@
 -- Create table to store user push subscriptions
 create table if not exists user_push_subscriptions (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users not null,
   subscription jsonb not null,
   user_agent text,

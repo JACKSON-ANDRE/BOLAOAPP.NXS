@@ -124,11 +124,20 @@ const Login: React.FC = () => {
             </button>
           </form>
 
-          <div className="mt-8 text-center text-zinc-500 text-sm">
-            Ainda não tem conta?{' '}
-            <Link to="/register" className="text-[#10B981] font-semibold hover:underline">
-              Crie uma agora
-            </Link>
+          <div className="mt-8 text-center space-y-4">
+            <div className="text-zinc-500 text-sm">
+              Ainda não tem conta?{' '}
+              <Link to="/register" className="text-[#10B981] font-semibold hover:underline">
+                Crie uma agora
+              </Link>
+            </div>
+
+            <div className="pt-4 border-t border-[#27272A]">
+              <Link to="/" className="text-zinc-500 hover:text-white text-xs flex items-center justify-center gap-2 transition-colors">
+                <Download size={14} />
+                <span>Ver opções de instalação do App</span>
+              </Link>
+            </div>
           </div>
 
           {/* PWA INSTALL BUTTON REMOVED (Moved to Gateway) */}

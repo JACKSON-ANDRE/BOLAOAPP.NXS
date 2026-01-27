@@ -25,6 +25,7 @@ import NotificationGuard from './src/components/NotificationGuard';
 
 const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
 
   if (loading) {
     return (
@@ -38,13 +39,33 @@ const AppContent: React.FC = () => {
     <HashRouter>
       <ReloadPrompt />
       <Routes>
-        <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
+        {/* LOGIN ROUTE: Validates if we should be here or at Gateway */}
+        <Route
+          path="/login"
+          element={
+            !user
+              ? <Login />
+              : <Navigate to="/" />
+          }
+        />
+
         <Route path="/register" element={!user ? <Register /> : <Navigate to="/" />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/update-password" element={<UpdatePassword />} />
 
-        {/* PROTECTED ROOT ROUTE: Redirects to Gateway if not authenticated */}
-        <Route path="/" element={user ? <Layout><Home /></Layout> : <Gateway />} />
+        {/* ROOT ROUTE logic:
+            - Logged in: Go Home.
+            - Not logged in + PWA (Installed): Go to Login.
+            - Not logged in + Browser: Go to Gateway.
+        */}
+        <Route
+          path="/"
+          element={
+            user
+              ? <Layout><Home /></Layout>
+              : (isStandalone ? <Navigate to="/login" /> : <Gateway />)
+          }
+        />
 
         {/* Community Route */}
         <Route path="/community" element={user ? <Layout><Community /></Layout> : <Navigate to="/login" />} />
@@ -58,7 +79,7 @@ const AppContent: React.FC = () => {
         <Route path="/admin" element={user ? <Layout><AdminDashboard /></Layout> : <Navigate to="/login" />} />
 
 
-        {/* Redirect unknown routes to root (Gateway or Home) */}
+        {/* Redirect unknown routes to root (Safe entry point) */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </HashRouter>
