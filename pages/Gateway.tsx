@@ -9,6 +9,13 @@ const Gateway: React.FC = () => {
     const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
 
+    React.useEffect(() => {
+        // Se estiver instalado (PWA), pula o Gateway e vai pro Login
+        if (isStandalone) {
+            navigate('/login');
+        }
+    }, [isStandalone, navigate]);
+
     return (
         <div className="min-h-screen bg-[#0A0A0B] flex flex-col items-center justify-center p-6 text-center">
             <div className="max-w-md w-full animate-in fade-in zoom-in duration-500">
