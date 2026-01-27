@@ -85,12 +85,23 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   const deleteNotification = async (id: string) => {
-    await supabase
-      .from('user_notifications')
-      .update({ deleted_at: new Date().toISOString() })
-      .eq('id', id);
+    try {
+      // 1. Update UI immediately (Optimistic Update)
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
 
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
+      // 2. Perform DB Update (Soft Delete)
+      const { error } = await supabase
+        .from('user_notifications')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', id);
+
+      if (error) throw error;
+    } catch (err: any) {
+      console.error('Erro ao deletar notificação:', err.message);
+      // Se falhar no banco, poderíamos reverter o estado, 
+      // mas para o usuário é melhor tentar recarregar no topo.
+      fetchNotifications();
+    }
   };
 
   useEffect(() => {
@@ -110,8 +121,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           filter: `user_id=eq.${user.id}`
         },
         (payload) => {
-          console.log('Notificação Realtime recebida:', payload);
-          fetchNotifications();
+          console.log('Realtime Event:', payload.eventType, payload);
+
+          if (payload.eventType === 'DELETE') {
+            // Se foi deletado no banco, removemos da lista local imediatamente
+            setNotifications(prev => prev.filter(n => n.id !== payload.old.id));
+          } else {
+            // INSERT ou UPDATE (como o deleted_at)
+            fetchNotifications();
+          }
         }
       )
       .subscribe((status) => {
