@@ -3,63 +3,71 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Download, LogIn, Share, PlusSquare } from 'lucide-react';
 import { usePWAInstall } from '../src/hooks/usePWAInstall';
 
-<div className="max-w-md w-full animate-in fade-in zoom-in duration-500">
+const Gateway: React.FC = () => {
+    const { isInstallable, install } = usePWAInstall();
+    const navigate = useNavigate();
+    const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
 
-    {/* LOGO */}
-    <div className="mb-10 flex justify-center">
-        <img
-            src="/login-logo.jpg"
-            alt="Bolão App"
-            className="w-32 h-32 rounded-3xl shadow-2xl shadow-emerald-500/20"
-        />
-    </div>
+    return (
+        <div className="min-h-screen bg-[#0A0A0B] flex flex-col items-center justify-center p-6 text-center">
+            <div className="max-w-md w-full animate-in fade-in zoom-in duration-500">
 
-    <h1 className="text-4xl font-black text-white mb-2">BOLÃO APP</h1>
-    <p className="text-zinc-500 text-lg mb-10">Aposte com amigos, ganhe com a comunidade.</p>
+                {/* LOGO */}
+                <div className="mb-10 flex justify-center">
+                    <img
+                        src="/login-logo.jpg"
+                        alt="Bolão App"
+                        className="w-32 h-32 rounded-3xl shadow-2xl shadow-emerald-500/20"
+                    />
+                </div>
 
-    <div className="space-y-4">
-        {/* LOGIN BUTTON */}
-        <Link
-            to="/login"
-            className="w-full bg-[#27272A] hover:bg-[#3F3F46] text-white font-bold py-4 rounded-2xl transition-all duration-200 flex items-center justify-center gap-3 text-lg border border-[#27272A]"
-        >
-            <LogIn size={22} className="text-zinc-400" />
-            <span>Logar no Navegador</span>
-        </Link>
+                <h1 className="text-4xl font-black text-white mb-2">BOLÃO APP</h1>
+                <p className="text-zinc-500 text-lg mb-10">Aposte com amigos, ganhe com a comunidade.</p>
 
-        {/* INSTALL BUTTON (OR IOS INSTRUCTION) */}
-        {!isStandalone && (
-            <>
-                {isInstallable ? (
-                    <button
-                        onClick={install}
-                        className="w-full bg-[#10B981] hover:bg-[#059669] text-[#0A0A0B] font-black py-4 rounded-2xl transition-all duration-200 flex items-center justify-center gap-3 text-lg shadow-lg shadow-emerald-500/20"
+                <div className="space-y-4">
+                    {/* LOGIN BUTTON */}
+                    <Link
+                        to="/login"
+                        className="w-full bg-[#27272A] hover:bg-[#3F3F46] text-white font-bold py-4 rounded-2xl transition-all duration-200 flex items-center justify-center gap-3 text-lg border border-[#27272A]"
                     >
-                        <Download size={22} />
-                        <span>Baixar Aplicativo</span>
-                    </button>
-                ) : (
-                    // Only show iOS instructions if actually on iOS
-                    isIOS && (
-                        <div className="bg-[#141417] border border-[#27272A] rounded-2xl p-4 text-sm text-zinc-500 animate-in fade-in duration-700">
-                            <p className="mb-2">Para instalar no iOS:</p>
-                            <p className="flex items-center justify-center gap-2 font-bold text-white">
-                                Compartilhar <Share size={16} /> &gt; Tela de Início <PlusSquare size={16} />
-                            </p>
-                        </div>
-                    )
-                )}
-            </>
-        )}
-    </div>
+                        <LogIn size={22} className="text-zinc-400" />
+                        <span>Logar no Navegador</span>
+                    </Link>
 
-    <p className="mt-8 text-xs text-zinc-600">
-        &copy; 2026 Bolão App. Todos os direitos reservados.
-    </p>
+                    {/* INSTALL BUTTON (OR IOS INSTRUCTION) */}
+                    {!isStandalone && (
+                        <>
+                            {isInstallable ? (
+                                <button
+                                    onClick={install}
+                                    className="w-full bg-[#10B981] hover:bg-[#059669] text-[#0A0A0B] font-black py-4 rounded-2xl transition-all duration-200 flex items-center justify-center gap-3 text-lg shadow-lg shadow-emerald-500/20"
+                                >
+                                    <Download size={22} />
+                                    <span>Baixar Aplicativo</span>
+                                </button>
+                            ) : (
+                                // Only show iOS instructions if actually on iOS
+                                isIOS && (
+                                    <div className="bg-[#141417] border border-[#27272A] rounded-2xl p-4 text-sm text-zinc-500 animate-in fade-in duration-700">
+                                        <p className="mb-2">Para instalar no iOS:</p>
+                                        <p className="flex items-center justify-center gap-2 font-bold text-white">
+                                            Compartilhar <Share size={16} /> &gt; Tela de Início <PlusSquare size={16} />
+                                        </p>
+                                    </div>
+                                )
+                            )}
+                        </>
+                    )}
+                </div>
 
-</div>
-    </div >
-);
+                <p className="mt-8 text-xs text-zinc-600">
+                    &copy; 2026 Bolão App. Todos os direitos reservados.
+                </p>
+
+            </div>
+        </div>
+    );
 };
 
 export default Gateway;
