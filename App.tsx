@@ -55,7 +55,7 @@ const AppContent: React.FC = () => {
 
         {/* ROOT ROUTE logic:
             - Logged in: Go Home.
-            - Not logged in + PWA (Installed): Go to Login.
+            - Not logged in + PWA (Installed): Go to Login (Force bypass Gateway).
             - Not logged in + Browser: Go to Gateway.
         */}
         <Route
@@ -63,7 +63,7 @@ const AppContent: React.FC = () => {
           element={
             user
               ? <Layout><Home /></Layout>
-              : (isStandalone ? <Navigate to="/login" /> : <Gateway />)
+              : (isStandalone ? <Navigate to="/login" replace /> : <Gateway />)
           }
         />
 
