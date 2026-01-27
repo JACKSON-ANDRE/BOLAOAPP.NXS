@@ -25,14 +25,11 @@ const Gateway: React.FC = () => {
                 <p className="text-zinc-500 text-lg mb-10">Aposte com amigos, ganhe com a comunidade.</p>
 
                 <div className="space-y-6">
-                    {/* BUTTON 1: BAIXAR APP */}
+                    {/* BUTTON 1: BAIXAR APP (Direct Flow) */}
                     {!isStandalone && (
                         <button
-                            onClick={async () => {
-                                const success = await install();
-                                if (!success) {
-                                    alert('Para instalar:\n\n1. Clique nos 3 pontinhos (Android) ou Compartilhar (iOS)\n2. Selecione "Instalar App" ou "Adicionar à Tela de Início"');
-                                }
+                            onClick={() => {
+                                install(); // Tenta instalar direto
                             }}
                             className="w-full bg-[#10B981] hover:bg-[#059669] text-[#0A0A0B] font-black py-5 rounded-2xl transition-all duration-200 flex items-center justify-center gap-3 text-xl shadow-xl shadow-emerald-500/20 transform hover:scale-[1.02] active:scale-95"
                         >
