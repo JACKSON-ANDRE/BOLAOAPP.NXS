@@ -391,13 +391,9 @@ const AdminDashboard: React.FC = () => {
     });
 
     if (!error) {
-      // Broadcast Push Notification if it's a Universal Message
-      if (!targetUser) {
-        notifyAllUsers("Mensagem do Admin 📢", newMessage.trim());
-      } else {
-        // Direct Push to Specific User
-        sendWebPush(targetUser.id, "Nova Mensagem do Admin 📩", newMessage.trim(), '/profile');
-      }
+      // OBS: Não chamamos mais notifyAllUsers() nem sendWebPush() aqui no front.
+      // O Trigger do banco de dados (admin_messages -> user_notifications) já faz o envio automático.
+      // Isso evita erros de CORS e garante que a mensagem chegue mesmo se o front fechar.
 
       setNewMessage('');
       setTargetUser(null); // Reset target
