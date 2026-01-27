@@ -55,7 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         let clientData = null;
         try {
             const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('TIMEOUT')), 2000)
+                setTimeout(() => reject(new Error('TIMEOUT')), 6000)
             );
 
             // Corrida: Quem chegar primeiro ganha. Se o Client demorar > 2s, o Timeout ganha.
@@ -157,7 +157,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setUser(null);
                 setProfile(null);
                 setLoading(false);
-                localStorage.clear();
+                // localStorage.clear(); // REMOVE: Isso mata o token do Supabase se o evento disparar por engano
                 return;
             }
 
@@ -187,11 +187,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } catch (error) {
             console.error("Erro ao sair:", error);
         } finally {
-            // 🧹 Faxina local forçada e imediata
+            // 🧹 Faxina local
             setUser(null);
             setProfile(null);
             setLoading(false);
-            localStorage.clear();
+            // localStorage.clear(); // REMOVE: Deixa o Supabase limpar o dele
         }
     };
 
