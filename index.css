@@ -1,8 +1,8 @@
 @import "tailwindcss";
-@source "../pages/**/*.{ts,tsx}";
-@source "../components/**/*.{ts,tsx}";
-@source "../src/**/*.{ts,tsx}";
-@source "../index.html";
+@source "./pages/**/*.{ts,tsx}";
+@source "./components/**/*.{ts,tsx}";
+@source "./src/**/*.{ts,tsx}";
+@source "./index.html";
 
 body {
     font-family: 'Inter', sans-serif;

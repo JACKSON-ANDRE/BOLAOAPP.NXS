@@ -155,6 +155,8 @@ const AdminDashboard: React.FC = () => {
   // Pagination
   const [depositPage, setDepositPage] = useState(1);
   const [withdrawPage, setWithdrawPage] = useState(1);
+  const [userPage, setUserPage] = useState(1);
+  const [historyPage, setHistoryPage] = useState(1);
   const itemsPerPage = 30;
 
   // New Details Modal State
@@ -165,6 +167,7 @@ const AdminDashboard: React.FC = () => {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [cityStats, setCityStats] = useState<{ name: string; value: number }[]>([]);
   const [userSearch, setUserSearch] = useState('');
+  const [historySearch, setHistorySearch] = useState('');
 
   // Message Targeting State
   const [targetUser, setTargetUser] = useState<AdminUser | null>(null);
@@ -208,6 +211,12 @@ const AdminDashboard: React.FC = () => {
     fetchCityStats();
   }, []);
 
+  // Reset pages when filters change
+  useEffect(() => { setUserPage(1); }, [userSearch]);
+  useEffect(() => { setHistoryPage(1); }, [historySearch, reportMonth, reportYear]);
+  useEffect(() => { setDepositPage(1); }, [depositFilter, financialMonth, financialYear, financialDay]);
+  useEffect(() => { setWithdrawPage(1); }, [withdrawFilter, financialMonth, financialYear, financialDay]);
+
   const handleToggleMaintenance = async () => {
     try {
       setTogglingMaintenance(true);
@@ -234,7 +243,11 @@ const AdminDashboard: React.FC = () => {
   // --- REPORT LOGIC ---
   const filteredPools = pools.filter(p => {
     const d = new Date(p.created_at);
-    return d.getMonth() === reportMonth && d.getFullYear() === reportYear;
+    const matchesDate = d.getMonth() === reportMonth && d.getFullYear() === reportYear;
+    const matchesSearch = !historySearch ||
+      (p.name || '').toLowerCase().includes(historySearch.toLowerCase()) ||
+      (p.id || '').toLowerCase().includes(historySearch.toLowerCase());
+    return matchesDate && matchesSearch;
   });
 
   const poolStats = {
@@ -785,6 +798,12 @@ const AdminDashboard: React.FC = () => {
     u.email?.toLowerCase().includes(userSearch.toLowerCase())
   );
 
+  const paginatedUsers = filteredUsers.slice((userPage - 1) * itemsPerPage, userPage * itemsPerPage);
+  const totalUserPages = Math.ceil(filteredUsers.length / itemsPerPage);
+
+  const paginatedPools = filteredPools.slice((historyPage - 1) * itemsPerPage, historyPage * itemsPerPage);
+  const totalPoolPages = Math.ceil(filteredPools.length / itemsPerPage);
+
   // Health Check State
   const [checkingHealth, setCheckingHealth] = useState(false);
   const [healthReport, setHealthReport] = useState<HealthReport | null>(null);
@@ -1024,15 +1043,25 @@ const AdminDashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex bg-[#0A0A0B] border border-[#27272A] rounded-xl p-3 items-center gap-3">
-              <Search className="text-zinc-500" />
-              <input
-                type="text"
-                placeholder="Buscar usuário por nome ou email..."
-                value={userSearch}
-                onChange={(e) => setUserSearch(e.target.value)}
-                className="bg-transparent text-white w-full focus:outline-none"
-              />
+            <div className="flex gap-3">
+              <div className="flex-1 flex bg-[#0A0A0B] border border-[#27272A] rounded-xl p-3 items-center gap-3">
+                <Search className="text-zinc-500" />
+                <input
+                  type="text"
+                  placeholder="Buscar usuário por nome ou email..."
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                  className="bg-transparent text-white w-full focus:outline-none"
+                />
+              </div>
+              {(userSearch) && (
+                <button
+                  onClick={() => { setUserSearch(''); }}
+                  className="px-4 bg-[#27272A] text-zinc-400 rounded-xl hover:text-white transition text-xs font-bold"
+                >
+                  LIMPAR
+                </button>
+              )}
             </div>
 
             <div className="overflow-x-auto">
@@ -1048,7 +1077,7 @@ const AdminDashboard: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="text-xs md:text-sm text-white divide-y divide-[#27272A]">
-                  {filteredUsers.map(u => (
+                  {paginatedUsers.map(u => (
                     <tr key={u.id} className="hover:bg-[#0A0A0B] transition">
                       <td className="py-3 pl-4 font-bold max-w-[150px] truncate flex items-center gap-2">
                         <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center overflow-hidden border border-zinc-700 flex-shrink-0">
@@ -1138,6 +1167,27 @@ const AdminDashboard: React.FC = () => {
                 <p className="text-zinc-500 text-center py-8">Nenhum usuário encontrado.</p>
               )}
             </div>
+
+            {/* USERS PAGINATION */}
+            {totalUserPages > 1 && (
+              <div className="flex items-center justify-between mt-6 pt-6 border-t border-white/5">
+                <button
+                  onClick={() => setUserPage(p => Math.max(1, p - 1))}
+                  disabled={userPage === 1}
+                  className="px-4 py-2 bg-[#0A0A0B] border border-[#27272A] text-white rounded-lg disabled:opacity-30 text-xs font-bold uppercase transition hover:bg-[#27272A]"
+                >
+                  Anterior
+                </button>
+                <p className="text-xs text-zinc-500 font-black uppercase">Página {userPage} de {totalUserPages}</p>
+                <button
+                  onClick={() => setUserPage(p => Math.min(totalUserPages, p + 1))}
+                  disabled={userPage === totalUserPages}
+                  className="px-4 py-2 bg-[#0A0A0B] border border-[#27272A] text-white rounded-lg disabled:opacity-30 text-xs font-bold uppercase transition hover:bg-[#27272A]"
+                >
+                  Próxima
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -1894,7 +1944,18 @@ const AdminDashboard: React.FC = () => {
                     <p className="text-zinc-500 text-sm">Selecione o período para gerar os indicadores.</p>
                   </div>
 
-                  <div className="flex gap-3">
+                  <div className="flex flex-wrap gap-3">
+                    <div className="flex bg-[#0A0A0B] border border-[#27272A] rounded-xl px-4 py-2 items-center gap-3 min-w-[200px]">
+                      <Search className="text-zinc-500" size={18} />
+                      <input
+                        type="text"
+                        placeholder="Buscar bolão por nome ou ID..."
+                        value={historySearch}
+                        onChange={(e) => setHistorySearch(e.target.value)}
+                        className="bg-transparent text-white w-full focus:outline-none text-sm"
+                      />
+                    </div>
+
                     <select
                       value={reportMonth}
                       onChange={(e) => setReportMonth(Number(e.target.value))}
@@ -1960,9 +2021,9 @@ const AdminDashboard: React.FC = () => {
                     </thead>
                     <tbody className="text-sm text-white divide-y divide-[#27272A]">
                       {filteredPools.length === 0 ? (
-                        <tr><td colSpan={7} className="py-8 text-center text-zinc-500">Nenhum bolão encontrado neste mês.</td></tr>
+                        <tr><td colSpan={7} className="py-8 text-center text-zinc-500">Nenhum bolão encontrado com esses filtros.</td></tr>
                       ) : (
-                        filteredPools.map(pool => (
+                        paginatedPools.map(pool => (
                           <tr key={pool.id} className="hover:bg-[#0A0A0B] transition">
                             <td className="py-4 pl-4 font-bold max-w-[200px] truncate">{(pool.name || 'Sem Nome').toUpperCase()}</td>
                             <td className="py-4 text-zinc-400">{(pool as any).profiles?.full_name || 'Admin'}</td>
@@ -1984,6 +2045,27 @@ const AdminDashboard: React.FC = () => {
                     </tbody>
                   </table>
                 </div>
+
+                {/* HISTORY PAGINATION */}
+                {totalPoolPages > 1 && (
+                  <div className="flex items-center justify-between mt-6 pt-6 border-t border-white/5">
+                    <button
+                      onClick={() => setHistoryPage(p => Math.max(1, p - 1))}
+                      disabled={historyPage === 1}
+                      className="px-4 py-2 bg-[#0A0A0B] border border-[#27272A] text-white rounded-lg disabled:opacity-30 text-xs font-bold uppercase transition hover:bg-[#27272A]"
+                    >
+                      Anterior
+                    </button>
+                    <p className="text-xs text-zinc-500 font-black uppercase">Página {historyPage} de {totalPoolPages}</p>
+                    <button
+                      onClick={() => setHistoryPage(p => Math.min(totalPoolPages, p + 1))}
+                      disabled={historyPage === totalPoolPages}
+                      className="px-4 py-2 bg-[#0A0A0B] border border-[#27272A] text-white rounded-lg disabled:opacity-30 text-xs font-bold uppercase transition hover:bg-[#27272A]"
+                    >
+                      Próxima
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* DETAIL MODAL (Existing logic preserved if any, or just expanded row) */}

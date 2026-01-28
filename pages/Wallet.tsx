@@ -291,15 +291,15 @@ const WalletPage: React.FC = () => {
   }, [selectedDay, selectedMonth, selectedYear]);
 
   const stats = {
-    totalDeposited: filteredItems.filter(i => (i.type === 'deposit' || i.type === 'deposit_request') && i.status === 'approved').reduce((acc, i) => acc + i.amount, 0),
-    totalBet: filteredItems.filter(i => i.type === 'bet_debit').reduce((acc, i) => acc + i.amount, 0),
-    totalWon: filteredItems.filter(i => i.type === 'winning').reduce((acc, i) => acc + i.amount, 0),
-    totalWithdrawn: filteredItems.filter(i => (i.type === 'withdraw' || i.type === 'withdraw_request') && i.status === 'approved').reduce((acc, i) => acc + i.amount, 0),
+    totalDeposited: filteredItems.filter(i => (i.type === 'deposit' || i.type === 'deposit_request') && i.status === 'approved').reduce((acc, i) => acc + (i.amount || 0), 0),
+    totalBet: filteredItems.filter(i => i.type === 'bet_debit').reduce((acc, i) => acc + (i.amount || 0), 0),
+    totalWon: filteredItems.filter(i => i.type === 'winning').reduce((acc, i) => acc + (i.amount || 0), 0),
+    totalWithdrawn: filteredItems.filter(i => (i.type === 'withdraw' || i.type === 'withdraw_request') && i.status === 'approved').reduce((acc, i) => acc + (i.amount || 0), 0),
   };
 
   const chartData = [
-    { name: 'Apostado', value: stats.totalBet, color: '#f59e0b' }, // Yellow/Orange
-    { name: 'Ganho', value: stats.totalWon, color: '#10B981' }, // Emerald
+    { name: 'Apostado', value: stats.totalBet || 0.001, color: '#f59e0b' }, // Amber/Orange
+    { name: 'Ganho', value: stats.totalWon || 0.001, color: '#10B981' }, // Emerald/Green
   ];
 
   const handleDownloadReport = () => {
@@ -552,18 +552,24 @@ const WalletPage: React.FC = () => {
 
           {/* ESSENTIAL STATS */}
           <div className="space-y-4 mb-8">
-            <div className="p-4 bg-[#0A0A0B] rounded-xl border border-[#27272A] flex justify-between items-center group/stat hover:border-orange-500/30 transition-colors">
-              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Total Apostado</span>
-              <span className="text-sm font-black text-white">R$ {stats.totalBet.toFixed(2)}</span>
+            <div className="p-4 bg-[#0A0A0B] rounded-xl border border-orange-500/10 flex justify-between items-center group/stat hover:border-orange-500/30 transition-colors">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-[#f59e0b]"></div>
+                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Total Apostado</span>
+              </div>
+              <span className="text-sm font-black text-[#f59e0b]">R$ {stats.totalBet.toFixed(2)}</span>
             </div>
-            <div className="p-4 bg-[#0A0A0B] rounded-xl border border-[#27272A] flex justify-between items-center group/stat hover:border-[#10B981]/30 transition-colors">
-              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Total Ganho</span>
+            <div className="p-4 bg-[#0A0A0B] rounded-xl border border-[#10B981]/10 flex justify-between items-center group/stat hover:border-[#10B981]/30 transition-colors">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-[#10B981]"></div>
+                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Total Ganho</span>
+              </div>
               <span className="text-sm font-black text-[#10B981]">R$ {stats.totalWon.toFixed(2)}</span>
             </div>
           </div>
 
-          <div className="w-full relative mt-auto mb-4 md:mb-6 flex justify-center min-h-[140px] md:min-h-[220px]">
-            {mounted ? (
+          <div className="w-full h-[220px] relative mt-auto mb-4 md:mb-6 flex justify-center">
+            {mounted && (stats.totalBet > 0 || stats.totalWon > 0) ? (
               <ResponsiveContainer width="100%" height="100%">
                 <RechartsPieChart>
                   <Pie
@@ -586,8 +592,12 @@ const WalletPage: React.FC = () => {
                   />
                 </RechartsPieChart>
               </ResponsiveContainer>
-            ) : null}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="w-32 h-32 rounded-full border-8 border-zinc-800 border-t-orange-500/20 opacity-20"></div>
+              </div>
+            )}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
               <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-tighter mb-1">Total</p>
               <p className="text-lg font-black text-white">R$ {(stats.totalBet + stats.totalWon).toFixed(0)}</p>
             </div>
