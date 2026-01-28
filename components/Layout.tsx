@@ -278,7 +278,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#1C1C21] text-[#10B981] font-semibold hover:bg-[#10B981] hover:text-[#0A0A0B]"
             >
               <MessageCircle size={20} />
-              <span>Suporte</span>
+              <span>Atendimento</span>
             </a>
 
             {isInstallable && (
