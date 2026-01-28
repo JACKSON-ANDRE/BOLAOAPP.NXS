@@ -4,9 +4,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4"
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, PUT, PATCH, DELETE',
 }
 
 serve(async (req) => {
+    // 0. Handle OPTIONS for CORS preflight
     if (req.method === 'OPTIONS') {
         return new Response('ok', {
             status: 200,
@@ -15,6 +17,8 @@ serve(async (req) => {
     }
 
     try {
+        console.log('--- Start create-payment ---')
+
         const supabaseClient = createClient(
             Deno.env.get('SUPABASE_URL') ?? '',
             Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -23,18 +27,30 @@ serve(async (req) => {
         // 1. Get user from Auth header
         const authHeader = req.headers.get('Authorization')
         if (!authHeader) throw new Error('Missing Authorization header')
-        const { data: { user }, error: authError } = await supabaseClient.auth.getUser(authHeader.replace('Bearer ', ''))
-        if (authError || !user) throw new Error('Invalid user token')
+
+        const token = authHeader.replace('Bearer ', '')
+        const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token)
+
+        if (authError || !user) {
+            console.error('Auth Error:', authError)
+            throw new Error('Invalid user token')
+        }
 
         // 2. Get amount from request body
-        const { amount } = await req.json()
+        const body = await req.json().catch(() => ({}))
+        const { amount } = body
+
         if (!amount || amount < 1) throw new Error('Valor inválido. Mínimo R$ 1,00')
 
         const external_reference = `DEP-${crypto.randomUUID()}`
+        console.log(`Generating payment for ${user.email} - Amount: ${amount} - Ref: ${external_reference}`)
 
         // 3. Call Mercado Pago API
         const mpAccessToken = Deno.env.get('MP_ACCESS_TOKEN')
-        if (!mpAccessToken) throw new Error('Configuração MP_ACCESS_TOKEN ausente no servidor')
+        if (!mpAccessToken) {
+            console.error('ERRO: MP_ACCESS_TOKEN não configurado')
+            throw new Error('Configuração de pagamento ausente no servidor. Verifique as chaves do Mercado Pago.')
+        }
 
         const mpResponse = await fetch('https://api.mercadopago.com/v1/payments', {
             method: 'POST',
@@ -51,8 +67,8 @@ serve(async (req) => {
                 notification_url: "https://vucvouxutompqoqhxzmi.supabase.co/functions/v1/mercado-pago-webhook",
                 payer: {
                     email: user.email,
-                    first_name: 'Usuário',
-                    last_name: 'Bolão App'
+                    first_name: user.user_metadata?.full_name?.split(' ')[0] || 'Usuário',
+                    last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || 'Bolão App'
                 }
             })
         })
@@ -63,6 +79,13 @@ serve(async (req) => {
             throw new Error(mpData.message || 'Erro ao gerar pagamento no Mercado Pago')
         }
 
+        // Validate nested data
+        const transactionData = mpData.point_of_interaction?.transaction_data
+        if (!transactionData?.qr_code) {
+            console.error('MP Invalid Data (Missing QR Code):', mpData)
+            throw new Error('Erro ao processar dados de resposta do Mercado Pago')
+        }
+
         // 4. Save to deposits table
         const { error: dbError } = await supabaseClient
             .from('deposits')
@@ -71,23 +94,29 @@ serve(async (req) => {
                 amount: amount,
                 external_reference: external_reference,
                 mp_id: String(mpData.id),
-                qr_code: mpData.point_of_interaction.transaction_data.qr_code,
-                qr_code_base64: mpData.point_of_interaction.transaction_data.qr_code_base64,
+                qr_code: transactionData.qr_code,
+                qr_code_base64: transactionData.qr_code_base64,
                 status: 'pending'
             })
 
-        if (dbError) throw dbError
+        if (dbError) {
+            console.error('Database Insert Error:', dbError)
+            throw dbError
+        }
+
+        console.log('Payment created successfully')
 
         return new Response(
             JSON.stringify({
-                qr_code: mpData.point_of_interaction.transaction_data.qr_code,
-                qr_code_base64: mpData.point_of_interaction.transaction_data.qr_code_base64,
+                qr_code: transactionData.qr_code,
+                qr_code_base64: transactionData.qr_code_base64,
                 external_reference
             }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
         )
 
     } catch (error) {
+        console.error('Function Error:', error.message)
         return new Response(
             JSON.stringify({ error: error.message }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
