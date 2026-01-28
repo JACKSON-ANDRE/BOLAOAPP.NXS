@@ -1,0 +1,29 @@
+{
+    "name": "Bolão App",
+    "short_name": "Bolão App",
+    "description": "Brinque com seus amigos!",
+    "theme_color": "#0A0A0B",
+    "background_color": "#0A0A0B",
+    "display": "standalone",
+    "orientation": "portrait",
+    "scope": "/",
+    "start_url": "/",
+    "icons": [
+        {
+            "src": "pwa-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "pwa-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "pwa-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        }
+    ]
+}

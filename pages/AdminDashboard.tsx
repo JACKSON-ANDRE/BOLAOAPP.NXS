@@ -24,6 +24,8 @@ import {
   Copy,
   CheckCircle2,
   ShieldAlert,
+  ChevronRight,
+  Trophy,
   Edit2
 } from 'lucide-react';
 import {
@@ -49,8 +51,8 @@ type AdminTab =
   | 'fake_users'
   | 'notifications';
 
-type DepositFilter = 'pending' | 'archived' | 'all';
-type WithdrawFilter = 'pending' | 'archived' | 'all';
+type DepositFilter = 'pending' | 'approved' | 'all';
+type WithdrawFilter = 'pending' | 'approved' | 'all';
 
 interface AdminMessage {
   id: string;
@@ -66,9 +68,12 @@ interface DepositRequest {
   status: string;
   receipt_path: string;
   created_at: string;
+  is_auto?: boolean;
+  user_id?: string;
   profiles?: {
     full_name: string;
     email: string;
+    avatar_url?: string;
   };
 }
 
@@ -82,6 +87,7 @@ interface WithdrawRequest {
   profiles?: {
     full_name: string;
     withdrawable_balance: number;
+    avatar_url?: string;
   };
 }
 
@@ -144,7 +150,16 @@ const AdminDashboard: React.FC = () => {
   // Financial Filters (Global for Deposits/Withdraws)
   const [financialMonth, setFinancialMonth] = useState(new Date().getMonth());
   const [financialYear, setFinancialYear] = useState(new Date().getFullYear());
-  const [financialDay, setFinancialDay] = useState<string>(''); // Day as string "1" to "31", empty if all days
+  const [financialDay, setFinancialDay] = useState<string>('');
+
+  // Pagination
+  const [depositPage, setDepositPage] = useState(1);
+  const [withdrawPage, setWithdrawPage] = useState(1);
+  const itemsPerPage = 30;
+
+  // New Details Modal State
+  const [selectedTransactionDetail, setSelectedTransactionDetail] = useState<any | null>(null);
+  const [detailModalType, setDetailModalType] = useState<'deposit' | 'withdraw' | null>(null);
 
   // Users State
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -166,12 +181,15 @@ const AdminDashboard: React.FC = () => {
 
   // Pix Config State
   const [pixKey, setPixKey] = useState('');
+  const [pixName, setPixName] = useState('');
   const [pixQrUrl, setPixQrUrl] = useState('');
   const [newQrFile, setNewQrFile] = useState<File | null>(null);
   const [savingPix, setSavingPix] = useState(false);
   const [fakeUserCount, setFakeUserCount] = useState<number>(0);
   const [supabaseUrl, setSupabaseUrl] = useState('');
   const [serviceRoleKey, setServiceRoleKey] = useState('');
+  const [vapidPublicKey, setVapidPublicKey] = useState('');
+  const [vapidPrivateKey, setVapidPrivateKey] = useState('');
 
   // History State
   const [selectedPoolHistory, setSelectedPoolHistory] = useState<{
@@ -278,10 +296,13 @@ const AdminDashboard: React.FC = () => {
 
     if (data) {
       setPixKey(data.pix_key || '');
+      setPixName(data.pix_name || '');
       setPixQrUrl(data.pix_qrcode_url || '');
       setFakeUserCount(data.fake_user_count || 0);
       setSupabaseUrl(data.supabase_url || '');
       setServiceRoleKey(data.service_role_key || '');
+      setVapidPublicKey(data.vapid_public_key || '');
+      setVapidPrivateKey(data.vapid_private_key || '');
     }
   };
 
@@ -320,24 +341,36 @@ const AdminDashboard: React.FC = () => {
   };
 
   const fetchDeposits = async () => {
-    const { data, error } = await supabase
+    // 1. Fetch Manual Requests
+    const { data: manualData, error: manualErr } = await supabase
       .from('deposit_requests')
-      // Ambiguous: could be user_id or admin_id. We want the USER who requested.
-      // Hint from error message: deposit_requests_user_id_fkey
-      .select('*, profiles!deposit_requests_user_id_fkey(full_name, email)')
+      .select('*, profiles!deposit_requests_user_id_fkey(full_name, email, avatar_url)')
       .order('created_at', { ascending: false });
 
-    if (error) console.error('Error fetching deposits:', error);
-    if (data) setDeposits(data as any);
+    // 2. Fetch Automated Deposits
+    const { data: autoData, error: autoErr } = await supabase
+      .from('deposits')
+      .select('*, profiles(full_name, email, avatar_url)')
+      .order('created_at', { ascending: false });
+
+    if (manualErr) console.error('Error manual deposits:', manualErr);
+    if (autoErr) console.error('Error auto deposits:', autoErr);
+
+    const merged = [
+      ...(manualData || []).map(d => ({ ...d, is_auto: false })),
+      ...(autoData || []).map(d => ({ ...d, is_auto: true }))
+    ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+    setDeposits(merged as any);
   };
 
   const fetchWithdraws = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('withdraw_requests')
-      // Ambiguous: withdraw_requests_user_id_fkey
-      .select('*, profiles!withdraw_requests_user_id_fkey(full_name, withdrawable_balance)')
+      .select('*, profiles!withdraw_requests_user_id_fkey(full_name, withdrawable_balance, avatar_url)')
       .order('created_at', { ascending: false });
 
+    if (error) console.error('Error fetching withdraws:', error);
     if (data) setWithdraws(data as any);
   };
 
@@ -485,51 +518,18 @@ const AdminDashboard: React.FC = () => {
       return;
     }
 
-    const headers = isDeposits
-      ? ['ID', 'Data', 'Usuário', 'Email', 'Valor', 'Status', 'Comprovante']
-      : ['ID', 'Data', 'Usuário', 'Chave PIX', 'Valor', 'Status'];
+    const periodStr = financialDay
+      ? `${financialDay}/${financialMonth + 1}/${financialYear}`
+      : `${new Date(0, financialMonth).toLocaleString('pt-BR', { month: 'long' }).toUpperCase()}/${financialYear}`;
 
-    const csvContent = [
-      headers.join(','),
-      ...data.map((item: any) => {
-        const date = new Date(item.created_at).toLocaleString().replace(',', '');
-        const user = item.profiles?.full_name || 'Desconhecido';
+    const stats = {
+      totalCount: data.length,
+      approvedCount: data.filter(d => d.status === 'approved' || d.status === 'completed').length,
+      pendingCount: data.filter(d => d.status === 'pending').length,
+      totalVolume: data.reduce((acc, item) => acc + (item.amount || 0), 0)
+    };
 
-        if (isDeposits) {
-          return [
-            item.id,
-            date,
-            user,
-            item.profiles?.email || '',
-            item.amount,
-            item.status,
-            item.receipt_path ? 'Sim' : 'Não'
-          ].join(',');
-        } else {
-          return [
-            item.id,
-            date,
-            user,
-            item.pix_key,
-            item.amount,
-            item.status
-          ].join(',');
-        }
-      })
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-
-    const dateStr = financialDay
-      ? `${financialDay}_${financialMonth + 1}_${financialYear}`
-      : `${financialMonth + 1}_${financialYear}`;
-
-    link.href = url;
-    link.download = `relatorio_${type}_${dateStr}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+    generateFinancialListReport(type, periodStr, data, stats);
   };
 
   const executeDepositAction = async () => {
@@ -538,9 +538,7 @@ const AdminDashboard: React.FC = () => {
     const { id, action } = confirmAction;
     setProcessingDepositId(id);
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
       setProcessingDepositId(null);
@@ -548,12 +546,27 @@ const AdminDashboard: React.FC = () => {
       return;
     }
 
-    const { error } = await supabase.rpc('process_deposit_request', {
-      p_deposit_request_id: id,
-      p_admin_id: user.id,
-      p_action: action,
-      p_reason: action === 'reject' ? 'Rejeitado pelo administrador' : null,
-    });
+    const deposit = deposits.find(d => d.id === id);
+    if (!deposit) return;
+
+    let error;
+    if (deposit.is_auto) {
+      // Para depósitos AUTOMÁTICOS do Mercado Pago
+      const { error: err } = await supabase
+        .from('deposits')
+        .update({ status: action === 'approve' ? 'approved' : 'rejected' })
+        .eq('id', id);
+      error = err;
+    } else {
+      // Para depósitos MANUAIS (Via formulário com comprovante)
+      const { error: err } = await supabase.rpc('process_deposit_request', {
+        p_deposit_request_id: id,
+        p_admin_id: user.id,
+        p_action: action,
+        p_reason: action === 'reject' ? 'Rejeitado pelo administrador' : null,
+      });
+      error = err;
+    }
 
     if (error) {
       alert('Erro ao processar: ' + error.message);
@@ -563,24 +576,15 @@ const AdminDashboard: React.FC = () => {
       setConfirmAction(null);
       fetchDeposits();
       if (action === 'approve') {
-        triggerCelebration(); // 🎉 WOW Effect
+        triggerCelebration();
 
-        // Notify User via Web Push
-        // We need the user_id from the deposit request
-        const deposit = deposits.find(d => d.id === id);
-        if (deposit) {
-          // Note: The schema might be deposit.user_id (check interface) - assuming it's available or we fetch via RPC
-          // Since `deposits` state has user_id (from select *), let's check interface
-          // Actually `deposits` interface above `DepositRequest` doesn't explicitly list `user_id`, but `select('*, ...')` fetches it.
-          // Let's coerce it.
-          const userId = (deposit as any).user_id;
-          sendWebPush(
-            userId,
-            "Depósito Aprovado! 🤑",
-            `Seu depósito de R$ ${deposit.amount.toFixed(2)} foi confirmado.`,
-            '/wallet'
-          );
-        }
+        const userId = (deposit as any).user_id;
+        sendWebPush(
+          userId,
+          "Depósito Aprovado! 🤑",
+          `Seu depósito de R$ ${deposit.amount.toFixed(2)} foi confirmado.`,
+          '/wallet'
+        );
       }
     }
   };
@@ -693,10 +697,13 @@ const AdminDashboard: React.FC = () => {
         .upsert({
           id: 1,
           pix_key: pixKey,
+          pix_name: pixName,
           pix_qrcode_url: finalQrUrl,
           fake_user_count: fakeUserCount,
           supabase_url: supabaseUrl,
           service_role_key: serviceRoleKey,
+          vapid_public_key: vapidPublicKey,
+          vapid_private_key: vapidPrivateKey,
           updated_at: new Date().toISOString(),
         });
 
@@ -739,32 +746,39 @@ const AdminDashboard: React.FC = () => {
   const pendingWithdraws = withdraws.filter(w => w.status === 'pending').length;
 
   const filteredDeposits = deposits.filter(d => {
+    const date = new Date(d.created_at);
+    const matchesMonth = date.getMonth() === financialMonth;
+    const matchesYear = date.getFullYear() === financialYear;
+    const matchesDay = financialDay ? date.getDate() === Number(financialDay) : true;
+
+    // Status Filter
     let matchesStatus = true;
     if (depositFilter === 'pending') matchesStatus = d.status === 'pending';
-    if (depositFilter === 'archived') matchesStatus = d.status !== 'pending';
+    else if (depositFilter === 'approved') matchesStatus = d.status === 'approved' || d.status === 'completed';
 
-    const date = new Date(d.created_at);
-    const matchesDate =
-      date.getMonth() === financialMonth &&
-      date.getFullYear() === financialYear &&
-      (financialDay === '' || date.getDate() === Number(financialDay));
-
-    return matchesStatus && matchesDate;
+    return matchesMonth && matchesYear && matchesDay && matchesStatus;
   });
 
   const filteredWithdraws = withdraws.filter(w => {
+    const date = new Date(w.created_at);
+    const matchesMonth = date.getMonth() === financialMonth;
+    const matchesYear = date.getFullYear() === financialYear;
+    const matchesDay = financialDay ? date.getDate() === Number(financialDay) : true;
+
+    // Status Filter
     let matchesStatus = true;
     if (withdrawFilter === 'pending') matchesStatus = w.status === 'pending';
-    if (withdrawFilter === 'archived') matchesStatus = w.status !== 'pending';
+    else if (withdrawFilter === 'approved') matchesStatus = w.status === 'approved' || w.status === 'completed';
 
-    const date = new Date(w.created_at);
-    const matchesDate =
-      date.getMonth() === financialMonth &&
-      date.getFullYear() === financialYear &&
-      (financialDay === '' || date.getDate() === Number(financialDay));
-
-    return matchesStatus && matchesDate;
+    return matchesMonth && matchesYear && matchesDay && matchesStatus;
   });
+
+  // Paginated Data
+  const paginatedDeposits = filteredDeposits.slice((depositPage - 1) * itemsPerPage, depositPage * itemsPerPage);
+  const totalDepositPages = Math.ceil(filteredDeposits.length / itemsPerPage);
+
+  const paginatedWithdraws = filteredWithdraws.slice((withdrawPage - 1) * itemsPerPage, withdrawPage * itemsPerPage);
+  const totalWithdrawPages = Math.ceil(filteredWithdraws.length / itemsPerPage);
 
   const filteredUsers = users.filter(u =>
     u.full_name?.toLowerCase().includes(userSearch.toLowerCase()) ||
@@ -1136,7 +1150,7 @@ const AdminDashboard: React.FC = () => {
               <div className="flex gap-3">
                 {[
                   ['pending', 'Pendentes'],
-                  ['archived', 'Arquivadas'],
+                  ['approved', 'Aprovados'],
                   ['all', 'Todas'],
                 ].map(([id, label]) => (
                   <button
@@ -1193,67 +1207,67 @@ const AdminDashboard: React.FC = () => {
             </div>
 
             {/* ... keeping deposits list ... */}
-            <div className="space-y-4">
-              {filteredDeposits.map(d => (
+            <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+              {paginatedDeposits.map(d => (
                 <div
                   key={d.id}
-                  className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[#0A0A0B] border border-[#27272A] rounded-xl p-4 gap-4"
+                  onClick={() => {
+                    setSelectedTransactionDetail(d);
+                    setDetailModalType('deposit');
+                  }}
+                  className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[#0A0A0B] border border-[#27272A] rounded-xl p-4 gap-4 hover:border-[#10B981]/50 transition cursor-pointer group"
                 >
-                  <div className="w-full md:w-auto">
-                    <div className="flex justify-between md:block mb-2 md:mb-0">
-                      <p className="text-white font-bold text-lg md:text-base">
-                        R$ {d.amount.toFixed(2)}
-                      </p>
-                      <p className={`text-xs font-bold md:mt-1 ${d.status === 'pending' ? 'text-yellow-500' : d.status === 'approved' ? 'text-green-500' : 'text-red-500'}`}>
-                        {d.status.toUpperCase()}
-                      </p>
+                  <div className="flex items-center gap-4 w-full md:w-auto">
+                    <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center overflow-hidden border border-zinc-700 flex-shrink-0">
+                      {d.profiles?.avatar_url ? (
+                        <img
+                          src={`https://vucvouxutompqoqhxzmi.supabase.co/storage/v1/object/public/avatars/${d.profiles.avatar_url}`}
+                          alt={d.profiles.full_name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-zinc-500 text-xs font-bold">{d.profiles?.full_name?.charAt(0).toUpperCase()}</span>
+                      )}
                     </div>
-
-                    <div className="text-xs text-zinc-400 mt-1">
-                      <p className="font-bold text-white">{d.profiles?.full_name || 'Usuário Desconhecido'}</p>
-                      <p className="truncate max-w-[200px]">{d.profiles?.email || 'Sem email'}</p>
+                    <div>
+                      <div className="flex items-baseline gap-2">
+                        <p className="text-white font-bold text-lg">R$ {d.amount.toFixed(2)}</p>
+                        <p className={`text-[10px] font-black px-2 py-0.5 rounded ${d.status === 'pending' ? 'bg-yellow-500/10 text-yellow-500' : d.status === 'approved' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                          {d.is_auto ? `AUTOMÁTICO` : `MANUAL`}
+                        </p>
+                      </div>
+                      <p className="text-xs text-zinc-400 font-bold">{d.profiles?.full_name || 'Desconhecido'}</p>
                     </div>
-                    <p className="text-[10px] text-zinc-500 mt-1">
-                      {new Date(d.created_at).toLocaleString()}
-                    </p>
                   </div>
 
-                  <div className="flex gap-3 items-center w-full md:w-auto justify-end border-t border-zinc-800 pt-3 md:border-0 md:pt-0">
-                    {d.receipt_path && (
-                      <button
-                        onClick={() => handleOpenReceipt(d.receipt_path)}
-                        className="flex items-center gap-2 text-[#10B981] font-bold text-xs bg-[#10B981]/10 px-3 py-2 rounded-lg"
-                      >
-                        <FileText size={16} />
-                        Ver Comprovante
-                      </button>
-                    )}
-
-                    {d.status === 'pending' && (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() =>
-                            setConfirmAction({ id: d.id, action: 'approve', type: 'deposit' })
-                          }
-                          className="bg-green-500/10 hover:bg-green-500/20 text-green-500 p-2 rounded-lg transition"
-                        >
-                          <CheckCircle size={20} />
-                        </button>
-
-                        <button
-                          onClick={() =>
-                            setConfirmAction({ id: d.id, action: 'reject', type: 'deposit' })
-                          }
-                          className="bg-red-500/10 hover:bg-red-500/20 text-red-500 p-2 rounded-lg transition"
-                        >
-                          <XCircle size={20} />
-                        </button>
-                      </div>
-                    )}
+                  <div className="flex gap-3 items-center w-full md:w-auto justify-end">
+                    <p className="text-[10px] text-zinc-500 font-bold uppercase">{new Date(d.created_at).toLocaleString()}</p>
+                    <ChevronRight size={16} className="text-zinc-600 group-hover:text-[#10B981] transition-colors" />
                   </div>
                 </div>
               ))}
             </div>
+
+            {/* PAGINATION CONTROLS */}
+            {totalDepositPages > 1 && (
+              <div className="flex items-center justify-between mt-6 pt-6 border-t border-white/5">
+                <button
+                  onClick={() => setDepositPage(p => Math.max(1, p - 1))}
+                  disabled={depositPage === 1}
+                  className="px-4 py-2 bg-[#0A0A0B] border border-[#27272A] text-white rounded-lg disabled:opacity-30 text-xs font-bold uppercase transition hover:bg-[#27272A]"
+                >
+                  Anterior
+                </button>
+                <p className="text-xs text-zinc-500 font-black uppercase">Página {depositPage} de {totalDepositPages}</p>
+                <button
+                  onClick={() => setDepositPage(p => Math.min(totalDepositPages, p + 1))}
+                  disabled={depositPage === totalDepositPages}
+                  className="px-4 py-2 bg-[#0A0A0B] border border-[#27272A] text-white rounded-lg disabled:opacity-30 text-xs font-bold uppercase transition hover:bg-[#27272A]"
+                >
+                  Próxima
+                </button>
+              </div>
+            )}
           </>
         )}
 
@@ -1264,7 +1278,7 @@ const AdminDashboard: React.FC = () => {
               <div className="flex gap-3">
                 {[
                   ['pending', 'Pendentes'],
-                  ['archived', 'Arquivadas'],
+                  ['approved', 'Aprovados'],
                   ['all', 'Todas'],
                 ].map(([id, label]) => (
                   <button
@@ -1320,71 +1334,68 @@ const AdminDashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="space-y-4">
-              {filteredWithdraws.length === 0 ? (
+            <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+              {paginatedWithdraws.length === 0 ? (
                 <p className="text-zinc-500 text-center py-8">
                   Nenhuma solicitação de saque encontrada
                 </p>
               ) : (
-                filteredWithdraws.map(w => (
+                paginatedWithdraws.map(w => (
                   <div
                     key={w.id}
-                    className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[#0A0A0B] border border-[#27272A] rounded-xl p-4 gap-4"
+                    onClick={() => {
+                      setSelectedTransactionDetail(w);
+                      setDetailModalType('withdraw');
+                    }}
+                    className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[#0A0A0B] border border-[#27272A] rounded-xl p-4 gap-4 hover:border-yellow-500/50 transition cursor-pointer group"
                   >
-                    <div className="w-full md:w-auto">
-                      <div className="flex justify-between md:block mb-2 md:mb-0">
-                        <p className="text-white font-bold text-lg md:text-base">
-                          R$ {w.amount.toFixed(2)}
-                        </p>
-                        <p className={`text-xs font-bold md:mt-1 ${w.status === 'pending' ? 'text-yellow-500' :
-                          w.status === 'approved' ? 'text-green-500' :
-                            'text-red-500'
-                          }`}>
-                          {w.status.toUpperCase()}
-                        </p>
+                    <div className="flex items-center gap-4 w-full md:w-auto">
+                      <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center overflow-hidden border border-zinc-700 flex-shrink-0">
+                        {w.profiles?.avatar_url ? (
+                          <img
+                            src={`https://vucvouxutompqoqhxzmi.supabase.co/storage/v1/object/public/avatars/${w.profiles.avatar_url}`}
+                            alt={w.profiles.full_name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-zinc-500 text-xs font-bold">{w.profiles?.full_name?.charAt(0).toUpperCase()}</span>
+                        )}
                       </div>
-
-                      <p className="text-xs text-zinc-400 mb-1">
-                        <span className="text-white font-bold">{w.profiles?.full_name || 'Desconhecido'}</span>
-                      </p>
-                      <div className="bg-zinc-900 p-2 rounded border border-zinc-800 mb-2">
-                        <p className="text-[10px] text-zinc-500 uppercase font-bold">Chave PIX</p>
-                        <p className="text-xs text-white font-mono break-all">{w.pix_key}</p>
+                      <div>
+                        <p className="text-white font-bold text-lg">R$ {w.amount.toFixed(2)}</p>
+                        <p className="text-xs text-zinc-400 font-bold">{w.profiles?.full_name || 'Desconhecido'}</p>
                       </div>
-                      <p className="text-[10px] text-zinc-500">
-                        {new Date(w.created_at).toLocaleString()}
-                      </p>
                     </div>
 
-                    <div className="flex gap-3 items-center w-full md:w-auto justify-end border-t border-zinc-800 pt-3 md:border-0 md:pt-0">
-                      {w.status === 'pending' && (
-                        <>
-                          <button
-                            onClick={() =>
-                              setConfirmAction({ id: w.id, action: 'approve', type: 'withdraw' })
-                            }
-                            className="bg-green-500/10 hover:bg-green-500/20 text-green-500 p-2 rounded-lg transition"
-                            title="Aprovar saque"
-                          >
-                            <CheckCircle size={20} />
-                          </button>
-
-                          <button
-                            onClick={() =>
-                              setConfirmAction({ id: w.id, action: 'reject', type: 'withdraw' })
-                            }
-                            className="bg-red-500/10 hover:bg-red-500/20 text-red-500 p-2 rounded-lg transition"
-                            title="Rejeitar saque"
-                          >
-                            <XCircle size={20} />
-                          </button>
-                        </>
-                      )}
+                    <div className="flex gap-3 items-center w-full md:w-auto justify-end">
+                      <p className="text-[10px] text-zinc-500 font-bold uppercase">{new Date(w.created_at).toLocaleString()}</p>
+                      <ChevronRight size={16} className="text-zinc-600 group-hover:text-yellow-500 transition-colors" />
                     </div>
                   </div>
                 ))
               )}
             </div>
+
+            {/* PAGINATION CONTROLS */}
+            {totalWithdrawPages > 1 && (
+              <div className="flex items-center justify-between mt-6 pt-6 border-t border-white/5">
+                <button
+                  onClick={() => setWithdrawPage(p => Math.max(1, p - 1))}
+                  disabled={withdrawPage === 1}
+                  className="px-4 py-2 bg-[#0A0A0B] border border-[#27272A] text-white rounded-lg disabled:opacity-30 text-xs font-bold uppercase transition hover:bg-[#27272A]"
+                >
+                  Anterior
+                </button>
+                <p className="text-xs text-zinc-500 font-black uppercase">Página {withdrawPage} de {totalWithdrawPages}</p>
+                <button
+                  onClick={() => setWithdrawPage(p => Math.min(totalWithdrawPages, p + 1))}
+                  disabled={withdrawPage === totalWithdrawPages}
+                  className="px-4 py-2 bg-[#0A0A0B] border border-[#27272A] text-white rounded-lg disabled:opacity-30 text-xs font-bold uppercase transition hover:bg-[#27272A]"
+                >
+                  Próxima
+                </button>
+              </div>
+            )}
           </>
         )}
 
@@ -1505,7 +1516,7 @@ const AdminDashboard: React.FC = () => {
                     <div className="flex items-start gap-6">
                       <div className="w-32 h-32 bg-black rounded-2xl flex items-center justify-center p-2 overflow-hidden border border-[#27272A] shadow-lg">
                         <img
-                          src="https://vucvouxutompqoqhxzmi.supabase.co/storage/v1/object/public/app_assets/pwa-icon.png"
+                          src="/pwa-512x512.png"
                           onError={(e) => (e.currentTarget.src = 'https://placehold.co/192x192/0A0A0B/FFF?text=Icon')}
                           className="w-full h-full object-contain rounded-xl"
                           alt="Current PWA Icon"
@@ -1600,9 +1611,70 @@ const AdminDashboard: React.FC = () => {
                     className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-xl px-4 py-3 text-white focus:border-[#10B981] outline-none font-mono text-xs"
                   />
                 </div>
+
+                <div className="pt-4 border-t border-[#27272A] mt-4">
+                  <h4 className="text-sm font-bold text-white mb-4">Web Push (VAPID Keys)</h4>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-[10px] text-zinc-500 block mb-1 font-bold">VAPID PUBLIC KEY (FRONTEND & BACKEND)</label>
+                      <input
+                        type="text"
+                        value={vapidPublicKey}
+                        onChange={(e) => setVapidPublicKey(e.target.value)}
+                        placeholder="Public Key..."
+                        className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-xl px-4 py-2 text-white focus:border-[#10B981] outline-none font-mono text-[10px]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-zinc-500 block mb-1 font-bold">VAPID PRIVATE KEY (BACKEND ONLY)</label>
+                      <input
+                        type="password"
+                        value={vapidPrivateKey}
+                        onChange={(e) => setVapidPrivateKey(e.target.value)}
+                        placeholder="Private Key..."
+                        className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-xl px-4 py-2 text-white focus:border-[#10B981] outline-none font-mono text-[10px]"
+                      />
+                    </div>
+                  </div>
+
+                  <p className="text-[10px] text-zinc-600 mt-2">
+                    As chaves VAPID são necessárias para identificar o servidor nas notificações push.
+                  </p>
+                </div>
               </div>
 
-              <div className="pt-6">
+              <div className="pt-6 space-y-3">
+                <button
+                  onClick={async () => {
+                    if (window.confirm("Isso enviará uma notificação de teste para VOCÊ agora. Continuar?")) {
+                      try {
+                        setSavingPix(true);
+                        const { data: { user } } = await supabase.auth.getUser();
+                        if (!user) throw new Error("Usuário não logado");
+
+                        const { data, error } = await supabase.functions.invoke('send-push', {
+                          body: {
+                            user_id: user.id,
+                            title: "Teste de Push ✅",
+                            body: "Se você recebeu isso, as notificações estão funcionando!",
+                            url: "/admin"
+                          }
+                        });
+
+                        if (error) throw error;
+                        alert("Comando enviado! Verifique seu celular.");
+                      } catch (err: any) {
+                        alert("Erro ao testar push: " + err.message);
+                      } finally {
+                        setSavingPix(false);
+                      }
+                    }
+                  }}
+                  className="w-full bg-[#1C1C21] hover:bg-[#27272A] text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition border border-[#27272A]"
+                >
+                  TESTAR MINHA NOTIFICAÇÃO
+                </button>
                 <button
                   onClick={() => handleSaveAppSettings('Configurações de Notificação')}
                   disabled={savingPix}
@@ -2237,7 +2309,115 @@ const AdminDashboard: React.FC = () => {
           </div>
         )
       }
-    </div >
+
+      {/* TRANSACTION DETAILS MODAL */}
+      {selectedTransactionDetail && detailModalType && (
+        <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[70] p-4 backdrop-blur-md">
+          <div className="bg-[#141417] border border-[#27272A] rounded-3xl p-8 max-w-lg w-full relative shadow-[0_0_100px_rgba(0,0,0,0.5)] space-y-8 animate-in zoom-in-95 duration-200">
+            <button
+              onClick={() => {
+                setSelectedTransactionDetail(null);
+                setDetailModalType(null);
+              }}
+              className="absolute top-4 right-4 text-zinc-500 hover:text-white transition-colors"
+            >
+              <XCircle size={24} />
+            </button>
+
+            <div className="flex flex-col items-center text-center space-y-4">
+              <div className="w-24 h-24 rounded-full bg-zinc-800 flex items-center justify-center overflow-hidden border-2 border-[#10B981]/30 shadow-2xl shadow-[#10B981]/10">
+                {selectedTransactionDetail.profiles?.avatar_url ? (
+                  <img
+                    src={`https://vucvouxutompqoqhxzmi.supabase.co/storage/v1/object/public/avatars/${selectedTransactionDetail.profiles.avatar_url}`}
+                    alt={selectedTransactionDetail.profiles.full_name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-zinc-500 text-3xl font-black uppercase">
+                    {selectedTransactionDetail.profiles?.full_name?.charAt(0)}
+                  </span>
+                )}
+              </div>
+              <div>
+                <h3 className="text-2xl font-black text-white">{selectedTransactionDetail.profiles?.full_name}</h3>
+                <p className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">{selectedTransactionDetail.profiles?.email}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-[#0A0A0B] p-5 rounded-2xl border border-white/5 text-center">
+                <p className="text-[10px] text-zinc-500 font-bold uppercase mb-1">Valor</p>
+                <p className="text-2xl font-black text-[#10B981]">R$ {selectedTransactionDetail.amount.toFixed(2)}</p>
+              </div>
+              <div className="bg-[#0A0A0B] p-5 rounded-2xl border border-white/5 text-center">
+                <p className="text-[10px] text-zinc-500 font-bold uppercase mb-1">Status</p>
+                <p className={`text-sm font-black uppercase ${selectedTransactionDetail.status === 'pending' ? 'text-yellow-500' : 'text-green-500'}`}>
+                  {selectedTransactionDetail.status === 'pending' ? 'AGUARDANDO' : 'CONCLUÍDO'}
+                </p>
+              </div>
+            </div>
+
+            {detailModalType === 'withdraw' && (
+              <div className="bg-[#0A0A0B] p-5 rounded-2xl border border-white/5">
+                <p className="text-[10px] text-zinc-500 font-bold uppercase mb-2">Chave PIX</p>
+                <div className="flex items-center justify-between bg-zinc-900/50 p-3 rounded-xl">
+                  <p className="text-xs text-white font-mono truncate mr-2">{selectedTransactionDetail.pix_key}</p>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(selectedTransactionDetail.pix_key);
+                      alert('Chave copiada!');
+                    }}
+                    className="text-[#10B981] p-2 hover:bg-[#10B981]/10 rounded-lg transition"
+                  >
+                    <Copy size={18} />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {detailModalType === 'deposit' && selectedTransactionDetail.receipt_path && (
+              <button
+                onClick={() => handleOpenReceipt(selectedTransactionDetail.receipt_path)}
+                className="w-full bg-[#10B981]/10 hover:bg-[#10B981]/20 text-[#10B981] font-black py-5 rounded-2xl flex items-center justify-center gap-3 transition-all border border-[#10B981]/20"
+              >
+                <FileText size={20} /> VER COMPROVANTE
+              </button>
+            )}
+
+            {selectedTransactionDetail.status === 'pending' && (
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
+                <button
+                  onClick={() => {
+                    setConfirmAction({
+                      id: selectedTransactionDetail.id,
+                      action: 'reject',
+                      type: detailModalType
+                    });
+                    setSelectedTransactionDetail(null);
+                  }}
+                  className="bg-red-500/10 hover:bg-red-500/20 text-red-500 font-black py-5 rounded-2xl transition-all border border-red-500/10"
+                >
+                  REJEITAR
+                </button>
+                <button
+                  onClick={() => {
+                    setConfirmAction({
+                      id: selectedTransactionDetail.id,
+                      action: 'approve',
+                      type: detailModalType
+                    });
+                    setSelectedTransactionDetail(null);
+                  }}
+                  className="bg-[#10B981] hover:bg-[#059669] text-black font-black py-5 rounded-2xl transition-all shadow-lg shadow-[#10B981]/20"
+                >
+                  APROVAR
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

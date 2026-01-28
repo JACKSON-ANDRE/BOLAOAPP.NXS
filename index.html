@@ -3,35 +3,20 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Bolão App</title>
   <meta name="description" content="Participe dos melhores bolões de futebol!" />
   <meta name="theme-color" content="#0A0A0B" />
-  <link rel="icon" type="image/png" href="/pwa-192x192.png" />
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-  <link rel="manifest" href="/manifest.json" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Bolão App">
+  <link rel="icon" type="image/png" href="/pwa-192x192.png?v=3" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3" />
+  <link rel="manifest" href="/manifest.json?v=3" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <script>
-    // Suppress Dev Warnings
-    const origWarn = console.warn;
-    const origError = console.error;
 
-    console.warn = (...args) => {
-      const msg = args.map(a => String(a)).join(' ');
-      if (msg.includes('cdn.tailwindcss.com')) return;
-      if ((msg.includes('width') || msg.includes('height')) && (msg.includes('chart') || msg.includes('greater than 0'))) return;
-      origWarn(...args);
-    };
-
-    console.error = (...args) => {
-      const msg = args.map(a => String(a)).join(' ');
-      if ((msg.includes('width') || msg.includes('height')) && (msg.includes('chart') || msg.includes('greater than 0'))) return;
-      origError(...args);
-    };
-  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {

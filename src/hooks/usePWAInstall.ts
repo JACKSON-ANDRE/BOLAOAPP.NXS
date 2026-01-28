@@ -8,44 +8,49 @@ interface BeforeInstallPromptEvent extends Event {
 export function usePWAInstall() {
     const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
     const [isInstallable, setIsInstallable] = useState(false);
+    const [isInstalled, setIsInstalled] = useState(false);
 
     useEffect(() => {
         const handler = (e: Event) => {
-            console.log('PWA: beforeinstallprompt disparado!');
             e.preventDefault();
             setDeferredPrompt(e as BeforeInstallPromptEvent);
             setIsInstallable(true);
         };
 
-        window.addEventListener('beforeinstallprompt', handler);
+        const installedHandler = () => {
+            setIsInstalled(true);
+            setIsInstallable(false);
+            setDeferredPrompt(null);
+            // console.log('PWA was installed');
+        };
 
-        // Verifica se já teve disparo (alguns navegadores guardam)
-        if (window.hasOwnProperty('beforeinstallprompt')) {
-            console.log('PWA: Evento já existia no window');
-        }
+        window.addEventListener('beforeinstallprompt', handler);
+        window.addEventListener('appinstalled', installedHandler);
 
         return () => {
             window.removeEventListener('beforeinstallprompt', handler);
+            window.removeEventListener('appinstalled', installedHandler);
         };
     }, []);
 
     const install = async () => {
         if (!deferredPrompt) {
-            console.log('PWA: Tentativa de instalação sem prompt diferido');
             return false;
         }
 
-        await deferredPrompt.prompt();
-        const result = await deferredPrompt.userChoice;
-        console.log('PWA: Escolha do usuário:', result.outcome);
+        try {
+            await deferredPrompt.prompt();
+            const result = await deferredPrompt.userChoice;
 
-        if (result.outcome === 'accepted') {
-            setIsInstallable(false);
-            setDeferredPrompt(null);
-            return true;
+            if (result.outcome === 'accepted') {
+                setDeferredPrompt(null);
+                return true;
+            }
+        } catch (err) {
+            console.error('Installation error:', err);
         }
         return false;
     };
 
-    return { isInstallable, install };
+    return { isInstallable, isInstalled, install };
 }

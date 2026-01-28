@@ -4,7 +4,8 @@ import { supabase } from '../../lib/supabase';
 // Se não tiver, o navegador pode dar erro ao tentar se inscrever.
 // Para teste sem chave, em alguns casos funciona, mas o ideal é ter.
 // Use a chave pública vinda do ambiente (configurada no Vercel/Env)
-const VAPID_PUBLIC_KEY = (import.meta as any).env.VITE_VAPID_PUBLIC_KEY;
+// Use a chave pública vinda do ambiente (Vercel) ou do Banco (Admin)
+let VAPID_PUBLIC_KEY = (import.meta as any).env.VITE_VAPID_PUBLIC_KEY;
 
 function urlBase64ToUint8Array(base64String: string) {
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -27,18 +28,27 @@ export async function subscribeToPushNotifications(userId: string, silent = fals
         return false;
     }
 
+    // 0. Fallback: Search in Database if env is empty
+    if (!VAPID_PUBLIC_KEY) {
+        const { data } = await supabase.from('app_settings').select('vapid_public_key').maybeSingle();
+        if (data?.vapid_public_key) {
+            VAPID_PUBLIC_KEY = data.vapid_public_key;
+        }
+    }
+
     // Validação da Chave VAPID
     if (!VAPID_PUBLIC_KEY) {
-        if (!silent) console.error('VITE_VAPID_PUBLIC_KEY não configurada no ambiente!');
+        if (!silent) console.error('VAPID_PUBLIC_KEY não encontrada (Ambiente ou Banco)!');
         return false;
     }
 
-    if (!silent) console.log('--- PUSH SETUP V10 (Harden Reset) ---');
+    // Push setup initialization
 
     try {
         // 1. Service Worker Initialization
-        const registration = await navigator.serviceWorker.register('/sw.js');
-        await navigator.serviceWorker.ready;
+        // O Service Worker já é registrado pelo ReloadPrompt (useRegisterSW)
+        // Apenas aguardamos ele estar pronto.
+        const registration = await navigator.serviceWorker.ready;
 
         // Skip aggressive cleanup in silent mode to avoid flicker, just upsert current
         // BUT if current is null, we must subscribe
@@ -46,7 +56,7 @@ export async function subscribeToPushNotifications(userId: string, silent = fals
 
         if (!pushSubscription) {
             // 3. New Subscription
-            if (!silent) console.log('Requesting new subscription with key:', VAPID_PUBLIC_KEY);
+            // Requesting new subscription
             const subscribeOptions = {
                 userVisibleOnly: true,
                 applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
@@ -63,11 +73,11 @@ export async function subscribeToPushNotifications(userId: string, silent = fals
                 }, { onConflict: 'user_id' });
 
             if (error) throw error;
-            if (!silent) console.log('Web Push OK (New)!', pushSubscription);
+            // Web Push OK (New)!
             return true;
         } else {
             // If already subscribed, just update DB to be sure
-            if (!silent) console.log('Existing subscription found, syncing...');
+            // Existing subscription found, syncing...
 
             const { error } = await supabase
                 .from('user_push_subscriptions')
@@ -78,7 +88,7 @@ export async function subscribeToPushNotifications(userId: string, silent = fals
                 }, { onConflict: 'user_id' });
 
             if (error) throw error;
-            if (!silent) console.log('Web Push OK (Synced)!', pushSubscription);
+            // Web Push OK (Synced)!
             return 'EXISTING';
         }
 
@@ -97,7 +107,7 @@ export async function subscribeToPushNotifications(userId: string, silent = fals
                 const sub = await registration.pushManager.getSubscription();
                 if (sub) {
                     await sub.unsubscribe();
-                    if (!silent) console.log('Old subscription removed. Retrying...');
+                    // Old subscription removed. Retrying...
                     // Recursive call to create new
                     return await subscribeToPushNotifications(userId, silent);
                 }

@@ -133,42 +133,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setLoading(false);
         }, 8000);
 
-        supabase.auth.getSession().then(async ({ data: { session } }) => {
-            try {
-                setUser(session?.user ?? null);
-                if (session?.user) {
-                    await fetchProfile(session.user);
-                }
-                await fetchSettings().catch(console.error);
-            } catch (e) {
-                console.error("Auth Init Error:", e);
-            } finally {
-                setLoading(false);
-                clearTimeout(safetyTimeout);
-            }
-        });
+        // Fetch maintenance settings
+        fetchSettings().catch(console.error);
 
+        // Supabase onAuthStateChange handles both INITIAL_SESSION and subsequent changes
         const {
             data: { subscription },
         } = supabase.auth.onAuthStateChange(async (event, session) => {
-            console.log(`[AUTH] Event: ${event}`, session?.user?.id);
+            const currentUser = session?.user ?? null;
 
-            if (event === 'SIGNED_OUT') {
-                setUser(null);
+            setUser(currentUser);
+
+            if (currentUser) {
+                // Ensure profile is fetched before hiding loading spinner for new sessions
+                await fetchProfile(currentUser).catch(console.error);
+            } else {
                 setProfile(null);
+            }
+
+            if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
                 setLoading(false);
-                // localStorage.clear(); // REMOVE: Isso mata o token do Supabase se o evento disparar por engano
-                return;
+                clearTimeout(safetyTimeout);
             }
 
-            setUser(session?.user ?? null);
-
-            // SEMPRE busca o perfil se tiver usuário, sem cache/ref
-            if (session?.user) {
-                await fetchProfile(session.user).catch(console.error);
+            // Handle session refresh errors (specifically 'Invalid Refresh Token')
+            if (event === 'TOKEN_REFRESHED' === false && (session === null && event !== 'SIGNED_OUT')) {
+                // If we are supposed to have a session but don't (and it's not a generic sign out)
+                // it might be a refresh failure.
+                console.warn("Auth Event:", event, "Session is null - potential refresh failure.");
             }
-
-            setLoading(false);
         });
 
         return () => {

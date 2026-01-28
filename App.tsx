@@ -25,7 +25,7 @@ import NotificationGuard from './src/components/NotificationGuard';
 
 const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone;
 
   if (loading) {
     return (
@@ -68,15 +68,15 @@ const AppContent: React.FC = () => {
         />
 
         {/* Community Route */}
-        <Route path="/community" element={user ? <Layout><Community /></Layout> : <Navigate to="/login" />} />
+        <Route path="/community" element={user ? <Layout><Community /></Layout> : <Navigate to="/" />} />
 
-        <Route path="/pools/new" element={user ? <Layout><CreatePool /></Layout> : <Navigate to="/login" />} />
+        <Route path="/pools/new" element={user ? <Layout><CreatePool /></Layout> : <Navigate to="/" />} />
         <Route path="/pools/:id" element={<Layout><PoolDetails /></Layout>} />
-        <Route path="/pools/:id/edit" element={user ? <Layout><EditPool /></Layout> : <Navigate to="/login" />} />
-        <Route path="/my-pools" element={user ? <Layout><MyPools /></Layout> : <Navigate to="/login" />} />
-        <Route path="/profile" element={user ? <Layout><ProfilePage /></Layout> : <Navigate to="/login" />} />
-        <Route path="/wallet" element={user ? <Layout><Wallet /></Layout> : <Navigate to="/login" />} />
-        <Route path="/admin" element={user ? <Layout><AdminDashboard /></Layout> : <Navigate to="/login" />} />
+        <Route path="/pools/:id/edit" element={user ? <Layout><EditPool /></Layout> : <Navigate to="/" />} />
+        <Route path="/my-pools" element={user ? <Layout><MyPools /></Layout> : <Navigate to="/" />} />
+        <Route path="/profile" element={user ? <Layout><ProfilePage /></Layout> : <Navigate to="/" />} />
+        <Route path="/wallet" element={user ? <Layout><Wallet /></Layout> : <Navigate to="/" />} />
+        <Route path="/admin" element={user ? <Layout><AdminDashboard /></Layout> : <Navigate to="/" />} />
 
 
         {/* Redirect unknown routes to root (Safe entry point) */}
@@ -89,9 +89,7 @@ const AppContent: React.FC = () => {
 const App: React.FC = () => {
   return (
     <AuthProvider>
-      <NotificationGuard>
-        <AppContent />
-      </NotificationGuard>
+      <AppContent />
     </AuthProvider>
   );
 };

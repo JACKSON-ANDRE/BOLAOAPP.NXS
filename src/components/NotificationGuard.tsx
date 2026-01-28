@@ -9,7 +9,7 @@ interface NotificationGuardProps {
 }
 
 const NotificationGuard: React.FC<NotificationGuardProps> = ({ children }) => {
-    const { session, loading: authLoading } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const [hasSubscription, setHasSubscription] = useState<boolean | null>(null);
     const [checking, setChecking] = useState(false);
     const [activationLoading, setActivationLoading] = useState(false);
@@ -31,7 +31,7 @@ const NotificationGuard: React.FC<NotificationGuardProps> = ({ children }) => {
             // If Context is loading, we wait. UNLESS direct user is already found, then we can proceed.
             // Actually, waiting for authLoading is safer to avoid flicker, but if Context is dead, we rely on directUser.
 
-            const effectiveUser = directUser || session?.user;
+            const effectiveUser = user || directUser;
 
             if (!effectiveUser) {
                 if (!authLoading) {
@@ -53,7 +53,6 @@ const NotificationGuard: React.FC<NotificationGuardProps> = ({ children }) => {
                 if (data && data.id) {
                     setHasSubscription(true);
                     // 🔄 SILENT SYNC: Ensure the DB has the *latest* token for this device
-                    // .catch((e) => {}) handles Incognito/Permission errors silently
                     subscribeToPushNotifications(effectiveUser.id, true).catch(() => { });
                 } else {
                     setHasSubscription(false); // BLOCK!
@@ -77,12 +76,12 @@ const NotificationGuard: React.FC<NotificationGuardProps> = ({ children }) => {
 
         return () => clearInterval(interval);
 
-    }, [session?.user, authLoading]);
+    }, [user, authLoading]);
 
     const handleActivate = async () => {
-        let targetId = session?.user?.id;
+        let targetId = user?.id;
 
-        // Fallback to direct check if session missing
+        // Fallback to direct check if state missing
         if (!targetId) {
             const { data } = await supabase.auth.getUser();
             targetId = data.user?.id;
@@ -160,7 +159,7 @@ const NotificationGuard: React.FC<NotificationGuardProps> = ({ children }) => {
 
                     {/* Debug inside blocker */}
                     <div className="text-red-500 text-[10px] mt-4 font-mono">
-                        User: {session?.user?.email} | Direct: {directUserEmail}
+                        User: {user?.email} | Direct: {directUserEmail}
                     </div>
                 </div>
             </div>

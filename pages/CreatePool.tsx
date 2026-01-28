@@ -153,6 +153,7 @@ const CreatePool: React.FC = () => {
                   <option>Vôlei</option>
                   <option>Basquete</option>
                   <option>Vale Tudo</option>
+                  <option>Big Brother Brasil</option>
                   <option>Outros</option>
                 </select>
               </div>
@@ -168,7 +169,9 @@ const CreatePool: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-[10px] md:text-xs text-zinc-400">TIME A *</label>
+                <label className="text-[10px] md:text-xs text-zinc-400">
+                  {formData.modality === 'Big Brother Brasil' ? 'PARTICIPANTE A *' : 'TIME A *'}
+                </label>
                 <input
                   value={formData.teamA}
                   onChange={(e) => setFormData({ ...formData, teamA: e.target.value })}
@@ -178,7 +181,9 @@ const CreatePool: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-[10px] md:text-xs text-zinc-400">TIME B *</label>
+                <label className="text-[10px] md:text-xs text-zinc-400">
+                  {formData.modality === 'Big Brother Brasil' ? 'PARTICIPANTE B *' : 'TIME B *'}
+                </label>
                 <input
                   value={formData.teamB}
                   onChange={(e) => setFormData({ ...formData, teamB: e.target.value })}

@@ -40,6 +40,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [isNotifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [pushStatus, setPushStatus] = useState<PermissionState | 'denied'>('prompt');
 
   const navItems = [
     { label: 'Início', path: '/', icon: Home },
@@ -105,6 +106,30 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   useEffect(() => {
+    if (Notification.permission === 'granted') {
+      setPushStatus('granted');
+    } else if (Notification.permission === 'denied') {
+      setPushStatus('denied');
+    }
+  }, []);
+
+  const handleEnableNotifications = async () => {
+    if (!user) return;
+    try {
+      const { subscribeToPushNotifications } = await import('../src/utils/pushNotifications');
+      const success = await subscribeToPushNotifications(user.id);
+      if (success) {
+        setPushStatus('granted');
+        alert('Notificações ativadas com sucesso!');
+      } else {
+        alert('Para ativar, autorize as notificações nas configurações do seu navegador.');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
     if (!user) return;
 
     fetchNotifications();
@@ -121,8 +146,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           filter: `user_id=eq.${user.id}`
         },
         (payload) => {
-          console.log('Realtime Event:', payload.eventType, payload);
-
           if (payload.eventType === 'DELETE') {
             // Se foi deletado no banco, removemos da lista local imediatamente
             setNotifications(prev => prev.filter(n => n.id !== payload.old.id));
@@ -133,7 +156,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         }
       )
       .subscribe((status) => {
-        console.log('Status da conexão Realtime:', status);
+        // Status da conexão Realtime: status
       });
 
     return () => {
@@ -144,11 +167,27 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <div className="flex h-screen bg-[#0A0A0B]">
       {maintenanceMode && (
-        <div className="fixed top-0 left-0 right-0 bg-yellow-500/90 text-black z-[100] px-4 py-1 flex items-center justify-center gap-2 font-bold backdrop-blur">
+        <div className="fixed top-0 left-0 right-0 bg-yellow-500/90 text-black z-[100] px-4 py-1 flex items-center justify-center gap-2 font-bold backdrop-blur shadow-lg">
           <ShieldAlert size={18} />
-          <span>MODO MANUTENÇÃO ATIVO — Apenas administradores podem realizar ações.</span>
+          <span className="text-xs md:text-sm">MODO MANUTENÇÃO ATIVO — Apenas administradores podem realizar ações.</span>
         </div>
       )}
+
+      {pushStatus !== 'granted' && (
+        <div className={`fixed ${maintenanceMode ? 'top-8' : 'top-0'} left-0 right-0 bg-[#10B981] text-[#0A0A0B] z-[90] px-4 py-2 flex items-center justify-between gap-4 font-black transition-all animate-in slide-in-from-top duration-500`}>
+          <div className="flex items-center gap-2">
+            <Bell size={18} className="animate-bounce" />
+            <span className="text-[10px] md:text-xs uppercase tracking-tight">Ative as notificações para receber avisos de prêmios e resultados!</span>
+          </div>
+          <button
+            onClick={handleEnableNotifications}
+            className="bg-white px-3 py-1 rounded-full text-[10px] uppercase shadow-md active:scale-95 transition-transform"
+          >
+            Ativar Agora
+          </button>
+        </div>
+      )}
+
       <button
         className="hidden lg:flex fixed top-4 left-4 z-50 p-2 bg-[#141417] rounded-lg border border-[#27272A]"
         onClick={() => setSidebarOpen(!isSidebarOpen)}
@@ -157,10 +196,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </button>
 
       <button
-        className="fixed top-3 right-3 md:top-4 md:right-4 z-50 p-1.5 md:p-2 bg-[#141417] rounded-lg border border-[#27272A]"
+        className={`fixed ${maintenanceMode || pushStatus !== 'granted' ? 'top-16 md:top-20' : 'top-3 md:top-4'} right-3 md:right-4 z-50 p-1.5 md:p-2 bg-[#141417] rounded-lg border border-[#27272A] transition-all duration-300 ${pushStatus !== 'granted' ? 'border-[#10B981] shadow-lg shadow-[#10B981]/20' : ''}`}
         onClick={() => setNotifOpen(!isNotifOpen)}
       >
-        <Bell className="w-4 h-4 md:w-5 md:h-5 text-white" />
+        <Bell className={`w-4 h-4 md:w-5 md:h-5 ${pushStatus !== 'granted' ? 'text-[#10B981] animate-pulse' : 'text-white'}`} />
         {notifications.length > 0 && (
           <span className="absolute -top-1 -right-1 bg-[#10B981] text-black text-[8px] md:text-xs font-bold rounded-full px-1">
             {notifications.length}

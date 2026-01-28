@@ -11,6 +11,7 @@ const Register: React.FC = () => {
   const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [pushEnabled, setPushEnabled] = useState(true); // Default to true
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -75,11 +76,13 @@ const Register: React.FC = () => {
         }
       }
 
-      // 4. Solicitar Notificações (Obrigatório dar permissão ou cai no Guard)
-      try {
-        await subscribeToPushNotifications(data.user.id);
-      } catch (pushErr) {
-        console.warn("Erro ao registrar notificações:", pushErr);
+      // 4. Solicitar Notificações (Opcional - mas sugerido)
+      if (pushEnabled) {
+        try {
+          await subscribeToPushNotifications(data.user.id);
+        } catch (pushErr) {
+          console.warn("Erro ao registrar notificações:", pushErr);
+        }
       }
 
       // 5. Notify Admin
@@ -185,6 +188,23 @@ const Register: React.FC = () => {
               <label className="text-xs text-zinc-500 leading-relaxed cursor-pointer" onClick={() => setTermsAccepted(!termsAccepted)}>
                 Eu aceito os <span className="text-[#10B981]">Termos de Uso</span> e a <span className="text-[#10B981]">Política de Privacidade</span> do Bolão App.
               </label>
+            </div>
+
+            <div className="flex items-center gap-3 p-4 bg-[#0A0A0B] rounded-2xl border border-[#27272A] hover:border-[#10B981]/30 transition-all">
+              <div className="flex-1">
+                <p className="text-sm font-bold text-white flex items-center gap-2">
+                  <Bell size={16} className="text-[#10B981]" />
+                  Avisos de Prêmios
+                </p>
+                <p className="text-[10px] text-zinc-500">Receber alertas de ganhos e resultados</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPushEnabled(!pushEnabled)}
+                className={`w-12 h-6 rounded-full relative transition-colors duration-200 ${pushEnabled ? 'bg-[#10B981]' : 'bg-zinc-700'}`}
+              >
+                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform duration-200 ${pushEnabled ? 'translate-x-7' : 'translate-x-1'}`} />
+              </button>
             </div>
 
 

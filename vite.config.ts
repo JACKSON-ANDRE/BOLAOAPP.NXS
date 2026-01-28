@@ -22,14 +22,14 @@ export default defineConfig(({ mode }) => {
         filename: 'sw.js',
         devOptions: {
           enabled: true,
-          type: 'module', // Required for dev
+          type: 'module',
         },
         manifestFilename: 'manifest.json', // FORCE output as manifest.json to fix 404s/caching issues
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png'],
         manifest: {
           name: 'Bolão App',
           short_name: 'Bolão App',
-          description: 'Aposte com amigos, ganhe com a comunidade.',
+          description: 'Brinque com seus amigos!',
           theme_color: '#0A0A0B',
           background_color: '#0A0A0B',
           display: 'standalone',
@@ -38,20 +38,20 @@ export default defineConfig(({ mode }) => {
           start_url: '/',
           icons: [
             {
-              src: 'pwa-192x192.png',
+              src: 'pwa-192x192.png?v=3',
               sizes: '192x192',
               type: 'image/png'
             },
             {
-              src: 'pwa-512x512.png',
+              src: 'pwa-512x512.png?v=3',
               sizes: '512x512',
               type: 'image/png'
             },
             {
-              src: 'pwa-512x512.png',
+              src: 'pwa-512x512.png?v=3',
               sizes: '512x512',
               type: 'image/png',
-              purpose: 'any maskable'
+              purpose: 'any'
             }
           ]
         }
