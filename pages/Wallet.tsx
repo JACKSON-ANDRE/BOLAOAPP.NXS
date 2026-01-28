@@ -211,9 +211,11 @@ const WalletPage: React.FC = () => {
 
       if (error) throw error;
       setPixData(data);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error generating PIX:', err);
-      alert('Erro ao gerar PIX. Tente novamente.');
+      // Try to extract specific error message from Supabase Function response
+      const errorMessage = err.context?.message || err.message || 'Erro ao gerar PIX. Tente novamente.';
+      alert(errorMessage);
     } finally {
       setGeneratingPix(false);
     }

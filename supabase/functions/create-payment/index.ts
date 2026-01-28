@@ -75,8 +75,9 @@ serve(async (req) => {
 
         const mpData = await mpResponse.json()
         if (!mpResponse.ok) {
-            console.error('MP API Error:', mpData)
-            throw new Error(mpData.message || 'Erro ao gerar pagamento no Mercado Pago')
+            console.error('Mercado Pago API Error Details:', JSON.stringify(mpData, null, 2))
+            const errorMsg = mpData.message || (mpData.cause && mpData.cause[0]?.description) || 'Erro no Mercado Pago'
+            throw new Error(`MP Error: ${errorMsg}`)
         }
 
         // Validate nested data
