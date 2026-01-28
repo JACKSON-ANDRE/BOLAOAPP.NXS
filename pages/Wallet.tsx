@@ -354,9 +354,8 @@ const WalletPage: React.FC = () => {
                 className="text-xs md:text-sm text-zinc-300 hover:text-orange-500 font-black uppercase transition-all cursor-pointer inline-flex items-center gap-2 group/help underline underline-offset-4 decoration-orange-500/30 hover:decoration-orange-500"
               >
                 <span className="w-5 h-5 md:w-6 md:h-6 rounded-full border-2 border-orange-500/50 group-hover:help:border-orange-500 flex items-center justify-center text-[10px] md:text-xs">?</span>
-                Probelas para realizar pix ? Clique aqui.
+                PROBLEMAS PARA REALIZAR PIX ?
               </p>
-              <p className="text-[9px] md:text-[10px] text-zinc-500 font-bold uppercase ml-7 md:ml-8 leading-none">Clique para falar com o atendimento e fazer manual</p>
             </div>
           </div>
         </div>
