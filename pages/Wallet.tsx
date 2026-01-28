@@ -346,16 +346,19 @@ const WalletPage: React.FC = () => {
               <QrCode size={20} md:size={24} strokeWidth={3} className="group-hover/btn:rotate-12 transition-transform" />
               <span className="text-xs md:text-lg tracking-tight uppercase">ADICIONAR SALDO VIA PIX</span>
             </button>
-            <p
-              onClick={() => {
-                const amount = prompt("Valor do depósito manual:");
-                if (amount) alert("Para depósitos manuais, entre em contato com o suporte enviando o comprovante.");
-              }}
-              className="mt-4 text-[9px] text-zinc-500 hover:text-[#10B981] font-bold uppercase transition-colors cursor-pointer inline-flex items-center gap-2 group/help"
-            >
-              <span className="w-4 h-4 rounded-full border border-zinc-500 group-hover/help:border-[#10B981] flex items-center justify-center text-[8px]">?</span>
-              Problemas com o automático? Clique aqui
-            </p>
+            <div className="mt-6 p-4 bg-orange-500/5 border border-orange-500/10 rounded-2xl flex flex-col gap-2">
+              <p
+                onClick={() => {
+                  const amount = prompt("Valor do depósito manual:");
+                  if (amount) alert("Para depósitos manuais, entre em contato com o suporte enviando o comprovante.");
+                }}
+                className="text-xs md:text-sm text-zinc-300 hover:text-orange-500 font-black uppercase transition-all cursor-pointer inline-flex items-center gap-2 group/help underline underline-offset-4 decoration-orange-500/30 hover:decoration-orange-500"
+              >
+                <span className="w-5 h-5 md:w-6 md:h-6 rounded-full border-2 border-orange-500/50 group-hover:help:border-orange-500 flex items-center justify-center text-[10px] md:text-xs">?</span>
+                Problemas com o automático? Clique aqui para depósito manual
+              </p>
+              <p className="text-[9px] md:text-[10px] text-zinc-500 font-bold uppercase ml-7 md:ml-8 leading-none">Clique para ver as instruções de pagamento via suporte</p>
+            </div>
           </div>
         </div>
 
