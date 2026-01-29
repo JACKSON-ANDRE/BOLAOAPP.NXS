@@ -21,7 +21,7 @@ export default defineConfig(({ mode }) => {
         srcDir: 'src',
         filename: 'sw.js',
         devOptions: {
-          enabled: true,
+          enabled: false,
           type: 'module',
         },
         manifestFilename: 'manifest.json', // FORCE output as manifest.json to fix 404s/caching issues

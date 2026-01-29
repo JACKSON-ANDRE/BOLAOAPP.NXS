@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../src/contexts/AuthContext';
-import { Trophy, Calendar, ArrowLeft, Loader2, Info, CheckCircle, Scale } from 'lucide-react';
+import { Trophy, Calendar, ArrowLeft, Loader2, Info, CheckCircle, Scale, Share2, Copy, Send, X as CloseIcon } from 'lucide-react';
 import { calculateServiceFee, getFeeTable } from '../src/utils/FeeCalculator';
 import { notifyAdmin } from '../src/utils/adminNotification';
 
@@ -14,7 +14,10 @@ const CreatePool: React.FC = () => {
   // Modal State
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showCommitmentModal, setShowCommitmentModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [createdPoolId, setCreatedPoolId] = useState<string | null>(null);
   const [calculatedFee, setCalculatedFee] = useState(0);
+  const [copied, setCopied] = useState(false);
 
   const [formData, setFormData] = useState({
     modality: 'Beach Tennis',
@@ -92,7 +95,7 @@ const CreatePool: React.FC = () => {
     const scheduledAtISO = new Date(formData.scheduled_at).toISOString();
     const betsDeadlineISO = new Date(formData.bets_deadline).toISOString();
 
-    const { error } = await supabase.from('pools').insert({
+    const { data, error } = await supabase.from('pools').insert({
       creator_id: profile?.id,
       title: formData.title,
       modality: formData.modality,
@@ -105,17 +108,31 @@ const CreatePool: React.FC = () => {
       gross_amount: 0,
       net_prize: 0,
       is_distributed: false
-    });
+    }).select().single();
 
     setLoading(false);
     setShowCommitmentModal(false);
 
     if (error) {
       alert('Erro ao criar bolão: ' + error.message);
-    } else {
+    } else if (data) {
       notifyAdmin("Novo Bolão Criado", `Um novo bolão "${formData.title}" foi criado na categoria ${formData.modality}.`);
-      navigate('/');
+      setCreatedPoolId(data.id);
+      setShowShareModal(true);
     }
+  };
+
+  const handleCopyLink = () => {
+    const link = `${window.location.origin}/#/pools/${createdPoolId}`;
+    navigator.clipboard.writeText(link);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleShareWhatsApp = () => {
+    const link = `${window.location.origin}/#/pools/${createdPoolId}`;
+    const text = encodeURIComponent(`🏆 *BORA JOGAR?* ⚽\n\nCriei um bolão para *${formData.title}*!\n💰 Valor: R$ ${formData.entry_fee}\n\nEntre agora e dê seu palpite:\n${link}`);
+    window.open(`https://wa.me/?text=${text}`, '_blank');
   };
 
 
@@ -371,6 +388,67 @@ const CreatePool: React.FC = () => {
           )
         }
 
+        {/* SHARE MODAL */}
+        {showShareModal && (
+          <div className="fixed inset-0 bg-black/95 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
+            <div className="bg-[#141417] border border-[#10B981]/30 rounded-[2.5rem] w-full max-w-md p-8 space-y-8 relative shadow-[0_0_50px_rgba(16,185,129,0.1)] animate-in zoom-in duration-300">
+
+              <button
+                onClick={() => navigate('/')}
+                className="absolute top-6 right-6 text-zinc-500 hover:text-white transition-colors"
+                aria-label="Fechar"
+              >
+                <CloseIcon size={24} />
+              </button>
+
+              <div className="text-center space-y-4">
+                <div className="w-20 h-20 bg-gradient-to-br from-[#10B981] to-[#059669] rounded-full flex items-center justify-center mx-auto shadow-lg shadow-[#10B981]/20 ring-4 ring-[#10B981]/10">
+                  <CheckCircle className="text-[#0A0A0B]" size={40} strokeWidth={2.5} />
+                </div>
+                <div className="space-y-1">
+                  <h2 className="text-2xl font-black text-white uppercase tracking-tight">BOLÃO CRIADO! 🚀</h2>
+                  <p className="text-zinc-400 text-sm font-medium">Tudo pronto! Agora é só convidar a galera.</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <button
+                  onClick={handleShareWhatsApp}
+                  className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white font-black py-5 rounded-2xl flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#25D366]/10"
+                >
+                  <Send size={24} />
+                  COMPARTILHAR WHATSAPP
+                </button>
+
+                <button
+                  onClick={handleCopyLink}
+                  className="w-full bg-[#1C1C21] border border-[#27272A] hover:border-[#10B981] text-white font-black py-5 rounded-2xl flex items-center justify-center gap-3 transition-all group"
+                >
+                  {copied ? (
+                    <>
+                      <CheckCircle className="text-[#10B981]" size={24} />
+                      <span className="text-[#10B981]">LINK COPIADO!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={24} className="text-[#10B981]" />
+                      COPIAR LINK DO BOLÃO
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <div className="pt-2 text-center">
+                <button
+                  onClick={() => navigate(`/pools/${createdPoolId}`)}
+                  className="text-zinc-500 hover:text-white font-bold text-sm uppercase tracking-widest transition-colors"
+                >
+                  Visualizar Bolão —›
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div >
     </div >
   );

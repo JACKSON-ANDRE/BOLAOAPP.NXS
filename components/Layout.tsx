@@ -313,23 +313,59 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
         </div>
       </aside>
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-[#141417] border-t border-[#27272A] pb-safe z-50 flex justify-around items-center h-16 px-2">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          return (
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-[72px] bg-[#141417]/95 backdrop-blur-2xl border-t border-white/5 z-50 flex items-center px-1 pb-safe shadow-[0_-20px_50px_rgba(0,0,0,0.8)]">
+        <div className="flex w-full justify-between items-stretch h-full relative">
+
+          {/* Left Side: Home, My Pools, Community */}
+          <div className="flex flex-[1.2] justify-around items-center">
+            {[navItems[0], navItems[3], navItems[1]].map((item) => {
+              const isActive = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`flex flex-col items-center justify-center gap-1.5 transition-all duration-300 w-full h-full ${isActive ? 'text-[#10B981]' : 'text-zinc-500 active:scale-90'}`}
+                >
+                  <item.icon size={18} strokeWidth={isActive ? 2.5 : 2} />
+                  <span className={`text-[8px] font-black uppercase tracking-widest transition-all ${isActive ? 'opacity-100' : 'opacity-40'}`}>
+                    {item.label === 'Início' ? 'Home' : item.label === 'Meus Bolões' ? 'Meus' : 'Social'}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* Center: Floating Create Button */}
+          <div className="relative flex flex-col items-center justify-center px-2 z-20">
+            <div className="absolute -top-6 w-20 h-20 bg-[#0A0A0B] rounded-full"></div>
             <Link
-              key={item.path}
-              to={item.path}
-              className={`flex flex-col items-center justify-center w-full h-full gap-1 ${isActive ? 'text-[#10B981]' : 'text-zinc-500'
-                }`}
+              to="/pools/new"
+              className="w-14 h-14 bg-gradient-to-br from-[#10B981] to-[#059669] rounded-full flex items-center justify-center text-[#0A0A0B] shadow-[0_10px_25px_rgba(16,185,129,0.4)] active:scale-90 transition-all duration-300 border-[4px] border-[#0A0A0B] relative -top-6 group"
             >
-              <div className={`p-1 rounded-xl transition-all ${isActive ? 'bg-[#10B981]/10' : ''}`}>
-                <item.icon size={isActive ? 24 : 20} strokeWidth={isActive ? 2.5 : 2} />
-              </div>
-              <span className="text-[10px] font-medium">{item.label.split(' ')[0]}</span>
+              <PlusSquare size={26} strokeWidth={3} className="group-hover:rotate-90 transition-transform duration-500" />
             </Link>
-          );
-        })}
+            <span className="absolute bottom-2 text-[9px] font-black text-[#10B981] uppercase tracking-[0.2em] opacity-80">Criar</span>
+          </div>
+
+          {/* Right Side: Wallet, Profile, Admin */}
+          <div className="flex flex-[1.2] justify-around items-center">
+            {[navItems[4], navItems[5], navItems[6]].filter(Boolean).map((item) => {
+              const isActive = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`flex flex-col items-center justify-center gap-1.5 transition-all duration-300 w-full h-full ${isActive ? 'text-[#10B981]' : 'text-zinc-500 active:scale-90'}`}
+                >
+                  <item.icon size={18} strokeWidth={isActive ? 2.5 : 2} />
+                  <span className={`text-[8px] font-black uppercase tracking-widest transition-all ${isActive ? 'opacity-100' : 'opacity-40'}`}>
+                    {item.label === 'Carteira' ? 'Wallet' : item.label === 'Meu Perfil' ? 'Perfil' : 'Admin'}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
       </nav>
 
       <main className="flex-1 overflow-y-auto pt-4 lg:pt-0 pb-20 lg:pb-0">
