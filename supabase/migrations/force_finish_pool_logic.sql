@@ -25,7 +25,7 @@ BEGIN
 
     SELECT COALESCE(SUM(amount), 0) INTO v_gross FROM public.bets WHERE pool_id = p_pool_id;
     
-    IF v_gross > 0 THEN v_fee := CEIL(v_gross / 50.0) * 5.0; END IF;
+    v_fee := TRUNC(v_gross * 0.10, 2);
     v_net := v_gross - v_fee;
     IF v_net < 0 THEN v_net := 0; END IF;
 

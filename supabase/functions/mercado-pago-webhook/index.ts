@@ -21,10 +21,31 @@ serve(async (req) => {
             Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
         )
 
-        // Mercado Pago sends data in query params or body depending on the type
         const url = new URL(req.url)
         const topic = url.searchParams.get('topic') || url.searchParams.get('type')
         const id = url.searchParams.get('id') || url.searchParams.get('data.id')
+
+        // --- DEBUG LOGGING ---
+        try {
+            const bodyClone = req.clone();
+            const rawBody = await bodyClone.text();
+            let parsedBody = {};
+            try { parsedBody = JSON.parse(rawBody); } catch (e) { }
+
+            await supabaseClient.from('webhook_logs').insert({
+                source: 'mercado-pago',
+                payload: {
+                    url: req.url,
+                    method: req.method,
+                    query: Object.fromEntries(url.searchParams),
+                    body: parsedBody
+                },
+                headers: Object.fromEntries(req.headers.entries())
+            });
+        } catch (logError) {
+            console.error('Failed to log webhook:', logError);
+        }
+        // --- END DEBUG LOGGING ---
 
         // Only interest in payment notifications
         if (topic === 'payment' || topic === 'payment.updated' || req.method === 'POST') {
@@ -54,11 +75,12 @@ serve(async (req) => {
 
                     // 2. Update our database
                     // This will trigger the SQL on_deposit_approved function automatically
+                    // Update if pending OR expired (user might have closed modal before payment)
                     const { error } = await supabaseClient
                         .from('deposits')
                         .update({ status: status })
                         .eq('external_reference', externalReference)
-                        .eq('status', 'pending'); // Only update if it was still pending
+                        .in('status', ['pending', 'expired']);
 
                     if (error) console.error('Error updating deposit:', error);
                 }

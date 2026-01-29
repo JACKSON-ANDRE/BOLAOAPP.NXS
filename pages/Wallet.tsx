@@ -12,6 +12,7 @@ import {
   X,
   ArrowUpCircle,
   Trophy,
+  CheckCircle2,
   AlertCircle,
   Download,
   Calendar,
@@ -22,6 +23,7 @@ import { PieChart as RechartsPieChart, Pie, Tooltip as RechartsTooltip, Responsi
 import { generateMonthlyReport } from '../utils/ReportGenerator';
 import TransactionDetailsModal from '../components/TransactionDetailsModal';
 import { notifyAdmin } from '../src/utils/adminNotification';
+import { triggerCelebration } from '../src/utils/confetti';
 
 const WalletPage: React.FC = () => {
   const { profile, maintenanceMode } = useAuth();
@@ -55,7 +57,7 @@ const WalletPage: React.FC = () => {
   const [autoPixAmount, setAutoPixAmount] = useState('');
   const [pixData, setPixData] = useState<{ qr_code: string; qr_code_base64: string; external_reference: string } | null>(null);
   const [generatingPix, setGeneratingPix] = useState(false);
-  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'approved' | 'expired'>('pending');
+  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'approved' | 'rejected' | 'expired'>('pending');
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -83,7 +85,11 @@ const WalletPage: React.FC = () => {
         }, (payload) => {
           if (payload.new.status === 'approved') {
             setPaymentStatus('approved');
+            triggerCelebration(); // Explodir confetes! 🎆
             fetchHistory(); // Refresh history automatically
+          } else if (payload.new.status === 'rejected') {
+            setPaymentStatus('rejected');
+            fetchHistory();
           }
         })
         .subscribe();
@@ -93,6 +99,7 @@ const WalletPage: React.FC = () => {
       };
     }
   }, [profile?.id]);
+
 
   const fetchPixSettings = async () => {
     const { data } = await supabase.from('app_settings').select('*').eq('id', 1).single();
@@ -132,11 +139,16 @@ const WalletPage: React.FC = () => {
       const { data: autoDeposits } = await supabase
         .from('deposits')
         .select('*')
-        .eq('user_id', profile.id);
+        .eq('user_id', profile.id)
+        .neq('status', 'expired');
 
       // Merge & Normalize
       const merged = [
-        ...(transactions || []).map(t => ({ ...t, source: 'txn', category: t.type === 'deposit' || t.type === 'winning' || t.type === 'bet_credit' ? 'credit' : 'debit' })),
+        ...(transactions || []).map(t => ({
+          ...t,
+          source: 'txn',
+          category: (t.type === 'deposit' || t.type === 'winning' || t.type === 'bet_credit' || (t.type === 'admin_adjustment' && t.amount > 0)) ? 'credit' : 'debit'
+        })),
         ...(deposits || []).map(d => ({ ...d, type: 'deposit_request', source: 'req', category: 'credit', created_at: d.created_at })),
         ...(withdraws || []).map(w => ({ ...w, type: 'withdraw_request', source: 'req', category: 'debit', created_at: w.created_at })),
         ...(autoDeposits || []).map(ad => ({ ...ad, type: 'deposit', source: 'auto_dep', category: 'credit', created_at: ad.created_at }))
@@ -268,16 +280,17 @@ const WalletPage: React.FC = () => {
     return <History size={20} />;
   };
 
-  const getLabelForType = (type: string) => {
+  const getLabelForType = (type: string, status?: string) => {
     switch (type) {
-      case 'deposit': return 'Depósito Aprovado';
-      case 'deposit_request': return 'Depósito (Solicitado)';
+      case 'deposit': return status === 'approved' || status === 'completed' ? 'Depósito Confirmado' : 'Depósito Automático';
+      case 'deposit_request': return status === 'approved' ? 'Depósito Confirmado' : 'Depósito (Em Análise)';
       case 'withdraw': return 'Saque Aprovado';
       case 'withdrawal': return 'Saque Realizado'; // Legacy or Manual
-      case 'withdraw_request': return 'Saque (Solicitado)';
+      case 'withdraw_request': return status === 'approved' ? 'Saque Realizado' : 'Saque (Solicitado)';
       case 'winning': return 'Prêmio Bolão (Vitória)';
       case 'bet_debit': return 'Aposta Realizada';
       case 'refund': return 'Reembolso';
+      case 'admin_adjustment': return 'Ajuste Administrativo';
       default: return type;
     }
   };
@@ -296,6 +309,29 @@ const WalletPage: React.FC = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedDay, selectedMonth, selectedYear]);
+
+  const handleCancelPix = async () => {
+    if (!pixData?.external_reference) {
+      setShowAutoPixModal(false);
+      return;
+    }
+
+    try {
+      // Mark as expired/rejected so it "disappears" from the active admin list
+      await supabase
+        .from('deposits')
+        .update({ status: 'expired' })
+        .eq('external_reference', pixData.external_reference)
+        .eq('status', 'pending');
+
+      setShowAutoPixModal(false);
+      setPixData(null);
+      setPaymentStatus('pending');
+    } catch (error) {
+      console.error('Error canceling pix:', error);
+      setShowAutoPixModal(false);
+    }
+  };
 
   const stats = {
     totalDeposited: filteredItems.filter(i => (i.type === 'deposit' || i.type === 'deposit_request') && i.status === 'approved').reduce((acc, i) => acc + (i.amount || 0), 0),
@@ -337,7 +373,7 @@ const WalletPage: React.FC = () => {
             </div>
             <h2 className="text-3xl md:text-6xl font-black text-white mb-1 md:mb-2 tracking-tighter">
               <span className="text-sm md:text-2xl font-bold opacity-30 mr-1 md:mr-2 italic">R$</span>
-              {profile?.balance?.toFixed(2) || '0.00'}
+              {(profile?.balance ?? 0).toFixed(2)}
             </h2>
             <p className="text-[10px] md:text-xs text-zinc-500 font-bold max-w-sm leading-relaxed hidden md:block">
               Saldo disponível para apostas. (Proveniente apenas de depósitos)
@@ -350,7 +386,7 @@ const WalletPage: React.FC = () => {
               onClick={() => setShowAutoPixModal(true)}
               className="w-full md:w-fit bg-[#10B981] hover:bg-[#10B981] text-[#0A0A0B] font-black py-3 md:py-4 px-6 md:px-8 rounded-xl md:rounded-2xl flex items-center justify-center gap-2 md:gap-3 shadow-[0_10px_30px_rgba(16,185,129,0.2)] hover:shadow-[0_15px_40px_rgba(16,185,129,0.3)] hover:scale-[1.03] active:scale-95 transition-all duration-300 border-none group/btn"
             >
-              <QrCode size={20} md:size={24} strokeWidth={3} className="group-hover/btn:rotate-12 transition-transform" />
+              <QrCode size={20} strokeWidth={3} className="group-hover/btn:rotate-12 transition-transform" />
               <span className="text-xs md:text-lg tracking-tight uppercase">ADICIONAR SALDO VIA PIX</span>
             </button>
             <div className="mt-6 p-4 bg-orange-500/5 border border-orange-500/10 rounded-2xl flex flex-col gap-2">
@@ -381,7 +417,7 @@ const WalletPage: React.FC = () => {
             </div>
             <h2 className="text-3xl md:text-5xl font-black text-white mb-1 md:mb-2 tracking-tighter">
               <span className="text-sm md:text-2xl font-bold opacity-30 mr-1 md:mr-2">R$</span>
-              {profile?.withdrawable_balance?.toFixed(2) || '0.00'}
+              {(profile?.withdrawable_balance ?? 0).toFixed(2)}
             </h2>
             <p className="text-[10px] md:text-xs text-zinc-500 font-bold max-w-sm leading-relaxed hidden md:block">
               Saldo disponível para retirada.
@@ -391,7 +427,7 @@ const WalletPage: React.FC = () => {
           <div className="relative z-10 mt-2.5 md:mt-3">
             {maintenanceMode && profile?.role !== 'admin' ? (
               <div className="w-full bg-[#1C1C21] border border-white/5 text-zinc-600 font-bold py-2 md:py-3 rounded-xl flex items-center justify-center gap-2 opacity-50 text-[10px] md:text-xs italic">
-                <AlertCircle size={12} md:size={14} />
+                <AlertCircle size={12} />
                 SAQUES SUSPENSOS
               </div>
             ) : (
@@ -399,7 +435,7 @@ const WalletPage: React.FC = () => {
                 onClick={() => setShowWithdrawModal(true)}
                 className="w-full bg-transparent border-2 border-orange-500/30 hover:border-orange-500 text-orange-500 font-black py-2.5 md:py-3 rounded-xl flex items-center justify-center gap-2 transition-all hover:bg-orange-500/10 active:scale-95 text-[10px] md:text-base uppercase"
               >
-                <ArrowUpCircle size={16} md:size={18} strokeWidth={2.5} />
+                <ArrowUpCircle size={16} strokeWidth={2.5} />
                 SOLICITAR SAQUE
               </button>
             )}
@@ -488,7 +524,7 @@ const WalletPage: React.FC = () => {
                         {getIconForType(item.type)}
                       </div>
                       <div>
-                        <p className="font-bold text-white text-sm group-hover:text-[#10B981] transition-colors">{getLabelForType(item.type)}</p>
+                        <p className="font-bold text-white text-sm group-hover:text-[#10B981] transition-colors">{getLabelForType(item.type, item.status)}</p>
                         <div className="flex gap-2 items-center mt-1">
                           <span className="text-[10px] text-zinc-500">{new Date(item.created_at).toLocaleString()}</span>
                           {item.status === 'rejected' && (
@@ -507,7 +543,7 @@ const WalletPage: React.FC = () => {
                             item.category === 'debit' ? 'text-white' :
                               'text-white'
                           }`}>
-                          {item.category === 'credit' ? '+' : '-'} R$ {item.amount.toFixed(2)}
+                          {item.category === 'credit' ? '+' : '-'} R$ {(item.amount ?? 0).toFixed(2)}
                         </p>
                         <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase inline-block mt-1 ${item.status === 'approved' || item.status === 'completed' ? 'bg-[#10B981]/10 text-[#10B981]' :
                           item.status === 'pending' ? 'bg-yellow-500/10 text-yellow-500' :
@@ -606,7 +642,7 @@ const WalletPage: React.FC = () => {
             )}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
               <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-tighter mb-1">Total</p>
-              <p className="text-lg font-black text-white">R$ {(stats.totalBet + stats.totalWon).toFixed(0)}</p>
+              <p className="text-lg font-black text-white">R$ {((stats?.totalBet ?? 0) + (stats?.totalWon ?? 0)).toFixed(2)}</p>
             </div>
           </div>
 
@@ -664,7 +700,7 @@ const WalletPage: React.FC = () => {
                         {getIconForType(item.type)}
                       </div>
                       <div>
-                        <p className="font-bold text-white text-sm group-hover:text-[#10B981] transition-colors">{getLabelForType(item.type)}</p>
+                        <p className="font-bold text-white text-sm group-hover:text-[#10B981] transition-colors">{getLabelForType(item.type, item.status)}</p>
                         <p className="text-[10px] text-zinc-500 mt-0.5">{new Date(item.created_at).toLocaleString()}</p>
                       </div>
                     </div>
@@ -706,7 +742,7 @@ const WalletPage: React.FC = () => {
 
             <div className="bg-[#0A0A0B] p-4 rounded-xl border border-[#27272A]">
               <p className="text-xs text-zinc-500 uppercase font-bold mb-1">Disponível para Saque</p>
-              <p className="text-2xl font-black text-[#10B981]">R$ {profile?.withdrawable_balance?.toFixed(2)}</p>
+              <p className="text-2xl font-black text-[#10B981]">R$ {(profile?.withdrawable_balance ?? 0).toFixed(2)}</p>
             </div>
 
             <div className="space-y-4">
@@ -743,39 +779,70 @@ const WalletPage: React.FC = () => {
           </div>
         </div>
       )}
-      {/* Automated Pix Modal */}
       {showAutoPixModal && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4 backdrop-blur-md">
-          <div className="bg-[#141417] border border-[#27272A] rounded-3xl p-6 md:p-8 max-w-md w-full relative space-y-6">
-            <button onClick={() => setShowAutoPixModal(false)} className="absolute top-4 right-4 text-zinc-500 hover:text-white">
+        <div
+          className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4 backdrop-blur-md"
+          onClick={(e) => {
+            // Close only if clicking the backdrop, not the modal content
+            if (e.target === e.currentTarget) handleCancelPix();
+          }}
+        >
+          <div className="bg-[#141417] border border-[#27272A] rounded-3xl p-6 md:p-8 max-w-md w-full relative space-y-6" onClick={(e) => e.stopPropagation()}>
+            <button onClick={handleCancelPix} className="absolute top-4 right-4 text-zinc-500 hover:text-white">
               <X size={24} />
             </button>
 
-            <div className="text-center space-y-2">
-              <h3 className="text-2xl font-black text-white uppercase tracking-tight">Adicionar Saldo</h3>
-              <p className="text-xs text-zinc-500 font-bold uppercase">PIX Automático - Crédito Instantâneo</p>
-            </div>
-
             {paymentStatus === 'approved' ? (
-              <div className="py-10 text-center space-y-4 animate-in zoom-in-95 duration-500">
-                <div className="w-20 h-20 bg-[#10B981]/20 rounded-full flex items-center justify-center mx-auto">
-                  <Trophy className="text-[#10B981]" size={40} />
+              <div className="py-10 text-center space-y-6 animate-in zoom-in-95 duration-500">
+                <div className="w-24 h-24 bg-[#10B981] rounded-full flex items-center justify-center mx-auto shadow-[0_0_40px_rgba(16,185,129,0.4)] animate-bounce">
+                  <CheckCircle2 className="text-black" size={48} />
                 </div>
-                <h4 className="text-2xl font-black text-white">💰 PAGAMENTO APROVADO!</h4>
-                <p className="text-sm text-zinc-400">O saldo já foi creditado na sua conta.</p>
+
+                <div className="space-y-1">
+                  <h4 className="text-3xl font-black text-white tracking-tighter">SALDO APROVADO!</h4>
+                  <p className="text-[#10B981] font-bold text-sm uppercase">Crédito Instantâneo Realizado</p>
+                </div>
+
+                <div className="bg-[#0A0A0B] border border-[#10B981]/20 rounded-2xl p-4">
+                  <p className="text-2xl font-black text-white">R$ {(Number(autoPixAmount) || 0).toFixed(2)}</p>
+                </div>
+
                 <button
                   onClick={() => {
                     setShowAutoPixModal(false);
                     setPaymentStatus('pending');
                     setPixData(null);
+                    setAutoPixAmount('');
                   }}
-                  className="w-full bg-[#10B981] hover:bg-[#059669] text-black font-black py-4 rounded-xl transition-all"
+                  className="w-full bg-[#10B981] hover:bg-[#059669] text-black font-black py-4 rounded-xl transition-all shadow-lg shadow-[#10B981]/20 active:scale-95"
                 >
-                  VOLTAR PARA CARTEIRA
+                  OK
+                </button>
+              </div>
+            ) : paymentStatus === 'rejected' ? (
+              <div className="py-10 text-center space-y-6 animate-in zoom-in-95 duration-500">
+                <div className="w-24 h-24 bg-red-500 rounded-full flex items-center justify-center mx-auto shadow-[0_0_40px_rgba(239,68,68,0.4)]">
+                  <X className="text-white" size={48} />
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="text-3xl font-black text-white tracking-tighter">SALDO REJEITADO</h4>
+                  <p className="text-red-500 font-bold text-sm uppercase">Clique no botão abaixo para atendimento</p>
+                </div>
+
+                <button
+                  onClick={() => window.open('https://wa.me/5584981358999', '_blank')}
+                  className="w-full bg-red-500 hover:bg-red-600 text-white font-black py-4 rounded-xl transition-all shadow-lg shadow-red-500/20 active:scale-95 flex items-center justify-center gap-2"
+                >
+                  FALAR COM ATENDIMENTO
                 </button>
               </div>
             ) : !pixData ? (
               <div className="space-y-4">
+                <div className="text-center space-y-2 mb-4">
+                  <h3 className="text-2xl font-black text-white uppercase tracking-tight">Adicionar Saldo</h3>
+                  <p className="text-xs text-zinc-500 font-bold uppercase">PIX Automatico - Credito Instantaneo</p>
+                </div>
                 <div>
                   <label className="text-[10px] font-bold text-zinc-500 block mb-2 uppercase tracking-widest">Valor do Depósito (R$)</label>
                   <input
@@ -796,6 +863,10 @@ const WalletPage: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-6 animate-in fade-in duration-300 text-center">
+                <div className="text-center space-y-2">
+                  <h3 className="text-2xl font-black text-white uppercase tracking-tight">Adicionar Saldo</h3>
+                  <p className="text-xs text-zinc-500 font-bold uppercase">PIX Automatico - Credito Instantaneo</p>
+                </div>
                 <div className="bg-white p-3 rounded-2xl inline-block shadow-2xl shadow-white/5">
                   <img src={`data:image/png;base64,${pixData.qr_code_base64}`} alt="QR Code PIX" className="w-48 h-48" />
                 </div>

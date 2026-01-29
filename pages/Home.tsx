@@ -296,11 +296,11 @@ const Home: React.FC = () => {
                     <div className="grid grid-cols-2 gap-2 pt-2 md:pt-4 border-t border-[#27272A]">
                       <div>
                         <p className="text-[8px] md:text-[10px] text-zinc-500 uppercase font-bold">Entrada</p>
-                        <p className="text-sm md:text-lg font-black text-white">R$ {pool.entry_fee.toFixed(0)}</p>
+                        <p className="text-sm md:text-lg font-black text-white">R$ {pool.entry_fee.toFixed(2)}</p>
                       </div>
                       <div>
                         <p className="text-[8px] md:text-[10px] text-zinc-500 uppercase font-bold text-right">Prêmio</p>
-                        <p className="text-sm md:text-lg font-black text-emerald-400 text-right">R$ {currentPrize.toFixed(0)}</p>
+                        <p className="text-sm md:text-lg font-black text-emerald-400 text-right">R$ {currentPrize.toFixed(2)}</p>
                       </div>
                     </div>
                   </div>

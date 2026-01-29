@@ -175,12 +175,14 @@ const AdminDashboard: React.FC = () => {
 
   const [selectedUser, setSelectedUser] = useState<UserDetails | null>(null);
   const [loadingUser, setLoadingUser] = useState(false);
+  const [loadingUsers, setLoadingUsers] = useState(false);
 
   const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
   const [receiptFilename, setReceiptFilename] = useState('comprovante');
 
   const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
   const [processingDepositId, setProcessingDepositId] = useState<string | null>(null);
+  const [rejectionReason, setRejectionReason] = useState('');
 
   // Pix Config State
   const [pixKey, setPixKey] = useState('');
@@ -395,9 +397,16 @@ const AdminDashboard: React.FC = () => {
   const [savingAdjustment, setSavingAdjustment] = useState(false);
 
   const fetchUsers = async () => {
-    const { data, error } = await supabase.rpc('get_admin_users_list');
-    if (error) console.error('Error fetching users:', error);
-    if (data) setUsers(data as any);
+    try {
+      setLoadingUsers(true);
+      const { data, error } = await supabase.rpc('get_admin_users_list');
+      if (error) throw error;
+      if (data) setUsers(data as any);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    } finally {
+      setLoadingUsers(false);
+    }
   };
 
   const fetchUserDetails = async (userId: string) => {
@@ -567,9 +576,13 @@ const AdminDashboard: React.FC = () => {
       // Para depósitos AUTOMÁTICOS do Mercado Pago
       const { error: err } = await supabase
         .from('deposits')
-        .update({ status: action === 'approve' ? 'approved' : 'rejected' })
+        .update({
+          status: action === 'approve' ? 'approved' : 'rejected',
+          rejection_reason: action === 'reject' ? rejectionReason : null
+        })
         .eq('id', id);
       error = err;
+      if (!err) setRejectionReason(''); // Clear after successful action
     } else {
       // Para depósitos MANUAIS (Via formulário com comprovante)
       const { error: err } = await supabase.rpc('process_deposit_request', {
@@ -766,8 +779,16 @@ const AdminDashboard: React.FC = () => {
 
     // Status Filter
     let matchesStatus = true;
-    if (depositFilter === 'pending') matchesStatus = d.status === 'pending';
-    else if (depositFilter === 'approved') matchesStatus = d.status === 'approved' || d.status === 'completed';
+    if (depositFilter === 'pending') {
+      matchesStatus = d.status === 'pending' || d.status === 'expired';
+    } else if (depositFilter === 'approved') {
+      matchesStatus = d.status === 'approved' || d.status === 'completed';
+    } else if (depositFilter === 'rejected') {
+      matchesStatus = d.status === 'rejected';
+    } else {
+      // For 'all' tab, show everything
+      matchesStatus = true;
+    }
 
     return matchesMonth && matchesYear && matchesDay && matchesStatus;
   });
@@ -782,6 +803,8 @@ const AdminDashboard: React.FC = () => {
     let matchesStatus = true;
     if (withdrawFilter === 'pending') matchesStatus = w.status === 'pending';
     else if (withdrawFilter === 'approved') matchesStatus = w.status === 'approved' || w.status === 'completed';
+    else if (withdrawFilter === 'rejected') matchesStatus = w.status === 'rejected';
+    // else show all
 
     return matchesMonth && matchesYear && matchesDay && matchesStatus;
   });
@@ -1043,25 +1066,35 @@ const AdminDashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex gap-3">
-              <div className="flex-1 flex bg-[#0A0A0B] border border-[#27272A] rounded-xl p-3 items-center gap-3">
-                <Search className="text-zinc-500" />
+            <div className="flex flex-col md:flex-row gap-4 mb-6 justify-between items-center">
+              <div className="relative flex-1 group">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-[#10B981] transition-colors" size={20} />
                 <input
                   type="text"
                   placeholder="Buscar usuário por nome ou email..."
                   value={userSearch}
                   onChange={(e) => setUserSearch(e.target.value)}
-                  className="bg-transparent text-white w-full focus:outline-none"
+                  className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-2xl py-3 pl-12 pr-4 text-white placeholder:text-zinc-600 focus:outline-none focus:border-[#10B981] transition-all"
                 />
               </div>
-              {(userSearch) && (
+              <div className="flex gap-2">
                 <button
-                  onClick={() => { setUserSearch(''); }}
-                  className="px-4 bg-[#27272A] text-zinc-400 rounded-xl hover:text-white transition text-xs font-bold"
+                  onClick={fetchUsers}
+                  disabled={loadingUsers}
+                  className="bg-[#27272A] hover:bg-zinc-700 text-white font-bold py-3 px-6 rounded-xl flex items-center gap-2 transition-colors border border-zinc-800 disabled:opacity-50"
                 >
-                  LIMPAR
+                  <TrendingUp size={18} className="text-[#10B981]" />
+                  Atualizar Lista
                 </button>
-              )}
+                {(userSearch) && (
+                  <button
+                    onClick={() => { setUserSearch(''); }}
+                    className="px-6 bg-[#27272A] text-zinc-400 rounded-xl hover:text-white transition text-xs font-bold border border-zinc-800"
+                  >
+                    LIMPAR
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="overflow-x-auto">
@@ -1071,7 +1104,7 @@ const AdminDashboard: React.FC = () => {
                     <th className="pb-3 pl-4">Nome</th>
                     <th className="pb-3">Email</th>
                     <th className="pb-3">Saldo Jogo</th>
-                    <th className="pb-3">Saldo Saque</th>
+                    <th className="pb-3 text-orange-500">Saldo Saque</th>
                     <th className="pb-3">Cargo</th>
                     <th className="pb-3">Ações</th>
                   </tr>
@@ -1104,12 +1137,12 @@ const AdminDashboard: React.FC = () => {
                           <Edit2 size={14} />
                         </button>
                       </td>
-                      <td className="py-4 text-white">
-                        <div className="flex items-center gap- group/with">
+                      <td className="py-4 text-orange-400">
+                        <div className="flex items-center gap-2 group/with">
                           R$ {u.withdrawable_balance.toFixed(2)}
                           <button
                             onClick={() => handleOpenAdjustment(u, 'withdrawable')}
-                            className="opacity-0 group-hover/with:opacity-100 hover:bg-[#27272A] p-1.5 rounded text-zinc-400 hover:text-white transition ml-2"
+                            className="opacity-0 group-hover/with:opacity-100 hover:bg-[#27272A] p-1.5 rounded text-zinc-400 hover:text-white transition"
                             title="Ajustar Saldo de Saque"
                           >
                             <Edit2 size={14} />
@@ -1201,6 +1234,7 @@ const AdminDashboard: React.FC = () => {
                 {[
                   ['pending', 'Pendentes'],
                   ['approved', 'Aprovados'],
+                  ['rejected', 'Rejeitados'],
                   ['all', 'Todas'],
                 ].map(([id, label]) => (
                   <button
@@ -1287,6 +1321,9 @@ const AdminDashboard: React.FC = () => {
                         </p>
                       </div>
                       <p className="text-xs text-zinc-400 font-bold">{d.profiles?.full_name || 'Desconhecido'}</p>
+                      {d.status === 'rejected' && d.rejection_reason && (
+                        <p className="text-[10px] text-red-400 mt-1">❌ {d.rejection_reason}</p>
+                      )}
                     </div>
                   </div>
 
@@ -1325,23 +1362,34 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'withdraws' && (
           <>
             <div className="flex flex-col md:flex-row gap-4 mb-6 justify-between items-start md:items-end">
-              <div className="flex gap-3">
-                {[
-                  ['pending', 'Pendentes'],
-                  ['approved', 'Aprovados'],
-                  ['all', 'Todas'],
-                ].map(([id, label]) => (
-                  <button
-                    key={id}
-                    onClick={() => setWithdrawFilter(id as WithdrawFilter)}
-                    className={`px-4 py-2 rounded-xl text-sm font-bold ${withdrawFilter === id
-                      ? 'bg-[#10B981] text-black'
-                      : 'bg-[#0A0A0B] text-zinc-400 border border-[#27272A]'
-                      }`}
-                  >
-                    {label}
-                  </button>
-                ))}
+              <div className="flex gap-2">
+                <div className="flex gap-3">
+                  {[
+                    ['pending', 'Pendentes'],
+                    ['approved', 'Aprovados'],
+                    ['rejected', 'Rejeitados'],
+                    ['all', 'Todas'],
+                  ].map(([id, label]) => (
+                    <button
+                      key={id}
+                      onClick={() => setWithdrawFilter(id as WithdrawFilter)}
+                      className={`px-4 py-2 rounded-xl text-sm font-bold ${withdrawFilter === id
+                        ? 'bg-[#10B981] text-black'
+                        : 'bg-[#0A0A0B] text-zinc-400 border border-[#27272A]'
+                        }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={fetchWithdraws}
+                  className="bg-[#27272A] hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded-xl flex items-center gap-2 transition-colors border border-zinc-800"
+                  title="Atualizar Saques"
+                >
+                  <TrendingUp size={16} className="text-[#10B981]" />
+                  <span className="hidden md:inline">Atualizar</span>
+                </button>
               </div>
 
               {/* DATE FILTERS */}
@@ -1412,7 +1460,12 @@ const AdminDashboard: React.FC = () => {
                         )}
                       </div>
                       <div>
-                        <p className="text-white font-bold text-lg">R$ {w.amount.toFixed(2)}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-white font-bold text-lg">R$ {w.amount.toFixed(2)}</p>
+                          <span className={`text-[10px] font-black px-2 py-0.5 rounded bg-orange-500/10 text-orange-400 border border-orange-500/20`}>
+                            SALDO DE SAQUE: R$ {w.profiles?.withdrawable_balance.toFixed(2) || '0.00'}
+                          </span>
+                        </div>
                         <p className="text-xs text-zinc-400 font-bold">{w.profiles?.full_name || 'Desconhecido'}</p>
                       </div>
                     </div>
@@ -2426,14 +2479,18 @@ const AdminDashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-[#0A0A0B] p-5 rounded-2xl border border-white/5 text-center">
-                <p className="text-[10px] text-zinc-500 font-bold uppercase mb-1">Valor</p>
-                <p className="text-2xl font-black text-[#10B981]">R$ {selectedTransactionDetail.amount.toFixed(2)}</p>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="bg-[#0A0A0B] p-4 rounded-2xl border border-white/5 text-center">
+                <p className="text-[10px] text-zinc-400 font-bold uppercase mb-1">Valor</p>
+                <p className="text-xl font-black text-[#10B981]">R$ {(selectedTransactionDetail.amount ?? 0).toFixed(2)}</p>
               </div>
-              <div className="bg-[#0A0A0B] p-5 rounded-2xl border border-white/5 text-center">
+              <div className="bg-[#0A0A0B] p-4 rounded-2xl border border-white/5 text-center">
+                <p className="text-[10px] text-zinc-500 font-bold uppercase mb-1">Saldo de Saque</p>
+                <p className="text-xl font-black text-orange-400">R$ {(selectedTransactionDetail.profiles?.withdrawable_balance ?? 0).toFixed(2)}</p>
+              </div>
+              <div className="bg-[#0A0A0B] p-4 rounded-2xl border border-white/5 text-center flex flex-col justify-center">
                 <p className="text-[10px] text-zinc-500 font-bold uppercase mb-1">Status</p>
-                <p className={`text-sm font-black uppercase ${selectedTransactionDetail.status === 'pending' ? 'text-yellow-500' : 'text-green-500'}`}>
+                <p className={`text-[10px] font-black uppercase ${selectedTransactionDetail.status === 'pending' ? 'text-yellow-500' : 'text-green-500'}`}>
                   {selectedTransactionDetail.status === 'pending' ? 'AGUARDANDO' : 'CONCLUÍDO'}
                 </p>
               </div>
@@ -2466,34 +2523,52 @@ const AdminDashboard: React.FC = () => {
               </button>
             )}
 
-            {selectedTransactionDetail.status === 'pending' && (
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
-                <button
-                  onClick={() => {
-                    setConfirmAction({
-                      id: selectedTransactionDetail.id,
-                      action: 'reject',
-                      type: detailModalType
-                    });
-                    setSelectedTransactionDetail(null);
-                  }}
-                  className="bg-red-500/10 hover:bg-red-500/20 text-red-500 font-black py-5 rounded-2xl transition-all border border-red-500/10"
-                >
-                  REJEITAR
-                </button>
-                <button
-                  onClick={() => {
-                    setConfirmAction({
-                      id: selectedTransactionDetail.id,
-                      action: 'approve',
-                      type: detailModalType
-                    });
-                    setSelectedTransactionDetail(null);
-                  }}
-                  className="bg-[#10B981] hover:bg-[#059669] text-black font-black py-5 rounded-2xl transition-all shadow-lg shadow-[#10B981]/20"
-                >
-                  APROVAR
-                </button>
+            {(selectedTransactionDetail.status === 'pending' || selectedTransactionDetail.status === 'expired') && (
+              <div className="space-y-4 pt-4 border-t border-white/5">
+                {/* Rejection Reason Input */}
+                <div>
+                  <label className="text-xs text-zinc-500 font-bold mb-2 block">MOTIVO DA REJEIÇÃO (opcional p/ aprovar)</label>
+                  <textarea
+                    value={rejectionReason}
+                    onChange={(e) => setRejectionReason(e.target.value)}
+                    placeholder="Digite o motivo aqui se for rejeitar..."
+                    className="w-full bg-[#0A0A0B] text-white text-sm p-3 rounded-xl border border-[#27272A] focus:border-[#10B981] outline-none resize-none h-20"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    onClick={() => {
+                      if (!rejectionReason.trim()) {
+                        alert('Por favor, digite o motivo da rejeição');
+                        return;
+                      }
+                      setConfirmAction({
+                        id: selectedTransactionDetail.id,
+                        action: 'reject',
+                        type: detailModalType
+                      });
+                      setSelectedTransactionDetail(null);
+                    }}
+                    className="bg-red-500/10 hover:bg-red-500/20 text-red-500 font-black py-5 rounded-2xl transition-all border border-red-500/10"
+                  >
+                    REJEITAR
+                  </button>
+                  <button
+                    onClick={() => {
+                      setRejectionReason(''); // Clear reason for approve
+                      setConfirmAction({
+                        id: selectedTransactionDetail.id,
+                        action: 'approve',
+                        type: detailModalType
+                      });
+                      setSelectedTransactionDetail(null);
+                    }}
+                    className="bg-[#10B981] hover:bg-[#059669] text-black font-black py-5 rounded-2xl transition-all shadow-lg shadow-[#10B981]/20"
+                  >
+                    APROVAR
+                  </button>
+                </div>
               </div>
             )}
           </div>

@@ -10,15 +10,26 @@ import {
     CheckCircle2,
     AlertCircle,
     Clock,
-    ArrowRight
+    ArrowRight,
+    Loader2,
+    XCircle
 } from 'lucide-react';
 
 interface TransactionDetailsModalProps {
     transaction: any;
     onClose: () => void;
+    onApprove?: (id: string) => void;
+    onReject?: (id: string) => void;
+    isProcessing?: boolean;
 }
 
-const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({ transaction, onClose }) => {
+const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
+    transaction,
+    onClose,
+    onApprove,
+    onReject,
+    isProcessing
+}) => {
     const [details, setDetails] = useState<any>(null);
     const [loading, setLoading] = useState(false);
 
@@ -180,6 +191,32 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({ trans
                             <div className="flex items-center gap-2 text-zinc-400 text-xs">
                                 <CheckCircle2 size={14} className="text-[#10B981]" /> Enviado com sucesso
                             </div>
+                        </div>
+                    )}
+
+                    {/* ACTION BUTTONS FOR PENDING/EXPIRED DEPOSITS */}
+                    {(onApprove || onReject) && (transaction.status === 'pending' || transaction.status === 'expired') && (
+                        <div className="flex gap-3 pt-4 border-t border-[#27272A] mt-4">
+                            {onReject && (
+                                <button
+                                    onClick={() => onReject(transaction.id)}
+                                    disabled={isProcessing}
+                                    className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-500 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                                >
+                                    {isProcessing ? <Loader2 className="animate-spin" size={18} /> : <XCircle size={18} />}
+                                    REJEITAR
+                                </button>
+                            )}
+                            {onApprove && (
+                                <button
+                                    onClick={() => onApprove(transaction.id)}
+                                    disabled={isProcessing}
+                                    className="flex-1 bg-[#10B981] hover:bg-[#059669] text-black font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 shadow-lg shadow-[#10B981]/20"
+                                >
+                                    {isProcessing ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle2 size={18} />}
+                                    APROVAR
+                                </button>
+                            )}
                         </div>
                     )}
 
