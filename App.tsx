@@ -7,7 +7,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import UpdatePassword from './pages/UpdatePassword';
-import Home from './pages/Home';
+import Home from './pages/HomePremium'; // Alterado para a versão Premium
 import Gateway from './pages/Gateway'; // Import Gateway
 import ProfilePage from './pages/Profile';
 import Wallet from './pages/Wallet';
