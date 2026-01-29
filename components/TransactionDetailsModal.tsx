@@ -115,6 +115,27 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
                     <div className="h-px bg-[#27272A]" />
 
                     {/* Metadata Grid */}
+                    {/* BALANCE HISTORY (New) */}
+                    {transaction.balance_before !== null && transaction.balance_after !== null && transaction.balance_before !== undefined && (
+                        <div className="bg-[#0A0A0B] p-4 rounded-xl border border-[#27272A] relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-2 opacity-10">
+                                <Target size={40} />
+                            </div>
+                            <p className="text-[10px] text-zinc-500 uppercase font-bold mb-2">Histórico de Saldo</p>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-[10px] text-zinc-600 font-bold mb-0.5">ANTES</p>
+                                    <p className="text-sm font-mono text-zinc-400">R$ {Number(transaction.balance_before).toFixed(2)}</p>
+                                </div>
+                                <ArrowRight size={16} className="text-[#10B981]" />
+                                <div className="text-right">
+                                    <p className="text-[10px] text-zinc-600 font-bold mb-0.5">DEPOIS</p>
+                                    <p className="text-xl font-mono font-black text-[#10B981]">R$ {Number(transaction.balance_after).toFixed(2)}</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="grid gap-4">
                         <div className="bg-[#0A0A0B] p-3 rounded-xl border border-[#27272A] flex items-center gap-3">
                             <div className="bg-zinc-800/50 p-2 rounded-lg text-zinc-400">
@@ -222,7 +243,7 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
 
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 

@@ -140,7 +140,8 @@ const WalletPage: React.FC = () => {
         .from('deposits')
         .select('*')
         .eq('user_id', profile.id)
-        .neq('status', 'expired');
+        .neq('status', 'expired')
+        .neq('status', 'approved');
 
       // Merge & Normalize
       const merged = [
@@ -232,7 +233,18 @@ const WalletPage: React.FC = () => {
       console.error('Error generating PIX:', err);
       // Try to extract specific error message from our refined Edge Function response
       const errorMessage = err.message || 'Erro ao gerar PIX. Tente novamente.';
-      alert(errorMessage);
+
+      // Tradução amigável para erros de sessão/token
+      if (
+        errorMessage.toLowerCase().includes('token') ||
+        errorMessage.toLowerCase().includes('jwt') ||
+        errorMessage.toLowerCase().includes('session') ||
+        errorMessage.toLowerCase().includes('unauthorized')
+      ) {
+        alert('Sua sessão expirou. Por favor, atualize a página e tente novamente.');
+      } else {
+        alert(errorMessage);
+      }
     } finally {
       setGeneratingPix(false);
     }
@@ -381,25 +393,35 @@ const WalletPage: React.FC = () => {
           </div>
 
           {/* INTEGRATED PIX BUTTON */}
-          <div className="relative z-10 mt-4 md:mt-6">
-            <button
-              onClick={() => setShowAutoPixModal(true)}
-              className="w-full md:w-fit bg-[#10B981] hover:bg-[#10B981] text-[#0A0A0B] font-black py-3 md:py-4 px-6 md:px-8 rounded-xl md:rounded-2xl flex items-center justify-center gap-2 md:gap-3 shadow-[0_10px_30px_rgba(16,185,129,0.2)] hover:shadow-[0_15px_40px_rgba(16,185,129,0.3)] hover:scale-[1.03] active:scale-95 transition-all duration-300 border-none group/btn"
-            >
-              <QrCode size={20} strokeWidth={3} className="group-hover/btn:rotate-12 transition-transform" />
-              <span className="text-xs md:text-lg tracking-tight uppercase">ADICIONAR SALDO VIA PIX</span>
-            </button>
-            <div className="mt-6 p-4 bg-orange-500/5 border border-orange-500/10 rounded-2xl flex flex-col gap-2">
-              <p
-                onClick={() => {
-                  alert("Para realizar o depósito via PIX manual, entre em contato com o atendimento via WhatsApp enviando o comprovante.");
-                }}
-                className="text-xs md:text-sm text-zinc-300 hover:text-orange-500 font-black uppercase transition-all cursor-pointer inline-flex items-center gap-2 group/help underline underline-offset-4 decoration-orange-500/30 hover:decoration-orange-500"
+          <div className="relative z-10 mt-4 md:mt-6 flex flex-col items-start gap-3">
+            {maintenanceMode && profile?.role !== 'admin' ? (
+              <button
+                disabled
+                className="w-full md:w-fit bg-[#1C1C21] border border-white/5 text-zinc-600 font-bold py-3 md:py-4 px-6 md:px-8 rounded-xl md:rounded-2xl flex items-center justify-center gap-2 md:gap-3 cursor-not-allowed opacity-50"
               >
-                <span className="w-5 h-5 md:w-6 md:h-6 rounded-full border-2 border-orange-500/50 group-hover:help:border-orange-500 flex items-center justify-center text-[10px] md:text-xs">?</span>
-                PROBLEMAS PARA REALIZAR PIX ?
-              </p>
-            </div>
+                <AlertCircle size={20} />
+                <span className="text-xs md:text-lg tracking-tight uppercase">DEPÓSITOS SUSPENSOS</span>
+              </button>
+            ) : (
+              <button
+                id="tour-wallet-auto-pix"
+                onClick={() => setShowAutoPixModal(true)}
+                className="w-full md:w-fit bg-[#10B981] hover:bg-[#10B981] text-[#0A0A0B] font-black py-3 md:py-4 px-6 md:px-8 rounded-xl md:rounded-2xl flex items-center justify-center gap-2 md:gap-3 shadow-[0_10px_30px_rgba(16,185,129,0.2)] hover:shadow-[0_15px_40px_rgba(16,185,129,0.3)] hover:scale-[1.03] active:scale-95 transition-all duration-300 border-none group/btn"
+              >
+                <QrCode size={20} strokeWidth={3} className="group-hover/btn:rotate-12 transition-transform" />
+                <span className="text-xs md:text-lg tracking-tight uppercase">ADICIONAR SALDO VIA PIX</span>
+              </button>
+            )}
+
+            <button
+              onClick={() => {
+                alert("Para realizar o depósito via PIX manual, entre em contato com o atendimento via WhatsApp enviando o comprovante.");
+              }}
+              className="text-[9px] md:text-[11px] text-zinc-500 hover:text-orange-400 font-black uppercase transition-all flex items-center gap-1.5 px-1 group/help"
+            >
+              <AlertCircle size={14} className="text-zinc-600 group-hover:text-orange-500 transition-colors" />
+              PROBLEMAS PARA REALIZAR PIX ?
+            </button>
           </div>
         </div>
 
@@ -432,6 +454,7 @@ const WalletPage: React.FC = () => {
               </div>
             ) : (
               <button
+                id="tour-wallet-withdraw"
                 onClick={() => setShowWithdrawModal(true)}
                 className="w-full bg-transparent border-2 border-orange-500/30 hover:border-orange-500 text-orange-500 font-black py-2.5 md:py-3 rounded-xl flex items-center justify-center gap-2 transition-all hover:bg-orange-500/10 active:scale-95 text-[10px] md:text-base uppercase"
               >
@@ -446,7 +469,7 @@ const WalletPage: React.FC = () => {
       {/* NEW GRID FOR HISTORY AND REPORT */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
         {/* HISTORY COLUMN (3/5) */}
-        <div className="md:col-span-3 bg-[#141417] border border-[#27272A] rounded-3xl p-6 md:p-8 flex flex-col min-h-[600px]">
+        <div id="tour-wallet-history" className="md:col-span-3 bg-[#141417] border border-[#27272A] rounded-3xl p-6 md:p-8 flex flex-col min-h-[600px]">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 md:mb-8 pb-4 border-b border-[#27272A] flex-shrink-0">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 md:w-10 md:h-10 bg-[#10B981]/10 rounded-xl flex items-center justify-center">

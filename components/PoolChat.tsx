@@ -11,7 +11,7 @@ interface PoolChatProps {
 }
 
 const PoolChat: React.FC<PoolChatProps> = ({ poolId, category, hasBet, isAdmin }) => {
-    const { profile } = useAuth();
+    const { profile, maintenanceMode } = useAuth();
     const [messages, setMessages] = useState<any[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(true);
@@ -232,23 +232,32 @@ const PoolChat: React.FC<PoolChatProps> = ({ poolId, category, hasBet, isAdmin }
             </div>
 
             {/* Input Area */}
-            <form onSubmit={handleSendMessage} className="p-3 bg-[#141417] border-t border-[#27272A] flex gap-2">
-                <input
-                    type="text"
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder={`Deixe sua opinião sobre esse ${contextTerm}...`}
-                    className="flex-1 bg-[#0A0A0B] border border-[#27272A] rounded-xl px-4 py-3 text-white focus:border-[#10B981] outline-none text-sm transition-colors"
-                    maxLength={500}
-                />
-                <button
-                    type="submit"
-                    disabled={!newMessage.trim()}
-                    className="bg-[#10B981] hover:bg-[#059669] disabled:opacity-50 disabled:cursor-not-allowed text-black p-3 rounded-xl transition-all"
-                >
-                    <Send size={20} />
-                </button>
-            </form>
+            {(maintenanceMode && profile?.role !== 'admin') ? (
+                <div className="p-4 border-t border-[#27272A] bg-[#141417] text-center">
+                    <p className="text-xs text-yellow-500 font-bold flex items-center justify-center gap-2">
+                        <Lock size={14} />
+                        Chat em manutenção
+                    </p>
+                </div>
+            ) : (
+                <form onSubmit={handleSendMessage} className="p-3 bg-[#141417] border-t border-[#27272A] flex gap-2">
+                    <input
+                        type="text"
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        placeholder={`Deixe sua opinião sobre esse ${contextTerm}...`}
+                        className="flex-1 bg-[#0A0A0B] border border-[#27272A] rounded-xl px-4 py-3 text-white focus:border-[#10B981] outline-none text-sm transition-colors"
+                        maxLength={500}
+                    />
+                    <button
+                        type="submit"
+                        disabled={!newMessage.trim()}
+                        className="bg-[#10B981] hover:bg-[#059669] disabled:opacity-50 disabled:cursor-not-allowed text-black p-3 rounded-xl transition-all"
+                    >
+                        <Send size={20} />
+                    </button>
+                </form>
+            )}
         </div>
     );
 };

@@ -1,0 +1,20 @@
+--- INVESTIGAÇÃO FRANKIE ---
+Saldo: 6.73
+
+--- DEPÓSITOS ---
+[2026-01-29T13:38:07.446908+00:00] R$ 1 | Status: approved | ID: 5b9e4bde-913f-41cb-9992-e82a70295cd8
+[2026-01-29T13:56:01.423271+00:00] R$ 1.83 | Status: approved | ID: 153138b0-b62b-4754-98bc-91f11ec373b5
+[2026-01-29T14:09:45.079518+00:00] R$ 1.86 | Status: approved | ID: 39ab2a09-3483-4d4f-b05f-4c3cbea8edbe
+[2026-01-29T14:14:05.527845+00:00] R$ 1.02 | Status: approved | ID: b04c1e5a-5de3-489d-b01d-7907022d87fd
+
+--- TRANSAÇÕES ---
+[2026-01-25T18:42:00.044705+00:00] R$ 10 | Type: admin_adjustment | Desc: Teste
+[2026-01-25T18:44:25.608741+00:00] R$ 10 | Type: bet_debit | Desc: null
+[2026-01-25T18:49:17.119767+00:00] R$ 18 | Type: winning | Desc: null
+[2026-01-25T18:52:30.416698+00:00] R$ 10 | Type: withdrawal | Desc: null
+[2026-01-25T19:16:01.571+00:00] R$ -8 | Type: admin_adjustment | Desc: teste
+[2026-01-27T19:20:38.218164+00:00] R$ 1100 | Type: admin_adjustment | Desc: teste
+[2026-01-27T19:20:52.47787+00:00] R$ 2500 | Type: admin_adjustment | Desc: teste
+[2026-01-27T19:21:43.567406+00:00] R$ -1100 | Type: admin_adjustment | Desc: teste
+[2026-01-27T19:22:00.682648+00:00] R$ -2500 | Type: admin_adjustment | Desc: teste
+[2026-01-29T14:14:05.575917+00:00] R$ 1.02 | Type: deposit | Desc: Depósito via PIX Automático (Confirmado)

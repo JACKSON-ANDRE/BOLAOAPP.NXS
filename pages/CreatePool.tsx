@@ -39,10 +39,15 @@ const CreatePool: React.FC = () => {
       formData.bets_deadline !== '' &&
       formData.scheduled_at !== '';
 
-    // Strict Validation: Betting Deadline MUST be BEFORE Event Date
+    // Strict Validation: Betting Deadline MUST be BEFORE Event Date AND in the FUTURE
     if (isValid) {
       const eventDate = new Date(formData.scheduled_at);
       const deadlineDate = new Date(formData.bets_deadline);
+      const now = new Date();
+
+      if (deadlineDate <= now) {
+        isValid = false;
+      }
 
       if (deadlineDate >= eventDate) {
         isValid = false;

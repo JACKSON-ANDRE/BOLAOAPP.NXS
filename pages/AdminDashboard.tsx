@@ -26,7 +26,10 @@ import {
   ShieldAlert,
   ChevronRight,
   Trophy,
-  Edit2
+  Edit2,
+  RefreshCw,
+  ArrowLeft,
+  ShieldCheck
 } from 'lucide-react';
 import {
   BarChart,
@@ -41,6 +44,7 @@ import {
 import { SystemHealthService, HealthReport } from '../utils/SystemHealthService';
 
 type AdminTab =
+  | 'ledger'
   | 'deposits'
   | 'withdraws'
   | 'users'
@@ -50,6 +54,24 @@ type AdminTab =
   | 'messages'
   | 'fake_users'
   | 'notifications';
+
+interface LedgerItem {
+  id: string;
+  amount: number;
+  type: string;
+  status: string;
+  created_at: string;
+  description?: string;
+  balance_before?: number;
+  balance_after?: number;
+  balance_type?: string;
+  user_id: string;
+  profiles?: {
+    full_name: string;
+    email: string;
+    avatar_url?: string;
+  };
+}
 
 type DepositFilter = 'pending' | 'approved' | 'all';
 type WithdrawFilter = 'pending' | 'approved' | 'all';
@@ -70,6 +92,8 @@ interface DepositRequest {
   created_at: string;
   is_auto?: boolean;
   user_id?: string;
+  balance_before?: number;
+  balance_after?: number;
   profiles?: {
     full_name: string;
     email: string;
@@ -201,7 +225,33 @@ const AdminDashboard: React.FC = () => {
     pool: Pool & { profiles?: { full_name: string } };
     bets: (Bet & { profiles: { full_name: string } })[];
   } | null>(null);
+
   const [loadingHistory, setLoadingHistory] = useState(false);
+
+  // Ledger State
+  const [ledgerItems, setLedgerItems] = useState<LedgerItem[]>([]);
+  const [ledgerLoading, setLedgerLoading] = useState(false);
+  const [ledgerSearch, setLedgerSearch] = useState('');
+  const [ledgerTypeFilter, setLedgerTypeFilter] = useState<'all' | 'admin_adjustment' | 'deposit' | 'withdraw' | 'winning' | 'bet'>('all');
+  const [selectedLedgerItem, setSelectedLedgerItem] = useState<LedgerItem | null>(null);
+
+  // Helper Translate
+  const translateTransactionType = (type: string) => {
+    switch (type) {
+      case 'deposit': return 'Depósito';
+      case 'withdraw': return 'Saque';
+      case 'withdrawal': return 'Saque';
+      case 'admin_adjustment': return 'Ajuste Manual (Admin)';
+      case 'adjustment': return 'Ajuste';
+      case 'bet': return 'Aposta';
+      case 'bet_debit': return 'Aposta (Débito)';
+      case 'winning': return 'Prêmio';
+      case 'bet_credit': return 'Retorno Aposta';
+      case 'bonus': return 'Bônus';
+      case 'refund': return 'Reembolso';
+      default: return type;
+    }
+  };
 
   useEffect(() => {
     fetchBaseData();
@@ -211,6 +261,27 @@ const AdminDashboard: React.FC = () => {
     fetchUsers();
     fetchPixSettings();
     fetchCityStats();
+    fetchUsers();
+    fetchPixSettings();
+    fetchCityStats();
+    fetchCityStats();
+    fetchLedger();
+
+    // Realtime Ledger Subscription
+    const ledgerSub = supabase
+      .channel('ledger_realtime')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'transactions' },
+        () => {
+          fetchLedger(); // Refresh list on new transaction
+        }
+      )
+      .subscribe();
+
+    return () => {
+      ledgerSub.unsubscribe();
+    };
   }, []);
 
   // Reset pages when filters change
@@ -359,13 +430,13 @@ const AdminDashboard: React.FC = () => {
     // 1. Fetch Manual Requests
     const { data: manualData, error: manualErr } = await supabase
       .from('deposit_requests')
-      .select('*, profiles!deposit_requests_user_id_fkey(full_name, email, avatar_url)')
+      .select('*, profiles!deposit_requests_user_id_fkey(full_name, email, avatar_url, withdrawable_balance, balance)')
       .order('created_at', { ascending: false });
 
     // 2. Fetch Automated Deposits
     const { data: autoData, error: autoErr } = await supabase
       .from('deposits')
-      .select('*, profiles(full_name, email, avatar_url)')
+      .select('*, profiles(full_name, email, avatar_url, withdrawable_balance, balance)')
       .order('created_at', { ascending: false });
 
     if (manualErr) console.error('Error manual deposits:', manualErr);
@@ -406,6 +477,25 @@ const AdminDashboard: React.FC = () => {
       console.error('Error fetching users:', error);
     } finally {
       setLoadingUsers(false);
+    }
+  };
+
+
+  const fetchLedger = async () => {
+    setLedgerLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('*, profiles!transactions_user_id_fkey(full_name, email, avatar_url)')
+        .order('created_at', { ascending: false })
+        .limit(500); // Safety limit
+
+      if (error) throw error;
+      setLedgerItems(data as unknown as LedgerItem[]);
+    } catch (err) {
+      console.error('Error fetching ledger:', err);
+    } finally {
+      setLedgerLoading(false);
     }
   };
 
@@ -1012,6 +1102,7 @@ const AdminDashboard: React.FC = () => {
 
       <nav className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
         {[
+          ['ledger', 'Extrato Geral'],
           ['deposits', 'Depósitos'],
           ['withdraws', 'Saques'],
           ['users', 'Usuários'],
@@ -1035,7 +1126,153 @@ const AdminDashboard: React.FC = () => {
         ))}
       </nav>
 
+
       <section className="bg-[#141417] border border-[#27272A] rounded-3xl min-h-[400px] p-6">
+
+        {/* LEDGER TAB */}
+        {activeTab === 'ledger' && (
+          <div className="space-y-6">
+            <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-[#0A0A0B] p-4 rounded-2xl border border-[#27272A]">
+              <div className="relative flex-1 w-full md:max-w-md group">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-[#10B981] transition-colors" size={20} />
+                <input
+                  type="text"
+                  placeholder="Buscar por ID, Nome ou Email..."
+                  value={ledgerSearch}
+                  onChange={(e) => setLedgerSearch(e.target.value)}
+                  className="w-full bg-[#141417] border border-[#27272A] rounded-xl py-3 pl-12 pr-4 text-white placeholder:text-zinc-600 focus:outline-none focus:border-[#10B981] transition-all"
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <select
+                  value={ledgerTypeFilter}
+                  onChange={(e) => setLedgerTypeFilter(e.target.value as any)}
+                  className="bg-[#141417] text-white text-xs font-bold px-4 py-3 rounded-xl border border-[#27272A] focus:border-[#10B981] outline-none"
+                >
+                  <option value="all">TODOS OS TIPOS</option>
+                  <option value="admin_adjustment">Ajustes Admin</option>
+                  <option value="deposit">Depósitos</option>
+                  <option value="withdraw">Saques</option>
+                  <option value="winning">Prêmios</option>
+                  <option value="bet">Apostas</option>
+                </select>
+
+                <button
+                  onClick={fetchLedger}
+                  disabled={ledgerLoading}
+                  className="bg-[#27272A] hover:bg-zinc-700 text-white p-3 rounded-xl border border-zinc-800 disabled:opacity-50"
+                  title="Atualizar"
+                >
+                  <RefreshCw size={20} className={ledgerLoading ? 'animate-spin' : ''} />
+                </button>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto rounded-2xl border border-[#27272A]">
+              <table className="w-full text-left bg-[#0A0A0B]">
+                <thead className="bg-[#141417]">
+                  <tr className="text-zinc-500 text-[10px] md:text-xs uppercase font-bold tracking-wider">
+                    <th className="p-4">Data</th>
+                    <th className="p-4">Usuário</th>
+                    <th className="p-4">Descrição/Tipo</th>
+                    <th className="p-4 text-right">Valor</th>
+                    <th className="p-4 text-center">Histórico (Antes ➜ Depois)</th>
+                    <th className="p-4 text-center">Admin</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#27272A] text-xs md:text-sm">
+                  {ledgerItems
+                    .filter(item => {
+                      const matchesSearch = !ledgerSearch ||
+                        item.id.toLowerCase().includes(ledgerSearch.toLowerCase()) ||
+                        item.profiles?.full_name?.toLowerCase().includes(ledgerSearch.toLowerCase()) ||
+                        item.profiles?.email?.toLowerCase().includes(ledgerSearch.toLowerCase());
+
+                      const matchesType = ledgerTypeFilter === 'all' ||
+                        (ledgerTypeFilter === 'bet' ? (item.type === 'bet' || item.type === 'bet_debit') : item.type === 'admin_adjustment' ? (item.type === 'admin_adjustment' || item.type === 'adjustment') : item.type.includes(ledgerTypeFilter));
+
+                      return matchesSearch && matchesType;
+                    })
+                    .map(item => (
+                      <tr
+                        key={item.id}
+                        onClick={() => setSelectedLedgerItem(item)}
+                        className="hover:bg-[#1C1C21] transition-colors group cursor-pointer border-b border-[#27272A] last:border-0"
+                      >
+                        <td className="p-4 text-zinc-400 whitespace-nowrap">
+                          {new Date(item.created_at).toLocaleString()}
+                          <div className="text-[10px] text-zinc-600 font-mono mt-1 opacity-50 group-hover:opacity-100 transition-opacity select-all">
+                            {item.id}
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <div className="flex items-center gap-2">
+                            {item.profiles?.avatar_url ? (
+                              <img src={`https://vucvouxutompqoqhxzmi.supabase.co/storage/v1/object/public/avatars/${item.profiles.avatar_url}`} className="w-8 h-8 rounded-full object-cover border border-zinc-700" />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-500">
+                                {item.profiles?.full_name?.charAt(0) || '?'}
+                              </div>
+                            )}
+                            <div>
+                              <p className="text-white font-bold text-sm">{item.profiles?.full_name || 'Desconhecido'}</p>
+                              <p className="text-[10px] text-zinc-500">{item.profiles?.email}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <div className="flex flex-col items-start gap-1">
+                            <span className={`text-[10px] uppercase font-black px-2 py-1 rounded-md tracking-wider
+                               ${item.type === 'admin_adjustment' || item.type === 'adjustment' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' :
+                                item.type === 'deposit' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                                  item.type === 'withdraw' || item.type === 'withdrawal' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' :
+                                    item.type === 'winning' ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/30' :
+                                      'bg-zinc-800 text-zinc-400 border border-zinc-700'}
+                             `}>{translateTransactionType(item.type)}</span>
+
+                            {item.description && (
+                              <span className="text-xs text-zinc-300 mt-0.5 line-clamp-1" title={item.description}>
+                                {item.description}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="p-4 text-right">
+                          <span className={`font-black text-sm md:text-base ${(['deposit', 'winning', 'bonus', 'bet_credit', 'refund'].includes(item.type) || (item.type.includes('adjustment') && item.amount >= 0)) ? 'text-[#10B981]' : 'text-red-500'
+                            }`}>
+                            {(['deposit', 'winning', 'bonus', 'bet_credit', 'refund'].includes(item.type) || (item.type.includes('adjustment') && item.amount >= 0)) ? '+' : '-'} R$ {Math.abs(item.amount).toFixed(2)}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          {(item.balance_before !== undefined && item.balance_after !== undefined && item.balance_before !== null) ? (
+                            <div className="flex items-center justify-center gap-2 bg-[#0A0A0B] border border-[#27272A] rounded-lg py-1 px-2 w-fit mx-auto">
+                              <span className="text-zinc-500 font-mono text-xs">R${item.balance_before.toFixed(2)}</span>
+                              <ArrowLeft size={10} className="text-zinc-600 rotate-180" />
+                              <span className="text-white font-mono font-bold text-xs">R${item.balance_after.toFixed(2)}</span>
+                            </div>
+                          ) : (
+                            <div className="text-center text-zinc-700 text-[10px]">-</div>
+                          )}
+                        </td>
+                        <td className="p-4 text-center">
+                          {item.type.includes('admin') && (
+                            <ShieldCheck size={18} className="text-purple-500 mx-auto" />
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+              {ledgerItems.length === 0 && (
+                <div className="text-center py-10 text-zinc-500">
+                  <p>Nenhum registro encontrado.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* USERS TAB */}
         {activeTab === 'users' && (
           <div className="space-y-6">
@@ -1316,11 +1553,40 @@ const AdminDashboard: React.FC = () => {
                     <div>
                       <div className="flex items-baseline gap-2">
                         <p className="text-white font-bold text-lg">R$ {d.amount.toFixed(2)}</p>
-                        <p className={`text-[10px] font-black px-2 py-0.5 rounded ${d.status === 'pending' ? 'bg-yellow-500/10 text-yellow-500' : d.status === 'approved' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                        <p className={`text-[10px] font-black px-2 py-0.5 rounded ${d.status === 'pending' ? 'bg-yellow-500/10 text-yellow-500' : d.status === 'approved' ? 'bg-green-500/10 text-green-500' : d.status === 'expired' ? 'bg-zinc-500/10 text-zinc-500' : 'bg-red-500/10 text-red-500'}`}>
                           {d.is_auto ? `AUTOMÁTICO` : `MANUAL`}
                         </p>
+                        {/* NOVAS ETIQUETAS INTELIGENTES PIX */}
+                        {d.is_auto && (
+                          <>
+                            {d.status === 'expired' && (
+                              <span className="text-[9px] font-black bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded border border-zinc-700">❌ SESSÃO CANCELADA</span>
+                            )}
+                            {d.status === 'pending' && !d.mp_id && (
+                              <span className="text-[9px] font-black bg-yellow-500/5 text-yellow-600 px-2 py-0.5 rounded border border-yellow-500/10">⏳ AGUARDANDO BANCO...</span>
+                            )}
+                            {d.mp_id && (d.status === 'pending' || d.status === 'rejected') && (
+                              <span className="text-[9px] font-black bg-orange-500 text-white px-2 py-0.5 rounded animate-pulse shadow-[0_0_10px_rgba(249,115,22,0.5)]">⚠️ ID MP DETECTADO: VERIFICAR!</span>
+                            )}
+                          </>
+                        )}
                       </div>
+
+                      {/* HISTÓRICO DE SALDO (Novo) */}
+                      {d.balance_before !== null && d.balance_after !== null && d.balance_before !== undefined && (
+                        <div className="flex items-center gap-1.5 mt-1 bg-zinc-900/50 w-fit px-2 py-0.5 rounded border border-zinc-800">
+                          <span className="text-[9px] text-zinc-500 font-bold uppercase">SALDO:</span>
+                          <div className="flex items-center gap-1 text-[10px] font-mono">
+                            <span className="text-zinc-400">R$ {d.balance_before.toFixed(2)}</span>
+                            <span className="text-zinc-600">➜</span>
+                            <span className="text-emerald-400 font-bold">R$ {d.balance_after?.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      )}
+
+
                       <p className="text-xs text-zinc-400 font-bold">{d.profiles?.full_name || 'Desconhecido'}</p>
+                      {d.mp_id && <p className="text-[9px] text-zinc-600 font-mono mt-0.5">ID: {d.mp_id}</p>}
                       {d.status === 'rejected' && d.rejection_reason && (
                         <p className="text-[10px] text-red-400 mt-1">❌ {d.rejection_reason}</p>
                       )}
@@ -2574,6 +2840,96 @@ const AdminDashboard: React.FC = () => {
           </div>
         </div>
       )}
+      {/* TRANSACTION DETAIL MODAL */}
+      {selectedLedgerItem && (
+        <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-[#141417] border border-[#27272A] rounded-3xl w-full max-w-2xl p-6 md:p-8 space-y-6 relative max-h-[90vh] overflow-y-auto">
+
+            <button
+              onClick={() => setSelectedLedgerItem(null)}
+              className="absolute top-4 right-4 text-zinc-500 hover:text-white"
+            >
+              <XCircle size={24} />
+            </button>
+
+            <div className="text-center">
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border-2
+                ${selectedLedgerItem.type === 'admin_adjustment' ? 'bg-purple-500/10 border-purple-500 text-purple-500' :
+                  selectedLedgerItem.type === 'deposit' ? 'bg-emerald-500/10 border-emerald-500 text-emerald-500' :
+                    selectedLedgerItem.type === 'withdraw' ? 'bg-orange-500/10 border-orange-500 text-orange-500' :
+                      'bg-zinc-800 border-zinc-600 text-zinc-400'}
+              `}>
+                <Activity size={32} />
+              </div>
+              <h2 className="text-2xl font-black text-white">{translateTransactionType(selectedLedgerItem.type)}</h2>
+              <p className="text-zinc-500 font-mono text-xs mt-1 select-all">{selectedLedgerItem.id}</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* User Info */}
+              <div className="bg-[#0A0A0B] p-4 rounded-2xl border border-[#27272A]">
+                <p className="text-xs text-zinc-500 font-bold uppercase mb-2">Usuário</p>
+                <div className="flex items-center gap-3">
+                  {selectedLedgerItem.profiles?.avatar_url ? (
+                    <img src={`https://vucvouxutompqoqhxzmi.supabase.co/storage/v1/object/public/avatars/${selectedLedgerItem.profiles.avatar_url}`} className="w-10 h-10 rounded-full object-cover" />
+                  ) : (
+                    <div className="w-10 h-10 bg-zinc-800 rounded-full flex items-center justify-center font-bold text-zinc-500">?</div>
+                  )}
+                  <div>
+                    <p className="text-white font-bold">{selectedLedgerItem.profiles?.full_name}</p>
+                    <p className="text-xs text-zinc-500">{selectedLedgerItem.profiles?.email}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Amount */}
+              <div className="bg-[#0A0A0B] p-4 rounded-2xl border border-[#27272A] flex flex-col justify-center">
+                <p className="text-xs text-zinc-500 font-bold uppercase mb-1">Valor</p>
+                <p className={`text-2xl font-black ${(['deposit', 'winning', 'bonus', 'bet_credit', 'refund'].includes(selectedLedgerItem.type) || (selectedLedgerItem.type.includes('adjustment') && selectedLedgerItem.amount >= 0)) ? 'text-[#10B981]' : 'text-red-500'}`}>
+                  {(['deposit', 'winning', 'bonus', 'bet_credit', 'refund'].includes(selectedLedgerItem.type) || (selectedLedgerItem.type.includes('adjustment') && selectedLedgerItem.amount >= 0)) ? '+ ' : '- '} R$ {Math.abs(selectedLedgerItem.amount).toFixed(2)}
+                </p>
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="bg-[#0A0A0B] p-4 rounded-2xl border border-[#27272A]">
+              <p className="text-xs text-zinc-500 font-bold uppercase mb-2">Descrição / Motivo</p>
+              <p className="text-zinc-200 text-sm leading-relaxed">
+                {selectedLedgerItem.description || 'Sem descrição.'}
+              </p>
+            </div>
+
+            {/* Audit Trail (Before -> After) */}
+            {selectedLedgerItem.balance_before !== null && selectedLedgerItem.balance_after !== null && (
+              <div className="bg-zinc-800/20 p-4 rounded-2xl border border-zinc-700/50">
+                <p className="text-xs text-zinc-500 font-bold uppercase mb-3 flex items-center gap-2">
+                  <ShieldCheck size={14} className="text-purple-500" />
+                  Auditoria de Saldo
+                </p>
+                <div className="flex items-center justify-between px-4">
+                  <div className="text-center">
+                    <p className="text-xs text-zinc-500 mb-1">Antes</p>
+                    <p className="font-mono text-zinc-300">R$ {selectedLedgerItem.balance_before?.toFixed(2)}</p>
+                  </div>
+                  <ArrowLeft className="text-zinc-600 shrink-0 rotate-180" />
+                  <div className="text-center">
+                    <p className="text-xs text-[#10B981] font-bold mb-1">Depois</p>
+                    <p className="font-mono text-white font-bold">R$ {selectedLedgerItem.balance_after?.toFixed(2)}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Metadata */}
+            <div className="flex justify-between items-center text-xs text-zinc-600 px-2">
+              <span>Criado em: {new Date(selectedLedgerItem.created_at).toLocaleString()}</span>
+              <span>Status: <span className="text-white uppercase font-bold">{selectedLedgerItem.status}</span></span>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

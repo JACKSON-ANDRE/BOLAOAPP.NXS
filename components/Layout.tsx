@@ -19,7 +19,9 @@ import {
   Trash2,
   Users,
   Download,
+  HelpCircle,
 } from 'lucide-react';
+import { startOnboardingTour } from '../src/utils/OnboardingTour';
 
 interface NotificationItem {
   id: string;
@@ -194,6 +196,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       >
         {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
+
+      {location.pathname !== '/admin' && (
+        <button
+          className={`fixed ${maintenanceMode || pushStatus !== 'granted' ? 'top-16 md:top-20' : 'top-3 md:top-4'} right-14 md:right-16 z-50 p-1.5 md:p-2 bg-[#141417] rounded-lg border border-[#27272A] hover:border-[#10B981] transition-all duration-300 group`}
+          onClick={() => startOnboardingTour(location.pathname)}
+          title="Tour Guiado"
+        >
+          <HelpCircle className="w-4 h-4 md:w-5 md:h-5 text-zinc-400 group-hover:text-[#10B981]" />
+        </button>
+      )}
 
       <button
         className={`fixed ${maintenanceMode || pushStatus !== 'granted' ? 'top-16 md:top-20' : 'top-3 md:top-4'} right-3 md:right-4 z-50 p-1.5 md:p-2 bg-[#141417] rounded-lg border border-[#27272A] transition-all duration-300 ${pushStatus !== 'granted' ? 'border-[#10B981] shadow-lg shadow-[#10B981]/20' : ''}`}

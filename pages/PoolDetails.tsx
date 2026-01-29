@@ -254,7 +254,7 @@ const PoolDetails: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Info */}
         <div className="lg:col-span-2 space-y-8">
-          <div className="bg-[#141417] border border-[#27272A] rounded-2xl md:rounded-3xl p-4 md:p-8">
+          <div id="tour-pool-info" className="bg-[#141417] border border-[#27272A] rounded-2xl md:rounded-3xl p-4 md:p-8">
             <div className="flex justify-between items-start mb-4 md:mb-6">
               <span className="bg-[#10B981]/10 text-[#10B981] px-3 py-1 md:px-4 md:py-1.5 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-widest">
                 {pool.modality}
@@ -366,7 +366,7 @@ const PoolDetails: React.FC = () => {
               Escolha seu Lado
             </h3>
 
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+            <div id="tour-pool-options" className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
               {pool.options.map((option) => (
                 <button
                   key={option}
@@ -403,6 +403,7 @@ const PoolDetails: React.FC = () => {
                   </div>
                 ) : (
                   <button
+                    id="tour-pool-bet-button"
                     onClick={handlePlaceBetClick}
                     disabled={!selectedOption || betting}
                     className="w-full bg-[#10B981] hover:bg-[#059669] text-[#0A0A0B] font-black py-4 rounded-2xl transition-all shadow-lg shadow-[#10B981]/10 flex items-center justify-center gap-2 disabled:opacity-50 disabled:grayscale"
@@ -532,12 +533,14 @@ const PoolDetails: React.FC = () => {
 
 
           {/* POOL CHAT */}
-          <PoolChat
-            poolId={pool.id}
-            category={pool.modality}
-            hasBet={!!hasBet}
-            isAdmin={!!isAdmin}
-          />
+          <div id="tour-pool-chat">
+            <PoolChat
+              poolId={pool.id}
+              category={pool.modality}
+              hasBet={!!hasBet}
+              isAdmin={!!isAdmin}
+            />
+          </div>
 
           <div className="bg-[#141417] border border-[#27272A] rounded-3xl p-6">
             <h3 className="text-lg font-bold text-white mb-6">Apostadores</h3>
