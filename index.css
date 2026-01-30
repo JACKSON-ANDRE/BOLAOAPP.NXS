@@ -16,6 +16,16 @@
     }
 }
 
+/* 👴 ULTRA-LEGACY SHIELD (iPhone 6/7/8/Old OS) */
+body.ios-legacy * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+    -webkit-filter: none !important;
+    background-attachment: scroll !important;
+    /* Evita parallax/fixed backgrounds */
+}
+
 body {
     font-family: 'Inter', sans-serif;
     background-color: #0A0A0B;

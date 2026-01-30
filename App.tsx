@@ -39,7 +39,7 @@ const AppContent: React.FC = () => {
     if (now - lastRender < 1000) {
       const newCount = renderCount + 1;
       sessionStorage.setItem('rn_cnt', newCount.toString());
-      if (newCount > 10) {
+      if (newCount > 15) {
         if (f) f.save("FATAL: Looping de Render detectado! Travando UI.");
         setIsCrashed(true);
         if (f) f.show();
@@ -50,7 +50,7 @@ const AppContent: React.FC = () => {
     sessionStorage.setItem('rn_last', now.toString());
 
     if (!bootRef.current) {
-      if (f) f.save("APP: v1.3 Bootei! Loading=" + loading + " User=" + (user ? "Sim" : "Não"));
+      if (f) f.save("APP: v1.5 Adaptive Boot! Loading=" + loading + " User=" + (user ? "Sim" : "Não"));
       bootRef.current = true;
     } else {
       if (f) f.save("APP: Update de Estado. Loading=" + loading + " User=" + (user ? "Sim" : "Não"));
@@ -68,9 +68,15 @@ const AppContent: React.FC = () => {
     );
   }
 
-  // Simplest loader: No spinners to avoid GPU stress during boot
+  // Visual feedback during boot
   if (loading) {
-    return <div style={{ background: '#0A0A0B', height: '100vh' }} />;
+    return (
+      <div style={{ background: '#0A0A0B', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '20px', color: '#10B981', fontFamily: 'sans-serif' }}>
+        <div style={{ width: '40px', height: '40px', border: '3px solid #10B981', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        <span style={{ fontSize: '12px', fontWeight: 'bold', letterSpacing: '2px', textTransform: 'uppercase', opacity: 0.6 }}>Iniciando...</span>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
   }
 
   return (

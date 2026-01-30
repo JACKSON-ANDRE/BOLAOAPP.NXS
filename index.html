@@ -71,14 +71,21 @@
         }
       };
 
-      window.Forensic.save("BOOT: Iniciando carregamento do index.html (v1.4 Legacy)");
+      var ua = navigator.userAgent;
+      var isLegacyIOS = /iPhone|iPad|iPod/.test(ua) && /OS [1-9]_|OS 1[0-3]_/.test(ua);
+      if (isLegacyIOS) {
+        document.body.className += " ios-legacy";
+        window.Forensic.save("DEVICE: Detectado iOS Legado (v11-13)");
+      }
+
+      window.Forensic.save("BOOT: Iniciando carregamento do index.html (v1.5 Adaptive)");
 
       // 1. FLASH/LOOP KILLER
       var now = Date.now();
       var lastReload = parseInt(localStorage.getItem('ios_last_reload') || '0');
       var reloadCount = parseInt(localStorage.getItem('ios_reload_count') || '0');
 
-      if (now - lastReload < 2000) {
+      if (now - lastReload < 2500) {
         reloadCount++;
         window.Forensic.save("LOOP CHECK: Reload detectado rápido (" + reloadCount + ")");
       } else {
@@ -87,27 +94,29 @@
       localStorage.setItem('ios_last_reload', now);
       localStorage.setItem('ios_reload_count', reloadCount);
 
-      if (reloadCount > 10) {
+      if (reloadCount > 8) {
         window.Forensic.save("FATAL: Bloqueando Loop Infinito.");
         document.body.innerHTML = '<div style="background:red; color:white; padding:40px; text-align:center; height:100vh; font-family:sans-serif;"><h1>⚠️ LOOP DETECTADO</h1><p>Limpe o cache na página /check.html</p></div>';
         window.stop();
         return;
       }
 
-      // 2. SW POISON
+      // 2. SMART SW POISON (Only if legacy or looping)
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function (registrations) {
-          for (var i = 0; i < registrations.length; i++) {
-            registrations[i].unregister();
-            window.Forensic.save("PWA: Unregistered SW " + i);
-          }
-        });
+        if (isLegacyIOS || reloadCount > 2) {
+          window.Forensic.save("PWA: Ativando vacina de SW por segurança.");
+          navigator.serviceWorker.getRegistrations().then(function (registrations) {
+            for (var i = 0; i < registrations.length; i++) {
+              registrations[i].unregister();
+            }
+          });
 
-        var originalRegister = navigator.serviceWorker.register;
-        navigator.serviceWorker.register = function () {
-          window.Forensic.save("PWA: Registro bloqueado.");
-          return new Promise(function (res, rej) { rej(new Error("Disabled")); });
-        };
+          var originalRegister = navigator.serviceWorker.register;
+          navigator.serviceWorker.register = function () {
+            window.Forensic.save("PWA: Registro bloqueado (Safeguard).");
+            return new Promise(function (res, rej) { rej(new Error("Disabled")); });
+          };
+        }
       }
 
       // 3. UNIVERSAL ERROR CATCHER
@@ -120,12 +129,10 @@
           msg.innerHTML += "<b>[" + new Date().toLocaleTimeString() + "]</b> " + m + "\n" + (stack || "") + "\n\n";
         }
       }
-
       window.onerror = function (m, u, l, c, e) {
         showErr(m, (e && e.stack) ? e.stack : "Arquivo: " + u + " Linha:" + l);
         return false;
       };
-
       window.onunhandledrejection = function (e) {
         showErr("Promessa Rejeitada: " + e.reason);
       };

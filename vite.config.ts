@@ -64,8 +64,8 @@ export default defineConfig(({ mode }) => {
     build: {
       target: 'es2015',
       outDir: 'dist',
-      minify: 'terser',
-      sourcemap: true,
+      minify: 'esbuild', // Padrão do Vite (Não requer pacote extra)
+      sourcemap: false,
     },
     resolve: {
       alias: {
