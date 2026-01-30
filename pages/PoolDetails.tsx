@@ -205,7 +205,25 @@ const PoolDetails: React.FC = () => {
     return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="animate-spin text-[#10B981]" size={48} /></div>;
   }
 
-  if (!pool) return <div className="text-center p-20 text-zinc-500">Bolão não encontrado.</div>;
+  if (!pool) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-500">
+        <div className="w-20 h-20 bg-zinc-900 rounded-3xl flex items-center justify-center mb-6 text-zinc-600">
+          <Info size={40} />
+        </div>
+        <h2 className="text-xl font-bold text-white mb-2 uppercase italic">Bolão não encontrado</h2>
+        <p className="text-zinc-500 text-sm mb-8 max-w-xs">
+          O link pode estar expirado ou o bolão foi removido pelo organizador.
+        </p>
+        <button
+          onClick={() => navigate('/')}
+          className="bg-emerald-500 text-black px-8 py-3 rounded-2xl font-black text-xs uppercase"
+        >
+          Ir para o Início
+        </button>
+      </div>
+    );
+  }
 
   const hasBet = bets.find(b => b.user_id === profile?.id);
 

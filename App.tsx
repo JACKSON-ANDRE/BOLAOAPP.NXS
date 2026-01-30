@@ -50,11 +50,20 @@ const AppContent: React.FC = () => {
     }
     sessionStorage.setItem('rn_last', now.toString());
 
-    // 2. CAPTURE INTENDED PATH: If we have a hash like #/pools/123 and no user, save it.
+    // 2. HASH RESCUE: Sanitize mangled links (removes trailing spaces, parentheses, etc)
     const currentHash = window.location.hash;
-    if (currentHash && currentHash.length > 2 && !user && !loading) {
-      if (f) f.save("APP: Capturando destino pretendido: " + currentHash);
-      sessionStorage.setItem('intended_path', currentHash);
+    if (currentHash && currentHash.length > 2) {
+      const sanitizedHash = currentHash.trim().replace(/[() ]+$/, '');
+      if (sanitizedHash !== currentHash) {
+        if (f) f.save("APP: Link mangulado detectado! Corrigindo: " + sanitizedHash);
+        window.location.hash = sanitizedHash;
+      }
+
+      // Capture for after login
+      if (!user && !loading) {
+        if (f) f.save("APP: Capturando destino pretendido: " + sanitizedHash);
+        sessionStorage.setItem('intended_path', sanitizedHash);
+      }
     }
 
     if (!bootRef.current && !loading) {

@@ -110,10 +110,16 @@
       localStorage.setItem('ios_last_reload', now);
       localStorage.setItem('ios_reload_count', reloadCount);
 
-      if (reloadCount > 20) {
-        window.Forensic.save("FATAL: Bloqueio de Segurança Ativo.");
-        document.body.innerHTML = '<div style="background:red; color:white; padding:40px; text-align:center; height:100vh; font-family:sans-serif;"><h1>⚠️ SISTEMA PROTEGIDO</h1><p>Detectamos muitas falhas seguidas. Clique abaixo para limpar e tentar de novo.</p><button onclick="localStorage.clear();location.href=\'/\';" style="padding:20px; background:white; color:red; border:none; border-radius:15px; font-weight:bold; font-size:16px; width:100%; max-width:300px;">LIMPAR E VOLTAR</button></div>';
-        window.stop();
+      if (reloadCount > 15) { // Adjusted to 15 for proactivity but without stop()
+        window.Forensic.save("PROTECTION: Bloqueio de Segurança Ativo (Loop detectado).");
+        document.body.innerHTML = '<div style="background:#0A0A0B; color:white; padding:40px; text-align:center; height:100vh; font-family:sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center;">' +
+          '<div style="width:80px; height:80px; background:#10B981; border-radius:20px; display:flex; align-items:center; justify-content:center; margin-bottom:20px; font-size:40px;">🛡️</div>' +
+          '<h1 style="font-size:24px; color:#10B981; margin-bottom:10px;">ESTABILIZADOR ATIVO</h1>' +
+          '<p style="opacity:0.6; font-size:14px; margin-bottom:30px;">Detectamos um problema no carregamento. Vamos limpar o cache para você!</p>' +
+          '<button onclick="localStorage.clear();sessionStorage.clear();location.href=\'/\';" style="padding:15px 30px; background:#10B981; color:black; border:none; border-radius:15px; font-weight:bold; font-size:16px; width:100%; max-width:280px; cursor:pointer;">LIMPAR E REINICIAR</button>' +
+          '<a href="https://wa.me/5562986216877" style="margin-top:20px; color:#10B981; text-decoration:none; font-size:12px; font-weight:bold;">Talar com Atendimento 💬</a>' +
+          '</div>';
+        // Removed window.stop(); to allow forensic log to persist or visual screen to remain.
         return;
       }
 
