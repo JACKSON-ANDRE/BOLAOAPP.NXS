@@ -32,9 +32,11 @@
         <p>Se você está vendo isso, o problema NÃO é o servidor.</p>
         <p>O problema é o CACHE do seu iPhone que está travado.</p>
         <hr>
-        <button onclick="location.reload()"
-            style="background: #10B981; border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold;">LIMPAR
-            ESTE CACHE</button>
+        <button onclick="localStorage.clear(); window.location.href='/';"
+            style="background: #10B981; border: none; padding: 15px 30px; border-radius: 10px; font-weight: bold; color: black; cursor: pointer; text-transform: uppercase;">LIMPAR
+            TUDO E VOLTAR PARA O APP</button>
+        <p style="font-size: 10px; margin-top: 10px; opacity: 0.5;">Isso vai deslogar você, mas vai destravar o iPhone.
+        </p>
     </div>
 </body>
 
