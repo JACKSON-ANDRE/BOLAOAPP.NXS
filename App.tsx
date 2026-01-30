@@ -57,15 +57,15 @@ const AppContent: React.FC = () => {
       sessionStorage.setItem('intended_path', currentHash);
     }
 
-    if (!bootRef.current) {
-      if (f) f.save("APP: v1.8 Adaptive Boot! Loading=" + loading + " User=" + (user ? "Sim" : "Não"));
+    if (!bootRef.current && !loading) {
+      if (f) f.save("APP: v1.9 Boot Completo! User=" + (user ? "Logado" : "Visitante"));
       bootRef.current = true;
 
       // RESET SURVIVAL COUNTERS: We reached this point, so we are stable.
       try {
         localStorage.removeItem('ios_reload_count');
         sessionStorage.removeItem('rn_cnt');
-        if (f) f.save("APP: Contadores de sobrevivência resetados (Sucesso).");
+        if (f) f.save("APP: Contadores Zerados (Sucesso).");
       } catch (e) { }
     }
   }, [user, loading]);

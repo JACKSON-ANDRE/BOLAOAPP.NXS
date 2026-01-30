@@ -61,12 +61,17 @@
           var panel = document.getElementById('forensic-panel');
           var content = document.getElementById('forensic-content');
           if (panel && content) {
-            content.innerText = log.map(function (i) { return "[" + i.t + "] " + i.m; }).join('\n');
+            var txt = "";
+            for (var i = 0; i < log.length; i++) {
+              txt += "[" + log[i].t + "] " + log[i].m + "\n";
+            }
+            content.innerText = txt;
             panel.style.display = 'block';
           }
         },
         clear: function () {
           localStorage.removeItem('ios_forensic_log');
+          localStorage.removeItem('ios_reload_count');
           location.reload();
         }
       };
@@ -74,11 +79,9 @@
       var ua = navigator.userAgent;
       var isLegacyIOS = /iPhone|iPad|iPod/.test(ua) && /OS [1-9]_|OS 1[0-3]_/.test(ua);
 
-      // Safe body access
       function setLegacyClass() {
         if (isLegacyIOS && document.body) {
           document.body.className += " ios-legacy";
-          window.Forensic.save("DEVICE: Aplicado Estilo Legacy (iOS)");
         }
       }
       if (document.readyState === 'loading') {
@@ -87,42 +90,44 @@
         setLegacyClass();
       }
 
-      window.Forensic.save("BOOT: v1.8 Adaptive Lifecycle");
+      window.Forensic.save("BOOT: v1.9 Deep Link Fix");
 
-      // 1. FLASH/LOOP KILLER (More tolerant)
+      // 1. SMART LOOP KILLER
       var now = Date.now();
       var lastReload = parseInt(localStorage.getItem('ios_last_reload') || '0');
       var reloadCount = parseInt(localStorage.getItem('ios_reload_count') || '0');
 
-      if (now - lastReload < 2000) {
+      if (now - lastReload < 2500) {
         reloadCount++;
         window.Forensic.save("LOOP CHECK: Rápido (" + reloadCount + ")");
       } else {
-        // If it took > 2s since last boot, maybe we are okay, but don't reset yet
-        // reloadCount = 0; 
+        // RESET: Se levou mais de 5 segundos, não é um loop infinito. Limpa o erro.
+        if (now - lastReload > 5000) {
+          reloadCount = 0;
+          window.Forensic.save("LOOP CHECK: Limpo (Reset por tempo)");
+        }
       }
       localStorage.setItem('ios_last_reload', now);
       localStorage.setItem('ios_reload_count', reloadCount);
 
-      if (reloadCount > 25) { // Increased to 25 to avoid false blocks
-        window.Forensic.save("FATAL: Bloqueando Loop após 25 tentativas.");
-        document.body.innerHTML = '<div style="background:red; color:white; padding:40px; text-align:center; height:100vh; font-family:sans-serif;"><h1>⚠️ ESTABILIZANDO...</h1><p>Muitas tentativas de abertura. Por favor, limpe o cache.</p><button onclick="localStorage.clear();location.reload();" style="padding:15px; background:white; color:red; border:none; border-radius:10px; font-weight:bold;">LIMPAR TUDO</button></div>';
+      if (reloadCount > 20) {
+        window.Forensic.save("FATAL: Bloqueio de Segurança Ativo.");
+        document.body.innerHTML = '<div style="background:red; color:white; padding:40px; text-align:center; height:100vh; font-family:sans-serif;"><h1>⚠️ SISTEMA PROTEGIDO</h1><p>Detectamos muitas falhas seguidas. Clique abaixo para limpar e tentar de novo.</p><button onclick="localStorage.clear();location.href=\'/\';" style="padding:20px; background:white; color:red; border:none; border-radius:15px; font-weight:bold; font-size:16px; width:100%; max-width:300px;">LIMPAR E VOLTAR</button></div>';
         window.stop();
         return;
       }
 
-      // 2. SMART SW VACINE
+      // 2. SW SHIELD
       if ('serviceWorker' in navigator) {
         if (isLegacyIOS || reloadCount > 5) {
-          window.Forensic.save("PWA: Modo de Segurança (SW Off).");
+          window.Forensic.save("PWA: Escudo SW Ativado.");
           navigator.serviceWorker.getRegistrations().then(function (registrations) {
             for (var i = 0; i < registrations.length; i++) {
               registrations[i].unregister();
             }
           });
-
           navigator.serviceWorker.register = function () {
-            return new Promise(function (res, rej) { rej(new Error("Disabled for stability")); });
+            return new Promise(function (res, rej) { rej(new Error("Safety Shield Active")); });
           };
         }
       }
