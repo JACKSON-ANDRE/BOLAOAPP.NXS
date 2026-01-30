@@ -96,18 +96,15 @@ const Login: React.FC = () => {
             </div>
 
             <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer group">
+              <div
+                onClick={() => setRememberMe(!rememberMe)}
+                className="flex items-center gap-2 cursor-pointer group"
+              >
                 <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${rememberMe ? 'bg-[#10B981] border-[#10B981]' : 'border-zinc-600 bg-transparent group-hover:border-zinc-500'}`}>
                   {rememberMe && <Check size={14} className="text-black stroke-[3]" />}
                 </div>
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="hidden"
-                />
                 <span className="text-sm text-zinc-400 group-hover:text-zinc-300 transition-colors">Manter conectado</span>
-              </label>
+              </div>
 
               <Link
                 to="/forgot-password"

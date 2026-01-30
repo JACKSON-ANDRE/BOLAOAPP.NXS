@@ -35,9 +35,9 @@ const NotificationGuard: React.FC<NotificationGuardProps> = ({ children }) => {
                 if (data && data.id) {
                     setHasSubscription(true);
                 } else {
-                    // Bypass blocking on iOS for now to stop the blinking
-                    setHasSubscription(true);
-                    if ((window as any).Forensic) (window as any).Forensic.save("GUARD: Ignorando bloqueio para estabilidade.");
+                    // SE NÃO TIVER NO BANCO: Mostra o bloqueio para forçar ativação
+                    setHasSubscription(false);
+                    if ((window as any).Forensic) (window as any).Forensic.save("GUARD: Usuário bloqueado (Falta assinatura).");
                 }
             } catch (err) {
                 setHasSubscription(true);

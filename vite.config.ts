@@ -15,11 +15,8 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       react(),
-      /*
       VitePWA({
-        selfDestroying: true, // This will unregister any existing service worker instantly!
         registerType: 'autoUpdate',
-        strategies: 'injectManifest',
         devOptions: {
           enabled: true,
           type: 'module',
@@ -28,7 +25,7 @@ export default defineConfig(({ mode }) => {
         manifest: {
           name: 'Bolão App',
           short_name: 'Bolão App',
-          description: 'Brinque com seus amigos!',
+          description: 'Participe dos melhores bolões!',
           theme_color: '#0A0A0B',
           background_color: '#0A0A0B',
           display: 'standalone',
@@ -55,7 +52,6 @@ export default defineConfig(({ mode }) => {
           ]
         }
       })
-      */
     ],
     define: {
       'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),

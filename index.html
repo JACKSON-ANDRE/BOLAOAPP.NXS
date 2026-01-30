@@ -45,144 +45,27 @@
 
   <script>
     (function () {
-      // --- FORENSIC BLACKBOX (LEGACY SYNTAX FOR OLD iOS) ---
+      // 🛡️ BASIC ERROR STABILIZER
+      window.onerror = function (msg, url, line, col, error) {
+        if (msg.indexOf('ResizeObserver') !== -1) return;
+        console.error("Critical Error:", msg, "at", line, url);
+      };
+
+      window.onunhandledrejection = function (event) {
+        console.error('Unhandled rejection:', event.reason);
+      };
+
+      // Ensure Forensic doesn't crash existing code
       window.Forensic = {
-        save: function (msg) {
-          try {
-            var log = JSON.parse(localStorage.getItem('ios_forensic_log') || '[]');
-            log.push({ t: new Date().toLocaleTimeString(), m: msg });
-            if (log.length > 50) log.shift();
-            localStorage.setItem('ios_forensic_log', JSON.stringify(log));
-            console.log("🧬 [Forensic]: " + msg);
-          } catch (e) { }
-        },
-        show: function () {
-          var log = JSON.parse(localStorage.getItem('ios_forensic_log') || '[]');
-          var panel = document.getElementById('forensic-panel');
-          var content = document.getElementById('forensic-content');
-          if (panel && content) {
-            var txt = "";
-            for (var i = 0; i < log.length; i++) {
-              txt += "[" + log[i].t + "] " + log[i].m + "\n";
-            }
-            content.innerText = txt;
-            panel.style.display = 'block';
-          }
-        },
-        clear: function () {
-          localStorage.removeItem('ios_forensic_log');
-          localStorage.removeItem('ios_reload_count');
-          location.reload();
-        }
+        save: function (m) { console.log("🧬 [Log]:", m); },
+        show: function () { alert("Logs no console do navegador."); },
+        clear: function () { localStorage.clear(); location.reload(); }
       };
 
-      var ua = navigator.userAgent;
-      var isLegacyIOS = /iPhone|iPad|iPod/.test(ua) && /OS [1-9]_|OS 1[0-3]_/.test(ua);
-
-      function setLegacyClass() {
-        if (isLegacyIOS && document.body) {
-          document.body.className += " ios-legacy";
-        }
-      }
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', setLegacyClass);
-      } else {
-        setLegacyClass();
-      }
-
-      window.Forensic.save("BOOT: v1.9 Deep Link Fix");
-
-      // 1. SMART LOOP KILLER
-      var now = Date.now();
-      var lastReload = parseInt(localStorage.getItem('ios_last_reload') || '0');
-      var reloadCount = parseInt(localStorage.getItem('ios_reload_count') || '0');
-
-      if (now - lastReload < 2500) {
-        reloadCount++;
-        window.Forensic.save("LOOP CHECK: Rápido (" + reloadCount + ")");
-      } else {
-        // RESET: Se levou mais de 5 segundos, não é um loop infinito. Limpa o erro.
-        if (now - lastReload > 5000) {
-          reloadCount = 0;
-          window.Forensic.save("LOOP CHECK: Limpo (Reset por tempo)");
-        }
-      }
-      localStorage.setItem('ios_last_reload', now);
-      localStorage.setItem('ios_reload_count', reloadCount);
-
-      if (reloadCount > 15) { // Adjusted to 15 for proactivity but without stop()
-        window.Forensic.save("PROTECTION: Bloqueio de Segurança Ativo (Loop detectado).");
-        document.body.innerHTML = '<div style="background:#0A0A0B; color:white; padding:40px; text-align:center; height:100vh; font-family:sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center;">' +
-          '<div style="width:80px; height:80px; background:#10B981; border-radius:20px; display:flex; align-items:center; justify-content:center; margin-bottom:20px; font-size:40px;">🛡️</div>' +
-          '<h1 style="font-size:24px; color:#10B981; margin-bottom:10px;">ESTABILIZADOR ATIVO</h1>' +
-          '<p style="opacity:0.6; font-size:14px; margin-bottom:30px;">Detectamos um problema no carregamento. Vamos limpar o cache para você!</p>' +
-          '<button onclick="localStorage.clear();sessionStorage.clear();location.href=\'/\';" style="padding:15px 30px; background:#10B981; color:black; border:none; border-radius:15px; font-weight:bold; font-size:16px; width:100%; max-width:280px; cursor:pointer;">LIMPAR E REINICIAR</button>' +
-          '<a href="https://wa.me/5562986216877" style="margin-top:20px; color:#10B981; text-decoration:none; font-size:12px; font-weight:bold;">Talar com Atendimento 💬</a>' +
-          '</div>';
-        // Removed window.stop(); to allow forensic log to persist or visual screen to remain.
-        return;
-      }
-
-      // 2. SW SHIELD
-      if ('serviceWorker' in navigator) {
-        if (isLegacyIOS || reloadCount > 5) {
-          window.Forensic.save("PWA: Escudo SW Ativado.");
-          navigator.serviceWorker.getRegistrations().then(function (registrations) {
-            for (var i = 0; i < registrations.length; i++) {
-              registrations[i].unregister();
-            }
-          });
-          navigator.serviceWorker.register = function () {
-            return new Promise(function (res, rej) { rej(new Error("Safety Shield Active")); });
-          };
-        }
-      }
-
-      // 3. UNIVERSAL ERROR CATCHER
-      function showErr(m, stack) {
-        window.Forensic.save("RUNTIME ERROR: " + m);
-        var debug = document.getElementById('ios-debug');
-        var msg = document.getElementById('ios-msg');
-        if (debug && msg) {
-          debug.style.display = 'block';
-          msg.innerHTML += "<b>[" + new Date().toLocaleTimeString() + "]</b> " + m + "\n" + (stack || "") + "\n\n";
-        }
-      }
-      window.onerror = function (m, u, l, c, e) {
-        showErr(m, (e && e.stack) ? e.stack : "Arquivo: " + u + " Linha:" + l);
-        return false;
-      };
-      window.onunhandledrejection = function (e) {
-        showErr("Promessa Rejeitada: " + e.reason);
-      };
-
-      // 4. DEBUG GESTURE
-      var taps = 0;
-      var lastTap = 0;
-      window.addEventListener('touchstart', function () {
-        var now_t = Date.now();
-        if (now_t - lastTap < 400) taps++; else taps = 1;
-        lastTap = now_t;
-        if (taps >= 6) window.Forensic.show();
-      });
+      console.log("BOOT: index.html carregado.");
     })();
   </script>
 
-  <!-- BOTAO DE DEBUG PERMANENTE -->
-  <button onclick="window.Forensic.show()"
-    style="position:fixed; bottom:80px; left:10px; z-index:9999999; background:blue; color:white; border:none; border-radius:10px; padding:10px; font-size:12px; font-weight:bold; box-shadow:0 0 10px rgba(0,0,0,0.5);">DEBUG
-    🧬</button>
-
-  <div id="forensic-panel"
-    style="display:none; position:fixed; top:20px; left:20px; right:20px; bottom:20px; background:rgba(0,0,0,0.95); color:#0f0; z-index:9999999; padding:20px; font-family:monospace; font-size:10px; border:2px solid #0f0; border-radius:10px; overflow:auto;">
-    <h2 style="color:white; margin-top:0;">🧬 CAIXA PRETA (LOG)</h2>
-    <div id="forensic-content" style="white-space:pre-wrap; margin-bottom:20px;"></div>
-    <button onclick="document.getElementById('forensic-panel').style.display='none'"
-      style="background:#555; color:white; border:none; padding:10px 20px; border-radius:5px;">FECHAR</button>
-    <button onclick="window.Forensic.clear()"
-      style="background:red; color:white; border:none; padding:10px 20px; border-radius:5px; margin-left:10px;">LIMPAR
-      LOG</button>
-  </div>
   <div id="root">
     <div
       style="background:#0A0A0B; color:#10B981; height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">

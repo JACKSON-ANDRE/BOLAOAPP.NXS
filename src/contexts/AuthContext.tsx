@@ -172,20 +172,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, []);
 
     const signOut = async () => {
+        if ((window as any).Forensic) (window as any).Forensic.save("AUTH: Iniciando logout atômico.");
         try {
-            // 🛑 TIMEOUT RACE: Tenta sair, mas se demorar mais que 500ms, força a saída local
-            await Promise.race([
-                supabase.auth.signOut(),
-                new Promise(resolve => setTimeout(resolve, 500))
-            ]);
+            // Tenta sair formalmente
+            await supabase.auth.signOut();
         } catch (error) {
             console.error("Erro ao sair:", error);
         } finally {
-            // 🧹 Faxina local
-            setUser(null);
-            setProfile(null);
-            setLoading(false);
-            // localStorage.clear(); // REMOVE: Deixa o Supabase limpar o dele
+            // 🧹 FAXINA NUCLEAR: Limpa TUDO
+            localStorage.clear();
+            sessionStorage.clear();
+
+            if ((window as any).Forensic) (window as any).Forensic.save("AUTH: Logout concluído. Forçando limpeza de memória...");
+
+            // 🚀 FORCE RELOAD: Mata o processo atual do React e limpa a memória global.
+            // Redireciona para a raiz SEM o hash do login para garantir um boot limpo.
+            window.location.href = window.location.origin + window.location.pathname;
         }
     };
 
