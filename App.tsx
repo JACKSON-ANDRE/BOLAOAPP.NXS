@@ -28,15 +28,45 @@ const AppContent: React.FC = () => {
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone;
   const bootRef = React.useRef(false);
 
+  // NUCLEAR HANDBRAKE: Detect loop and stop
+  const [isCrashed, setIsCrashed] = React.useState(false);
   React.useEffect(() => {
     const f = (window as any).Forensic;
+    const now = Date.now();
+    const lastRender = parseInt(sessionStorage.getItem('rn_last') || '0');
+    const renderCount = parseInt(sessionStorage.getItem('rn_cnt') || '0');
+
+    if (now - lastRender < 1000) {
+      const newCount = renderCount + 1;
+      sessionStorage.setItem('rn_cnt', newCount.toString());
+      if (newCount > 10) {
+        if (f) f.save("FATAL: Looping de Render detectado! Travando UI.");
+        setIsCrashed(true);
+        if (f) f.show();
+      }
+    } else {
+      sessionStorage.setItem('rn_cnt', '0');
+    }
+    sessionStorage.setItem('rn_last', now.toString());
+
     if (!bootRef.current) {
-      if (f) f.save("APP: v1.2 Bootei! Loading=" + loading + " User=" + (user ? "Sim" : "Não"));
+      if (f) f.save("APP: v1.3 Bootei! Loading=" + loading + " User=" + (user ? "Sim" : "Não"));
       bootRef.current = true;
     } else {
       if (f) f.save("APP: Update de Estado. Loading=" + loading + " User=" + (user ? "Sim" : "Não"));
     }
   }, [user, loading]);
+
+  if (isCrashed) {
+    return (
+      <div style={{ background: 'red', color: 'white', padding: '100px 20px', textAlign: 'center', height: '100vh', zIndex: 99999999 }}>
+        <h1 style={{ fontSize: '40px' }}>🛑 LOOP DETECTADO</h1>
+        <p>O aplicativo parou para evitar que o celular trave.</p>
+        <p>O painel de DEBUG deve ter aberto sozinho abaixo.</p>
+        <button onClick={() => { sessionStorage.clear(); location.reload(); }} style={{ padding: '20px', background: 'white', color: 'red', fontWeight: 'bold', border: 'none', borderRadius: '10px' }}>RE TENTAR</button>
+      </div>
+    );
+  }
 
   // Simplest loader: No spinners to avoid GPU stress during boot
   if (loading) {
