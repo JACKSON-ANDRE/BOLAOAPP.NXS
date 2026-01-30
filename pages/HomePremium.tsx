@@ -24,6 +24,7 @@ const HomePremium: React.FC = () => {
         fetchPools();
     }, []);
 
+    /*
     useEffect(() => {
         if (profile && !profile.has_completed_tour && !loading) {
             // Pequeno delay para garantir que o layout renderizou
@@ -39,6 +40,7 @@ const HomePremium: React.FC = () => {
             return () => clearTimeout(timer);
         }
     }, [profile?.id, loading]);
+    */
 
     const fetchPools = async () => {
         setLoading(true);
@@ -92,7 +94,7 @@ const HomePremium: React.FC = () => {
         <div className="space-y-6 md:space-y-12 pb-10 font-['Inter']">
 
             {/* PREMIUM BANNER - GLASSMORPHISM */}
-            <div id="tour-welcome" className="relative overflow-hidden rounded-[2.5rem] bg-[#141417]/40 backdrop-blur-xl border border-white/5 p-4 md:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
+            <div id="tour-welcome" className="relative overflow-hidden rounded-[2.5rem] bg-[#141417] border border-white/5 p-4 md:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
                 <div className="absolute -top-24 -right-24 w-64 h-64 bg-[#10B981]/10 rounded-full blur-[80px]" />
                 <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-orange-500/10 rounded-full blur-[80px]" />
 
@@ -190,7 +192,7 @@ const HomePremium: React.FC = () => {
                             </button>
                         </div>
 
-                        <div className="flex bg-[#141417]/50 backdrop-blur p-1 rounded-xl md:p-1.5 md:rounded-2xl border border-white/5">
+                        <div className="flex bg-[#141417] p-1 rounded-xl md:p-1.5 md:rounded-2xl border border-white/5">
                             <button onClick={() => setActiveListTab('open')} className={`px-3 py-2 md:px-6 md:py-2.5 rounded-lg md:rounded-xl text-[8px] md:text-xs font-black uppercase transition-all duration-300 ${activeListTab === 'open' ? 'bg-[#10B981] text-[#0A0A0B]' : 'text-zinc-500 hover:text-white'}`}>Ativos</button>
                             <button onClick={() => setActiveListTab('waiting')} className={`px-3 py-2 md:px-6 md:py-2.5 rounded-lg md:rounded-xl text-[8px] md:text-xs font-black uppercase transition-all duration-300 ${activeListTab === 'waiting' ? 'bg-orange-500 text-[#0A0A0B]' : 'text-zinc-500 hover:text-white'}`}>Aguardando Encerramento</button>
                         </div>

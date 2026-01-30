@@ -105,7 +105,7 @@ const MyPools: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex flex-wrap gap-2 md:gap-3 p-1.5 md:p-2 bg-[#141417]/50 backdrop-blur-xl border border-white/5 rounded-2xl md:rounded-[2rem] w-fit">
+      <div className="flex flex-wrap gap-2 md:gap-3 p-1.5 md:p-2 bg-[#141417] border border-white/5 rounded-2xl md:rounded-[2rem] w-fit">
         <button
           onClick={() => setActiveTab('bets')}
           className={`flex items-center gap-2 px-4 py-2.5 md:px-8 md:py-4 rounded-xl md:rounded-2xl text-[10px] md:text-sm font-black uppercase tracking-wider transition-all duration-300 ${activeTab === 'bets'

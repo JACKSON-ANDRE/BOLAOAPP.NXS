@@ -69,45 +69,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Silencioso: Se der timeout ou erro, seguimos para o Plano B (REST)
         }
 
+        let newData = null;
+
         if (clientData) {
-            setProfile({ ...clientData });
-            setAuthError(null);
-            return;
-        }
+            newData = clientData;
+        } else {
+            // 2. FALLBACK: REST API (Silencioso e Invisível)
+            try {
+                const url = import.meta.env.VITE_SUPABASE_URL;
+                const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-        // 2. FALLBACK: REST API (Silencioso e Invisível)
-        // Busca direta via HTTP para contornar problemas de WebSocket
-        try {
-            const url = import.meta.env.VITE_SUPABASE_URL;
-            const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+                if (url && key) {
+                    const response = await fetch(`${url}/rest/v1/profiles?id=eq.${u.id}&select=*`, {
+                        headers: {
+                            'apikey': key,
+                            'Authorization': `Bearer ${key}`
+                        }
+                    });
 
-            if (url && key) {
-                const response = await fetch(`${url}/rest/v1/profiles?id=eq.${u.id}&select=*`, {
-                    headers: {
-                        'apikey': key,
-                        'Authorization': `Bearer ${key}`
-                    }
-                });
-
-                if (response.ok) {
-                    const restData = await response.json();
-                    if (restData && restData.length > 0) {
-                        setProfile({ ...restData[0] });
-                        setAuthError(null);
-                        return;
+                    if (response.ok) {
+                        const restData = await response.json();
+                        if (restData && restData.length > 0) {
+                            newData = restData[0];
+                        }
                     }
                 }
+            } catch (restErr) { }
+
+            // 3. RECUPERAÇÃO DE CONTA (Sync)
+            if (!newData) {
+                newData = await syncProfile(u);
             }
-        } catch (restErr) {
-            // Silencioso
         }
 
-        // 3. RECUPERAÇÃO DE CONTA (Sync)
-        if (!clientData) {
-            const synced = await syncProfile(u);
-            if (synced) {
-                setProfile({ ...synced });
+        if (newData) {
+            // Só atualiza se for diferente para evitar "blink"
+            const currentProfileJson = JSON.stringify(profile);
+            const nextProfileJson = JSON.stringify(newData);
+
+            if (currentProfileJson !== nextProfileJson) {
+                if ((window as any).Forensic) (window as any).Forensic.save("AUTH: Perfil atualizado (Dados mudaram)");
+                setProfile({ ...newData });
                 setAuthError(null);
+            } else {
+                // if ((window as any).Forensic) (window as any).Forensic.save("AUTH: Perfil checado (Sem mudanças)");
             }
         }
     };
@@ -203,16 +208,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!user) return;
 
         const interval = setInterval(() => {
+            if ((window as any).Forensic) (window as any).Forensic.save("AUTH: Polling de 5s iniciado.");
             refreshProfile();
         }, 5000);
 
         return () => clearInterval(interval);
     }, [user]);
 
+    const value = React.useMemo(() => ({
+        user,
+        profile,
+        loading,
+        signOut,
+        refreshProfile,
+        isProfileComplete,
+        maintenanceMode,
+        authError: (authError as any)
+    }), [user, profile, loading, maintenanceMode, authError, isProfileComplete]);
+
     return (
-        <AuthContext.Provider
-            value={{ user, profile, loading, signOut, refreshProfile, isProfileComplete, maintenanceMode, authError: (authError as any) }}
-        >
+        <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
     );

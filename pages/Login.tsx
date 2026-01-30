@@ -29,7 +29,15 @@ const Login: React.FC = () => {
       setError(error.message);
       setLoading(false);
     } else {
-      navigate('/');
+      const intendedPath = sessionStorage.getItem('intended_path');
+      if (intendedPath) {
+        sessionStorage.removeItem('intended_path');
+        // Extract route from hash (remove #)
+        const target = intendedPath.replace(/^#/, '');
+        navigate(target);
+      } else {
+        navigate('/');
+      }
     }
   };
 
@@ -129,6 +137,30 @@ const Login: React.FC = () => {
             <Link to="/register" className="text-[#10B981] font-semibold hover:underline">
               Crie uma agora
             </Link>
+          </div>
+
+          <div className="mt-10 pt-6 border-t border-zinc-800/50 text-center space-y-4">
+            <p className="text-[8px] text-zinc-700 uppercase tracking-widest">
+              v1.2 Active
+            </p>
+            <button
+              onClick={async () => {
+                if (confirm("Isso irá limpar todos os arquivos temporários e forçar o download da versão mais nova. Continuar?")) {
+                  if ('serviceWorker' in navigator) {
+                    const regs = await navigator.serviceWorker.getRegistrations();
+                    for (let reg of regs) await reg.unregister();
+                  }
+                  if ('caches' in window) {
+                    const keys = await caches.keys();
+                    for (let key of keys) await caches.delete(key);
+                  }
+                  window.location.href = window.location.origin + '/?v=' + Date.now();
+                }
+              }}
+              className="text-zinc-600 text-[8px] font-bold uppercase hover:text-[#10B981] transition-colors"
+            >
+              [ Limpar Cache do App (Deep Clean) ]
+            </button>
           </div>
 
           {/* PWA INSTALL BUTTON REMOVED (Moved to Gateway) */}

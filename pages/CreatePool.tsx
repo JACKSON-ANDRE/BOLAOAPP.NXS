@@ -390,7 +390,7 @@ const CreatePool: React.FC = () => {
 
         {/* SHARE MODAL */}
         {showShareModal && (
-          <div className="fixed inset-0 bg-black/95 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="fixed inset-0 bg-black/95 z-[60] flex items-center justify-center p-4">
             <div className="bg-[#141417] border border-[#10B981]/30 rounded-[2.5rem] w-full max-w-md p-8 space-y-8 relative shadow-[0_0_50px_rgba(16,185,129,0.1)] animate-in zoom-in duration-300">
 
               <button

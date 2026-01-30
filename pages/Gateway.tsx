@@ -15,6 +15,7 @@ const Gateway: React.FC = () => {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone;
 
     useEffect(() => {
+        /*
         if (isInstalled || isStandalone) {
             setInstalledSuccess(true);
             const timer = setTimeout(() => {
@@ -22,6 +23,7 @@ const Gateway: React.FC = () => {
             }, 2500);
             return () => clearTimeout(timer);
         }
+        */
     }, [isInstalled, isStandalone, navigate]);
 
     return (

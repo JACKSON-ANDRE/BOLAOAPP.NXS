@@ -72,7 +72,9 @@ const PoolDetails: React.FC = () => {
 
   const handlePlaceBetClick = () => {
     if (!profile) {
-      navigate('/');
+      // Save interest just in case, though App.tsx already does it on mount
+      sessionStorage.setItem('intended_path', window.location.hash);
+      navigate('/login');
       return;
     }
 
@@ -383,10 +385,10 @@ const PoolDetails: React.FC = () => {
                 <button
                   id="tour-pool-bet-button"
                   onClick={handlePlaceBetClick}
-                  disabled={!selectedOption || betting}
+                  disabled={(!profile ? false : !selectedOption) || betting}
                   className="w-full bg-[#10B981] hover:bg-[#059669] text-[#0A0A0B] font-black py-4 rounded-xl transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 disabled:opacity-30 uppercase text-xs"
                 >
-                  {betting ? <Loader2 className="animate-spin" size={18} /> : 'Confirmar Palpite'}
+                  {betting ? <Loader2 className="animate-spin" size={18} /> : (!profile ? 'LOGAR PARA PARTICIPAR' : 'Confirmar Palpite')}
                 </button>
               )}
             </div>

@@ -14,105 +14,77 @@ const NotificationGuard: React.FC<NotificationGuardProps> = ({ children }) => {
     const [checking, setChecking] = useState(false);
     const [activationLoading, setActivationLoading] = useState(false);
     const [directUserEmail, setDirectUserEmail] = useState<string>('');
+    const [safeMode] = useState(() => window.location.search.includes('safe=true'));
 
     useEffect(() => {
         const verifyAndBlock = async () => {
-            // 1. Get Real User (Direct) to bypass potential Context lags
-            const { data: { user: directUser } } = await supabase.auth.getUser();
-
-            // Updates debug info
-            if (directUser) {
-                setDirectUserEmail(directUser.email || 'No Email');
-            } else {
-                setDirectUserEmail('No User');
-            }
-
-            // 2. Decide if we should check subscription
-            // If Context is loading, we wait. UNLESS direct user is already found, then we can proceed.
-            // Actually, waiting for authLoading is safer to avoid flicker, but if Context is dead, we rely on directUser.
-
-            const effectiveUser = user || directUser;
-
-            if (!effectiveUser) {
-                if (!authLoading) {
-                    setHasSubscription(true); // Truly logged out and finished loading
-                }
+            if (!user && !authLoading) {
+                setHasSubscription(true);
                 return;
             }
+            if (!user) return;
 
-
-            // 3. User detected! Check DB
-            setChecking(true);
             try {
-                const { data, error } = await supabase
+                // Check DB quietly
+                const { data } = await supabase
                     .from('user_push_subscriptions')
                     .select('id')
-                    .eq('user_id', effectiveUser.id)
+                    .eq('user_id', user.id)
                     .maybeSingle();
 
                 if (data && data.id) {
                     setHasSubscription(true);
-                    // 🔄 SILENT SYNC: Ensure the DB has the *latest* token for this device
-                    subscribeToPushNotifications(effectiveUser.id, true).catch(() => { });
                 } else {
-                    setHasSubscription(false); // BLOCK!
+                    // Bypass blocking on iOS for now to stop the blinking
+                    setHasSubscription(true);
+                    if ((window as any).Forensic) (window as any).Forensic.save("GUARD: Ignorando bloqueio para estabilidade.");
                 }
             } catch (err) {
-                console.error('Error checking sub:', err);
                 setHasSubscription(true);
-            } finally {
-                setChecking(false);
             }
         };
 
-        if (!authLoading || directUserEmail) {
-            verifyAndBlock();
-        }
-
-        // Polling backup just in case
-        const interval = setInterval(() => {
-            if (hasSubscription === null) verifyAndBlock();
-        }, 3000);
-
-        return () => clearInterval(interval);
-
+        verifyAndBlock();
     }, [user, authLoading]);
 
     const handleActivate = async () => {
-        let targetId = user?.id;
-
-        // Fallback to direct check if state missing
-        if (!targetId) {
-            const { data } = await supabase.auth.getUser();
-            targetId = data.user?.id;
-        }
-
-        if (!targetId) return;
-
         setActivationLoading(true);
         try {
+            // Get user again to be 100% sure
+            const { data: { user: currentUser } } = await supabase.auth.getUser();
+            const targetId = user?.id || currentUser?.id;
+
+            if (!targetId) {
+                alert('Sessão expirada. Por favor, faça login novamente.');
+                window.location.href = '#/login';
+                return;
+            }
+
             // Force registration
             const success = await subscribeToPushNotifications(targetId);
             if (success) {
-                // SUCCESS
-                alert('Notificações ativadas! Acesso liberado.');
-                window.location.reload();
+                if ((window as any).Forensic) (window as any).Forensic.save("GUARD: Notificações ativadas com sucesso. Desbloqueando...");
+                alert('✅ Notificações ativadas! Acesso liberado.');
+                setHasSubscription(true); // Desbloqueia sem precisar de reload
             } else {
-                alert('Não foi possível ativar. Verifique se as permissões do navegador estão bloqueadas.');
-                setActivationLoading(false);
+                alert('❌ Não foi possível ativar. Verifique se as permissões do navegador estão bloqueadas.');
             }
         } catch (err: any) {
             alert('Erro: ' + err.message);
+        } finally {
             setActivationLoading(false);
         }
     };
 
     // If we are checking, OR if we haven't decided yet (null), show spinner
     // EXCEPTION: If auth is loading, we show spinner.
-    if (authLoading && hasSubscription === null) {
+    if ((authLoading || checking) && hasSubscription === null) {
         return (
             <div className="min-h-screen bg-[#0A0A0B] flex items-center justify-center">
-                <Loader2 className="animate-spin text-[#10B981]" size={32} />
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="animate-spin text-[#10B981]" size={32} />
+                    <p className="text-[10px] text-zinc-600 uppercase tracking-widest animate-pulse">Sincronizando...</p>
+                </div>
             </div>
         );
     }
@@ -166,8 +138,17 @@ const NotificationGuard: React.FC<NotificationGuardProps> = ({ children }) => {
         );
     }
 
-    // Pass through
-    return <>{children}</>;
+    // Pass through if subscription confirmed OR if in Safe Mode
+    if (hasSubscription === true || safeMode) {
+        return <>{children}</>;
+    }
+
+    // Default: Wait for check
+    return (
+        <div className="min-h-screen bg-[#0A0A0B] flex items-center justify-center">
+            <Loader2 className="animate-spin text-[#10B981]" size={32} />
+        </div>
+    );
 };
 
 export default NotificationGuard;

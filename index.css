@@ -4,6 +4,18 @@
 @source "./src/**/*.{ts,tsx}";
 @source "./index.html";
 
+/* 🛡️ GPU SHIELD & iOS STABILITY */
+@media (max-width: 768px) {
+    * {
+        /* Desativa animações de entrada que engasgam a GPU do iPhone */
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+}
+
 body {
     font-family: 'Inter', sans-serif;
     background-color: #0A0A0B;
@@ -28,8 +40,7 @@ body {
 
 /* Custom Driver.js Styling - Modern Balloon ✨ */
 .premium-tour-popover {
-    background: rgba(20, 20, 23, 0.9) !important;
-    backdrop-filter: blur(20px) !important;
+    background: #141417 !important;
     border: 1px solid rgba(16, 185, 129, 0.3) !important;
     /* Emerald Border */
     border-radius: 24px !important;

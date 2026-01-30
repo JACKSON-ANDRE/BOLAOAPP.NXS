@@ -17,6 +17,7 @@ import { useAuth } from '../src/contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { subscribeToPushNotifications } from '../src/utils/pushNotifications';
 import { usePWAInstall } from '../src/hooks/usePWAInstall';
+import { processImage } from '../src/utils/imageUtils';
 
 const Profile: React.FC = () => {
   const { profile, signOut } = useAuth();
@@ -46,17 +47,30 @@ const Profile: React.FC = () => {
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!profile || !e.target.files || !e.target.files[0]) return;
 
+    const originalFile = e.target.files[0];
+    alert(`DEBUG: Arquivo: ${originalFile.name} | Tipo: ${originalFile.type} | Tamanho: ${(originalFile.size / 1024 / 1024).toFixed(2)}MB`);
+
     setAvatarLoading(true);
-    const file = e.target.files[0];
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${profile.id}/profile.${fileExt}`;
 
     try {
+      console.log("Processing image...");
+      // Process image (HEIC/Large -> JPEG/Small)
+      const processedBlob = await processImage(originalFile);
+      alert("DEBUG: Imagem processada com sucesso. Iniciando Upload...");
+
+      const fileName = `${profile.id}/profile.jpg`; // Force .jpg
+
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, processedBlob, {
+          upsert: true,
+          contentType: 'image/jpeg'
+        });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("Storage Error:", uploadError);
+        throw new Error(`Erro no servidor de fotos: ${uploadError.message}`);
+      }
 
       const { error: updateError } = await supabase
         .from('profiles')
@@ -66,10 +80,14 @@ const Profile: React.FC = () => {
         })
         .eq('id', profile.id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("Profile Update Error:", updateError);
+        throw new Error(`Erro ao salvar no perfil: ${updateError.message}`);
+      }
       window.location.reload();
     } catch (error: any) {
-      alert("Erro ao atualizar foto: " + error.message);
+      console.error("Upload Process Error:", error);
+      alert("Aviso: " + error.message);
     } finally {
       setAvatarLoading(false);
     }
@@ -140,7 +158,7 @@ const Profile: React.FC = () => {
           </div>
           <input
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/jpg"
             onChange={handleAvatarChange}
             disabled={avatarLoading}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
@@ -150,6 +168,18 @@ const Profile: React.FC = () => {
         {!profile?.avatar_url && (
           <p className="text-red-500 text-xs font-bold mt-2 uppercase animate-pulse">Foto Obrigatória</p>
         )}
+
+        <p className="text-[8px] text-zinc-600 mt-1 uppercase">v1.2 Active</p>
+        <button
+          onClick={() => {
+            if (confirm("Deseja verificar se há uma versão mais nova do app? Isso irá recarregar a página.")) {
+              window.location.href = window.location.pathname + '?v=' + Date.now() + window.location.hash;
+            }
+          }}
+          className="text-[#10B981] text-[8px] font-bold mt-1 underline uppercase"
+        >
+          Limpar Cache e Sincronizar
+        </button>
 
         <h1 className="mt-6 text-2xl font-black text-white">
           {profile?.full_name?.toUpperCase() || "USUÁRIO"}

@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
-import webpush from "https://esm.sh/web-push@3.6.7";
+import webpush from "npm:web-push";
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -21,9 +21,20 @@ serve(async (req) => {
         const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
         const supabase = createClient(supabaseUrl, supabaseKey);
 
+        // --- BUSCA DINÂMICA DAS CHAVES NO BANCO ---
+        const { data: settings } = await supabase
+            .from('app_settings')
+            .select('vapid_public_key, vapid_private_key')
+            .eq('id', 1)
+            .maybeSingle();
+
         const vapidSubject = Deno.env.get('VAPID_SUBJECT') || "mailto:admin@bolaoapp.com";
-        const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY')!;
-        const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY')!;
+        const vapidPublicKey = settings?.vapid_public_key || Deno.env.get('VAPID_PUBLIC_KEY')!;
+        const vapidPrivateKey = settings?.vapid_private_key || Deno.env.get('VAPID_PRIVATE_KEY')!;
+
+        if (!vapidPublicKey || !vapidPrivateKey) {
+            throw new Error("VAPID keys not found in DB or Environment");
+        }
 
         webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
 
@@ -31,36 +42,38 @@ serve(async (req) => {
 
         if (broadcast) {
             // 1. Send to EVERYONE
-            const { data: allSubs, error } = await supabase
+            const { data: allSubs, error: subError } = await supabase
                 .from('user_push_subscriptions')
                 .select('subscription');
-            if (error) throw error;
-            tokens = allSubs.map(s => s.subscription);
+            if (subError) throw subError;
+            tokens = allSubs ? allSubs.map(s => s.subscription) : [];
         } else if (target === 'admins') {
             // 2. Send to ADMINS only
-            const { data: adminSubs, error } = await supabase
+            const { data: adminSubs, error: adminError } = await supabase
                 .from('profiles')
                 .select('id')
                 .eq('role', 'admin');
 
-            if (error) throw error;
-            const adminIds = adminSubs.map(a => a.id);
+            if (adminError) throw adminError;
+            const adminIds = adminSubs ? adminSubs.map(a => a.id) : [];
 
-            const { data: subs, error: subError } = await supabase
-                .from('user_push_subscriptions')
-                .select('subscription')
-                .in('user_id', adminIds);
+            if (adminIds.length > 0) {
+                const { data: subs, error: subError } = await supabase
+                    .from('user_push_subscriptions')
+                    .select('subscription')
+                    .in('user_id', adminIds);
 
-            if (subError) throw subError;
-            tokens = subs.map(s => s.subscription);
+                if (subError) throw subError;
+                tokens = subs ? subs.map(s => s.subscription) : [];
+            }
         } else if (user_id) {
             // 3. Send to SPECIFIC user
-            const { data: subData, error } = await supabase
+            const { data: subData, error: subError } = await supabase
                 .from('user_push_subscriptions')
                 .select('subscription')
                 .eq('user_id', user_id)
                 .maybeSingle();
-            if (error) throw error;
+            if (subError) throw subError;
             if (subData) tokens.push(subData.subscription);
         }
 
@@ -78,16 +91,26 @@ serve(async (req) => {
             icon: 'https://vucvouxutompqoqhxzmi.supabase.co/storage/v1/object/public/app_assets/pwa-icon.png'
         });
 
-        const results = await Promise.all(tokens.map(sub =>
-            webpush.sendNotification(sub, payload).catch(err => {
-                console.error("Single send failed:", err.message);
-                return null;
-            })
+        // Use Promise.allSettled for robust sending
+        const results = await Promise.allSettled(tokens.map(sub =>
+            webpush.sendNotification(sub, payload)
         ));
+
+        results.forEach((r, i) => {
+            if (r.status === 'rejected') {
+                console.error(`Token ${i} failed:`, r.reason.message || r.reason);
+                if (r.reason.body) console.error(`Token ${i} response body:`, r.reason.body);
+            }
+        });
+
+        const successful = results.filter(r => r.status === 'fulfilled').length;
+        const failed = results.filter(r => r.status === 'rejected').length;
+
+        console.log(`Push execution finished: ${successful} success, ${failed} failed`);
 
         return new Response(JSON.stringify({
             success: true,
-            message: `Sent to ${results.filter(r => r !== null).length} devices`
+            message: `Sent to ${successful} devices (${failed} failed)`
         }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200

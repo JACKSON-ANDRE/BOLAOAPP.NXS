@@ -13,11 +13,9 @@ if (!rootElement) {
 }
 
 const root = ReactDOM.createRoot(rootElement);
-if ((window as any).Forensic) (window as any).Forensic.save("INDEX.TSX: Montando root do React...");
 root.render(
   <App />
 );
-if ((window as any).Forensic) (window as any).Forensic.save("INDEX.TSX: Render disparado.");
 
 // Global Rejection Catcher
 window.onunhandledrejection = (event) => {

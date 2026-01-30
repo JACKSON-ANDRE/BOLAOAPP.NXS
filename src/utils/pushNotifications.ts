@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase';
 // Para teste sem chave, em alguns casos funciona, mas o ideal é ter.
 // Use a chave pública vinda do ambiente (configurada no Vercel/Env)
 // Use a chave pública vinda do ambiente (Vercel) ou do Banco (Admin)
+// Use a chave pública vinda do ambiente (Vercel) ou do Banco (Admin)
 let VAPID_PUBLIC_KEY = (import.meta as any).env.VITE_VAPID_PUBLIC_KEY;
 
 function urlBase64ToUint8Array(base64String: string) {
@@ -28,12 +29,19 @@ export async function subscribeToPushNotifications(userId: string, silent = fals
         return false;
     }
 
-    // 0. Fallback: Search in Database if env is empty
-    if (!VAPID_PUBLIC_KEY) {
+    // 0. Priority: Search in Database for live updates without rebuilds
+    try {
         const { data } = await supabase.from('app_settings').select('vapid_public_key').maybeSingle();
         if (data?.vapid_public_key) {
             VAPID_PUBLIC_KEY = data.vapid_public_key;
         }
+    } catch (e) {
+        console.warn('Falha ao buscar VAPID do banco, usando fallback do env:', e);
+    }
+
+    // 0.5 Fallback to Env if DB is still empty
+    if (!VAPID_PUBLIC_KEY) {
+        VAPID_PUBLIC_KEY = (import.meta as any).env.VITE_VAPID_PUBLIC_KEY;
     }
 
     // Validação da Chave VAPID
@@ -98,21 +106,22 @@ export async function subscribeToPushNotifications(userId: string, silent = fals
         if (
             error.name === 'InvalidAccessError' ||
             error.name === 'InvalidStateError' ||
-            error.message?.includes('different applicationServerKey')
+            error.message?.includes('different applicationServerKey') ||
+            error.message?.includes('registration has a different')
         ) {
-            if (!silent) console.warn('Key mismatch detected! Attempting auto-recovery...');
+            console.warn('Push Recovery: Chave VAPID antiga detectada. Reinscrevendo...');
 
             try {
                 const registration = await navigator.serviceWorker.ready;
                 const sub = await registration.pushManager.getSubscription();
                 if (sub) {
                     await sub.unsubscribe();
-                    // Old subscription removed. Retrying...
+                    console.log('Push Recovery: Inscrição antiga removida.');
                     // Recursive call to create new
                     return await subscribeToPushNotifications(userId, silent);
                 }
             } catch (recoveryErr) {
-                console.error('Recovery failed:', recoveryErr);
+                console.error('Push Recovery: Falha crítica na recuperação:', recoveryErr);
             }
         }
 
@@ -132,6 +141,34 @@ export async function subscribeToPushNotifications(userId: string, silent = fals
             alert('Erro: ' + error.message);
         }
 
+        return false;
+    }
+}
+
+export async function hardResetPushSubscription(userId: string) {
+    if (!('serviceWorker' in navigator)) return false;
+
+    try {
+        const registration = await navigator.serviceWorker.ready;
+        const sub = await registration.pushManager.getSubscription();
+
+        if (sub) {
+            await sub.unsubscribe();
+        }
+
+        // Delete from DB to force rebuild
+        await supabase
+            .from('user_push_subscriptions')
+            .delete()
+            .eq('user_id', userId);
+
+        // Clear local storage flag if any
+        localStorage.removeItem('push_notif_sync');
+
+        // Re-subscribe
+        return await subscribeToPushNotifications(userId);
+    } catch (err) {
+        console.error('Hard Reset Error:', err);
         return false;
     }
 }

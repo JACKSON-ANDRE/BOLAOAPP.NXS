@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { subscribeToPushNotifications } from '../src/utils/pushNotifications';
 import { notifyAdmin } from '../src/utils/adminNotification';
 import { TrendingUp, Mail, Lock, User, Loader2, CheckCircle2, Camera, Bell } from 'lucide-react';
+import { processImage } from '../src/utils/imageUtils';
 
 const Register: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -57,12 +58,16 @@ const Register: React.FC = () => {
       // 2. Upload do Avatar (Se houver)
       if (avatarFile) {
         try {
-          const fileExt = avatarFile.name.split('.').pop();
-          const fileName = `${data.user.id}/profile.${fileExt}`;
+          // Process image before upload
+          const processedBlob = await processImage(avatarFile);
+          const fileName = `${data.user.id}/profile.jpg`;
 
           const { error: uploadError } = await supabase.storage
             .from('avatars')
-            .upload(fileName, avatarFile, { upsert: true });
+            .upload(fileName, processedBlob, {
+              upsert: true,
+              contentType: 'image/jpeg'
+            });
 
           if (!uploadError) {
             // 3. Atualizar perfil com a URL
@@ -88,7 +93,15 @@ const Register: React.FC = () => {
       // 5. Notify Admin
       notifyAdmin("Novo Usuário!", `O usuário ${fullName} acabou de criar uma conta.`);
 
-      navigate('/');
+      const intendedPath = sessionStorage.getItem('intended_path');
+      if (intendedPath) {
+        sessionStorage.setItem('intended_path_debug', intendedPath); // Debug helper
+        sessionStorage.removeItem('intended_path');
+        const target = intendedPath.replace(/^#/, '');
+        navigate(target);
+      } else {
+        navigate('/');
+      }
     }
   };
 

@@ -50,19 +50,22 @@ self.addEventListener('message', (event) => {
 });
 
 self.addEventListener('push', function (event) {
-    let data = { title: 'Bolão App', body: 'Nova notificação!' };
+    console.log('[Service Worker] Push Received.');
+    let data = { title: 'Bolão App', body: 'Nova notificação!', url: '/' };
 
     if (event.data) {
         try {
             data = event.data.json();
+            console.log('[Service Worker] Push Data (JSON):', data);
         } catch (e) {
             data.body = event.data.text();
+            console.log('[Service Worker] Push Data (Text):', data.body);
         }
     }
 
     const options = {
         body: data.body,
-        icon: '/pwa-192x192.png',
+        icon: data.icon || '/pwa-192x192.png',
         badge: '/pwa-192x192.png',
         vibrate: [100, 50, 100],
         data: {
@@ -72,8 +75,12 @@ self.addEventListener('push', function (event) {
         }
     };
 
+    console.log('[Service Worker] Showing Notification:', data.title, options);
+
     event.waitUntil(
         self.registration.showNotification(data.title, options)
+            .then(() => console.log('[Service Worker] Notification displayed successfully.'))
+            .catch(err => console.error('[Service Worker] Failed to show notification:', err))
     );
 });
 

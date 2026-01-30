@@ -82,7 +82,7 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
     };
 
     return (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60] p-4 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[60] p-4 animate-in fade-in duration-200">
             <div className="bg-[#18181b] border border-[#27272A] rounded-2xl w-full max-w-md relative overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
 
                 {/* Header */}

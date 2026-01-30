@@ -15,16 +15,15 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       react(),
+      /*
       VitePWA({
+        selfDestroying: true, // This will unregister any existing service worker instantly!
         registerType: 'autoUpdate',
-        strategies: 'injectManifest', // IMPORTANT: Allows custom SW logic
-        srcDir: 'src',
-        filename: 'sw.js',
+        strategies: 'injectManifest',
         devOptions: {
-          enabled: false,
+          enabled: true,
           type: 'module',
         },
-        manifestFilename: 'manifest.json', // FORCE output as manifest.json to fix 404s/caching issues
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png'],
         manifest: {
           name: 'Bolão App',
@@ -56,6 +55,7 @@ export default defineConfig(({ mode }) => {
           ]
         }
       })
+      */
     ],
     define: {
       'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),

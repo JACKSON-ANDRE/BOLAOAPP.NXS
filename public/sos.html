@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOS Bolão App</title>
+    <style>
+        body {
+            background: #0A0A0B;
+            color: white;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 400px;
+            padding: 30px;
+            background: #141417;
+            border-radius: 24px;
+            border: 1px solid #27272A;
+        }
+
+        h1 {
+            color: #10B981;
+            margin-bottom: 20px;
+        }
+
+        p {
+            color: #999;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .status {
+            font-size: 14px;
+            font-weight: bold;
+            color: #10B981;
+            margin-top: 20px;
+        }
+
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 5px solid #10B981;
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+
+        @keyframes rotation {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>REPARO DE EMERGÊNCIA</h1>
+        <p>Estamos limpando o cache corrompido do seu iPhone. O aplicativo será reiniciado em instantes.</p>
+        <span class="loader"></span>
+        <div id="status" class="status">Iniciando limpeza...</div>
+    </div>
+
+    <script>
+        async function nuclearReset() {
+            const status = document.getElementById('status');
+
+            try {
+                // 1. Limpar LocalStorage e SessionStorage
+                status.innerText = "Limpando memórias locais...";
+                localStorage.clear();
+                sessionStorage.clear();
+
+                // 2. Limpar Cookies
+                status.innerText = "Limpando cookies...";
+                document.cookie.split(";").forEach(function (c) {
+                    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Error().toUTCString() + ";path=/");
+                });
+
+                // 3. Limpar Caches
+                if ('caches' in window) {
+                    status.innerText = "Limpando arquivos de cache...";
+                    const keys = await caches.keys();
+                    for (const key of keys) {
+                        await caches.delete(key);
+                    }
+                }
+
+                // 4. Desregistrar Service Workers
+                if ('serviceWorker' in navigator) {
+                    status.innerText = "Removendo service workers...";
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (const registration of registrations) {
+                        await registration.unregister();
+                    }
+                }
+
+                status.innerText = "✅ Tudo limpo! Reiniciando...";
+
+                // 5. Redirecionar com bypass de cache total
+                setTimeout(() => {
+                    window.location.href = window.location.origin + '/?v=' + Date.now();
+                }, 1500);
+
+            } catch (err) {
+                status.style.color = 'red';
+                status.innerText = "Erro ao limpar: " + err.message;
+            }
+        }
+
+        // Executar após um pequeno delay para o usuário ver a tela
+        setTimeout(nuclearReset, 1000);
+    </script>
+</body>
+
+</html>

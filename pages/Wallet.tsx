@@ -684,7 +684,7 @@ const WalletPage: React.FC = () => {
 
       {/* Search Results Modal */}
       {showSearchModal && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[60] p-4 backdrop-blur-md">
+        <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[60] p-4">
           <div className="bg-[#141417] border border-[#27272A] rounded-3xl p-6 md:p-8 max-w-2xl w-full max-h-[90vh] flex flex-col relative shadow-[0_0_100px_rgba(0,0,0,0.5)]">
             <button onClick={() => setShowSearchModal(false)} className="absolute top-4 right-4 text-zinc-500 hover:text-white transition-colors">
               <X size={28} />
@@ -752,7 +752,7 @@ const WalletPage: React.FC = () => {
 
       {/* Withdrawal Modal */}
       {showWithdrawModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-50 p-4">
           <div className="bg-[#141417] border border-[#27272A] rounded-3xl p-8 max-w-md w-full space-y-6 relative">
             <button onClick={() => setShowWithdrawModal(false)} className="absolute top-4 right-4 text-zinc-500 hover:text-white">
               <X size={24} />

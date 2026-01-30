@@ -33,9 +33,12 @@ WITH CHECK (
 DROP POLICY IF EXISTS "Avatar Auth Update" ON storage.objects;
 CREATE POLICY "Avatar Auth Update"
 ON storage.objects FOR UPDATE
-USING ( context_id = auth.uid()::text ); -- Simplification: allow auth users update if they own the object (owner check is default in storage RLS usually via owner column, but for simplicity we rely on bucket logic or refined policy below)
+USING ( 
+  bucket_id = 'avatars' 
+  AND auth.uid() = owner 
+);
 
--- REFINED UPDATE/DELETE POLICY (Matches owner)
+-- D. Allow Users to Delete their own avatar
 DROP POLICY IF EXISTS "Avatar Admin/Owner Delete" ON storage.objects;
 CREATE POLICY "Avatar Admin/Owner Delete"
 ON storage.objects FOR DELETE

@@ -150,11 +150,14 @@ import {
   generateFinancialListReport
 } from '../utils/ReportGenerator';
 import { triggerCelebration } from '../src/utils/confetti';
-import { notifyAllUsers } from '../src/utils/broadcastNotification';
+import {
+  subscribeToPushNotifications,
+  hardResetPushSubscription
+} from '../src/utils/pushNotifications';
 import { sendWebPush } from '../src/utils/sendWebPush';
 
 const AdminDashboard: React.FC = () => {
-  const { maintenanceMode, refreshProfile } = useAuth();
+  const { maintenanceMode, refreshProfile, user } = useAuth();
   const [togglingMaintenance, setTogglingMaintenance] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminTab>('deposits');
   const [pools, setPools] = useState<Pool[]>([]);
@@ -219,6 +222,8 @@ const AdminDashboard: React.FC = () => {
   const [serviceRoleKey, setServiceRoleKey] = useState('');
   const [vapidPublicKey, setVapidPublicKey] = useState('');
   const [vapidPrivateKey, setVapidPrivateKey] = useState('');
+  const [newMessageTitle, setNewMessageTitle] = useState('');
+  const [newMessageBody, setNewMessageBody] = useState('');
 
   // History State
   const [selectedPoolHistory, setSelectedPoolHistory] = useState<{
@@ -1946,6 +1951,125 @@ const AdminDashboard: React.FC = () => {
           <div className="space-y-8 max-w-2xl">
             <div className="bg-[#0A0A0B] border border-[#27272A] rounded-2xl p-6">
               <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                <Send className="text-[#10B981]" size={24} />
+                Envio de Push Direto (Flash)
+              </h3>
+
+              <div className="bg-[#141417] p-4 rounded-xl border border-[#10B981]/10 text-zinc-400 text-xs mb-6">
+                <p className="flex items-center gap-2 font-bold mb-1 text-[#10B981]">
+                  <CheckCircle2 size={16} />
+                  Modo Silencioso
+                </p>
+                Este envio fala diretamente com o celular, sem criar histórico no "sininho" do App. Ideal para avisos rápidos e urgentes.
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm text-zinc-400 block mb-2 font-bold">Título da Notificação</label>
+                  <input
+                    type="text"
+                    value={newMessageTitle}
+                    onChange={(e) => setNewMessageTitle(e.target.value)}
+                    placeholder="Ex: NOVIDADE NO APP! 🚀"
+                    className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-xl px-4 py-3 text-white focus:border-[#10B981] outline-none font-medium"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm text-zinc-400 block mb-2 font-bold">Mensagem (Corpo)</label>
+                  <textarea
+                    value={newMessageBody}
+                    onChange={(e) => setNewMessageBody(e.target.value)}
+                    placeholder="Escreva sua mensagem aqui..."
+                    className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-xl px-4 py-3 text-white focus:border-[#10B981] outline-none font-medium min-h-[100px]"
+                  />
+                </div>
+
+                <button
+                  onClick={async () => {
+                    if (!newMessageTitle || !newMessageBody) {
+                      alert("Preencha título e mensagem para enviar.");
+                      return;
+                    }
+
+                    const confirmBroadcast = window.confirm(`Deseja disparar este Push para TODOS os usuários agora?`);
+                    if (!confirmBroadcast) return;
+
+                    try {
+                      setSavingPix(true);
+
+                      // BYPASS CORS: Usamos despacho via Banco de Dados
+                      const { error } = await supabase
+                        .from('admin_push_dispatches')
+                        .insert({
+                          title: newMessageTitle,
+                          body: newMessageBody,
+                          broadcast: true,
+                          url: "/"
+                        });
+
+                      if (error) throw error;
+
+                      alert("Comando enviado! O Bipe deve tocar em segundos. Se não tocar, use o botão de 'HARD RESET' abaixo.");
+                      setNewMessageTitle('');
+                      setNewMessageBody('');
+                    } catch (err: any) {
+                      alert("Erro ao enviar despacho: " + err.message);
+                    } finally {
+                      setSavingPix(false);
+                    }
+                  }}
+                  disabled={savingPix}
+                  className="w-full bg-gradient-to-r from-[#10B981] to-[#34D399] hover:from-[#059669] hover:to-[#10B981] text-black font-black py-4 rounded-xl flex items-center justify-center gap-2 transition shadow-lg shadow-[#10B981]/20"
+                >
+                  <Send size={20} />
+                  {savingPix ? 'DISPARANDO...' : 'DISPARAR PUSH PARA TODOS'}
+                </button>
+              </div>
+            </div>
+
+            {/* DIAGNÓSTICO DO DISPOSITIVO */}
+            <div className="bg-[#0A0A0B] border border-[#27272A] rounded-2xl p-6">
+              <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                <Activity className="text-[#10B981]" size={24} />
+                Diagnóstico do Dispositivo
+              </h3>
+
+              <div className="space-y-4">
+                <div className="bg-[#141417] p-4 rounded-xl border border-[#10B981]/10">
+                  <p className="text-zinc-400 text-xs mb-3">
+                    Se você não está recebendo os "bipes", pode ser que seu navegador tenha uma assinatura antiga presa.
+                    <strong> Use este botão para limpar tudo e começar do zero:</strong>
+                  </p>
+                  <button
+                    onClick={async () => {
+                      if (!confirm("Isso vai apagar sua inscrição atual e criar uma nova com as chaves do banco. Deseja continuar?")) return;
+                      try {
+                        setSavingPix(true);
+                        const res = await hardResetPushSubscription(user.id);
+                        if (res) {
+                          alert("✅ Reset Concluído! Sua inscrição foi renovada com sucesso.");
+                        } else {
+                          alert("❌ Falha no Reset. Verifique o console ou as permissões do navegador.");
+                        }
+                      } catch (err: any) {
+                        alert("Erro: " + err.message);
+                      } finally {
+                        setSavingPix(false);
+                      }
+                    }}
+                    disabled={savingPix}
+                    className="w-full py-3 bg-[#141417] border border-[#10B981]/30 hover:bg-[#10B981]/10 text-[#10B981] rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition"
+                  >
+                    <Activity size={16} />
+                    FORÇAR RE-SINCRONIA (HARD RESET)
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-[#0A0A0B] border border-[#27272A] rounded-2xl p-6">
+              <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
                 <ShieldAlert className="text-[#10B981]" />
                 Configurações de Notificações (Backend)
               </h3>
@@ -2390,7 +2514,7 @@ const AdminDashboard: React.FC = () => {
               {/* DETAIL MODAL (Existing logic preserved if any, or just expanded row) */}
               {/* DETAIL MODAL (Rich View Restored) */}
               {selectedPoolHistory && (
-                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+                <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-50 p-4">
                   <div className="bg-[#141417] border border-[#27272A] rounded-3xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar relative animate-in zoom-in-95 duration-200">
                     <button onClick={() => setSelectedPoolHistory(null)} className="absolute top-6 right-6 text-zinc-500 hover:text-white transition">
                       <X size={24} />
@@ -2659,7 +2783,7 @@ const AdminDashboard: React.FC = () => {
       {/* ADJUSTMENT MODAL */}
       {
         editingUser && (
-          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in duration-200" style={{ zIndex: 9999 }}>
+          <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200" style={{ zIndex: 9999 }}>
             <div className="bg-[#141417] border border-[#27272A] rounded-2xl p-6 max-w-md w-full animate-in zoom-in-95">
               <h3 className="text-xl font-bold text-white mb-1">Ajuste Manual de Saldo</h3>
               <p className="text-zinc-500 text-sm mb-6">Editando {editType === 'balance' ? 'Saldo de Jogo' : 'Saldo de Saque'} de <span className="text-[#10B981]">{editingUser.full_name}</span></p>
@@ -2713,7 +2837,7 @@ const AdminDashboard: React.FC = () => {
 
       {/* TRANSACTION DETAILS MODAL */}
       {selectedTransactionDetail && detailModalType && (
-        <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[70] p-4 backdrop-blur-md">
+        <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[70] p-4">
           <div className="bg-[#141417] border border-[#27272A] rounded-3xl p-8 max-w-lg w-full relative shadow-[0_0_100px_rgba(0,0,0,0.5)] space-y-8 animate-in zoom-in-95 duration-200">
             <button
               onClick={() => {
@@ -2842,7 +2966,7 @@ const AdminDashboard: React.FC = () => {
       )}
       {/* TRANSACTION DETAIL MODAL */}
       {selectedLedgerItem && (
-        <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 bg-black/95 z-[60] flex items-center justify-center p-4">
           <div className="bg-[#141417] border border-[#27272A] rounded-3xl w-full max-w-2xl p-6 md:p-8 space-y-6 relative max-h-[90vh] overflow-y-auto">
 
             <button
