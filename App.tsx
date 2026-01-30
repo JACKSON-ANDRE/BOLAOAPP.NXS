@@ -31,6 +31,7 @@ const AppContent: React.FC = () => {
   // NUCLEAR HANDBRAKE: Detect loop and stop
   const [isCrashed, setIsCrashed] = React.useState(false);
   React.useEffect(() => {
+    // 1. NUCLEAR HANDBRAKE: Detect loop and stop
     const f = (window as any).Forensic;
     const now = Date.now();
     const lastRender = parseInt(sessionStorage.getItem('rn_last') || '0');
@@ -49,11 +50,16 @@ const AppContent: React.FC = () => {
     }
     sessionStorage.setItem('rn_last', now.toString());
 
+    // 2. CAPTURE INTENDED PATH: If we have a hash like #/pools/123 and no user, save it.
+    const currentHash = window.location.hash;
+    if (currentHash && currentHash.length > 2 && !user && !loading) {
+      if (f) f.save("APP: Capturando destino pretendido: " + currentHash);
+      sessionStorage.setItem('intended_path', currentHash);
+    }
+
     if (!bootRef.current) {
-      if (f) f.save("APP: v1.5 Adaptive Boot! Loading=" + loading + " User=" + (user ? "Sim" : "Não"));
+      if (f) f.save("APP: v1.6 Adaptive Boot! Loading=" + loading + " User=" + (user ? "Sim" : "Não"));
       bootRef.current = true;
-    } else {
-      if (f) f.save("APP: Update de Estado. Loading=" + loading + " User=" + (user ? "Sim" : "Não"));
     }
   }, [user, loading]);
 
@@ -83,7 +89,7 @@ const AppContent: React.FC = () => {
     <HashRouter>
       {/* Bypass Guard for now to stabilize iOS */}
       {(() => {
-        if ((window as any).Forensic) (window as any).Forensic.save("APP: Renderizando Root... User=" + (user ? 'Sim' : 'Não'));
+        if ((window as any).Forensic) (window as any).Forensic.save("APP: Renderizando Root... HASH=" + window.location.hash + " User=" + (user ? 'Sim' : 'Não'));
         return (
           <Routes>
             <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />

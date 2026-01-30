@@ -102,13 +102,21 @@ const Gateway: React.FC = () => {
                     )}
 
                     {/* BUTTON 2: LOGAR NO NAVEGADOR */}
-                    <Link
-                        to="/login"
+                    <button
+                        onClick={() => {
+                            const hash = window.location.hash;
+                            // If we have a deep link, go there first (it will redirect to login if needed)
+                            if (hash && hash.includes('/pools/')) {
+                                navigate(hash.replace('#', ''));
+                            } else {
+                                navigate('/login');
+                            }
+                        }}
                         className="w-full bg-[#1C1C21] hover:bg-[#27272A] text-zinc-300 hover:text-white font-bold py-5 rounded-2xl transition-all duration-200 flex items-center justify-center gap-3 text-lg border border-[#27272A]"
                     >
                         <LogIn size={22} />
                         <span>LOGAR NO NAVEGADOR</span>
-                    </Link>
+                    </button>
                 </div>
 
                 <p className="mt-12 text-xs text-zinc-600 font-medium tracking-widest uppercase">

@@ -218,7 +218,13 @@ const PoolDetails: React.FC = () => {
 
   const handleShare = () => {
     const text = `🏆 *${pool?.title}* no Bolão App!\n💰 Entrada: R$ ${pool?.entry_fee.toFixed(2)}\n📅 Data: ${new Date(pool?.scheduled_at || '').toLocaleDateString('pt-BR')}\n\nParticipe agora! 🚀`;
-    const url = window.location.href;
+
+    // HashRouter Fix: link must include #
+    var baseUrl = window.location.origin + window.location.pathname;
+    if (!baseUrl.endsWith('/')) baseUrl += '/';
+    const url = baseUrl + '#/pools/' + pool?.id;
+
+    if ((window as any).Forensic) (window as any).Forensic.save("SHARE: Gerando link com HASH: " + url);
 
     if (navigator.share) {
       navigator.share({

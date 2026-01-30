@@ -133,10 +133,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     useEffect(() => {
-        // 🔒 SAFETY BREAK: Força o fim do loading após 8 segundos caso algo trave
+        // 🔒 SAFETY BREAK: Força o fim do loading após 5 segundos caso algo trave
         const safetyTimeout = setTimeout(() => {
+            if ((window as any).Forensic) (window as any).Forensic.save("AUTH: Safety Timeout disparado (5s)");
             setLoading(false);
-        }, 8000);
+        }, 5000);
 
         // Fetch maintenance settings
         fetchSettings().catch(console.error);
@@ -146,26 +147,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             data: { subscription },
         } = supabase.auth.onAuthStateChange(async (event, session) => {
             const currentUser = session?.user ?? null;
+            if ((window as any).Forensic) (window as any).Forensic.save("AUTH: Evento=" + event + " User=" + (currentUser ? "Sim" : "Não"));
 
             setUser(currentUser);
 
             if (currentUser) {
-                // Ensure profile is fetched before hiding loading spinner for new sessions
+                // Ensure profile is fetched 
                 await fetchProfile(currentUser).catch(console.error);
             } else {
                 setProfile(null);
             }
 
+            // Always clear loading on major state transitions
             if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
                 setLoading(false);
                 clearTimeout(safetyTimeout);
-            }
-
-            // Handle session refresh errors (specifically 'Invalid Refresh Token')
-            if (event === 'TOKEN_REFRESHED' === false && (session === null && event !== 'SIGNED_OUT')) {
-                // If we are supposed to have a session but don't (and it's not a generic sign out)
-                // it might be a refresh failure.
-                console.warn("Auth Event:", event, "Session is null - potential refresh failure.");
             }
         });
 
