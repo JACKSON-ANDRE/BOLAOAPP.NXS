@@ -38,68 +38,42 @@ const AppContent: React.FC = () => {
     }
   }, [user, loading]);
 
+  // Simplest loader: No spinners to avoid GPU stress during boot
   if (loading) {
-    return (
-      <div className="min-h-screen bg-[#0A0A0B] flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-[#10B981] border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <div style={{ background: '#0A0A0B', height: '100vh' }} />;
   }
 
   return (
     <HashRouter>
-      {/* <ReloadPrompt /> */}
-      <NotificationGuard>
-        {(() => {
-          if ((window as any).Forensic) (window as any).Forensic.save("APP: Renderizando Routes... User=" + (user ? 'Sim' : 'Não'));
-          return (
-            <Routes>
-              {/* LOGIN ROUTE: Validates if we should be here or at Gateway */}
-              <Route
-                path="/login"
-                element={
-                  !user
-                    ? <Login />
-                    : <Navigate to="/" />
-                }
-              />
-
-              <Route path="/register" element={!user ? <Register /> : <Navigate to="/" />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/update-password" element={<UpdatePassword />} />
-
-              {/* ROOT ROUTE logic:
-                  - Logged in: Go Home.
-                  - Not logged in + PWA (Installed): Go to Login (Force bypass Gateway).
-                  - Not logged in + Browser: Go to Gateway.
-              */}
-              <Route
-                path="/"
-                element={
-                  user
-                    ? <Layout><Home /></Layout>
-                    : (isStandalone ? <Navigate to="/login" replace /> : <Gateway />)
-                }
-              />
-
-              {/* Community Route */}
-              <Route path="/community" element={user ? <Layout><Community /></Layout> : <Navigate to="/" />} />
-
-              <Route path="/pools/new" element={user ? <Layout><CreatePool /></Layout> : <Navigate to="/" />} />
-              <Route path="/pools/:id" element={<Layout><PoolDetails /></Layout>} />
-              <Route path="/pools/:id/edit" element={user ? <Layout><EditPool /></Layout> : <Navigate to="/" />} />
-              <Route path="/my-pools" element={user ? <Layout><MyPools /></Layout> : <Navigate to="/" />} />
-              <Route path="/profile" element={user ? <Layout><ProfilePage /></Layout> : <Navigate to="/" />} />
-              <Route path="/wallet" element={user ? <Layout><Wallet /></Layout> : <Navigate to="/" />} />
-              <Route path="/admin" element={user ? <Layout><AdminDashboard /></Layout> : <Navigate to="/" />} />
-
-
-              {/* Redirect unknown routes to root (Safe entry point) */}
-              <Route path="*" element={<Navigate to="/" />} />
-            </Routes>
-          );
-        })()}
-      </NotificationGuard>
+      {/* Bypass Guard for now to stabilize iOS */}
+      {(() => {
+        if ((window as any).Forensic) (window as any).Forensic.save("APP: Renderizando Root... User=" + (user ? 'Sim' : 'Não'));
+        return (
+          <Routes>
+            <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
+            <Route path="/register" element={!user ? <Register /> : <Navigate to="/" />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/update-password" element={<UpdatePassword />} />
+            <Route
+              path="/"
+              element={
+                user
+                  ? <Layout><Home /></Layout>
+                  : (isStandalone ? <Navigate to="/login" replace /> : <Gateway />)
+              }
+            />
+            <Route path="/community" element={user ? <Layout><Community /></Layout> : <Navigate to="/" />} />
+            <Route path="/pools/new" element={user ? <Layout><CreatePool /></Layout> : <Navigate to="/" />} />
+            <Route path="/pools/:id" element={<Layout><PoolDetails /></Layout>} />
+            <Route path="/pools/:id/edit" element={user ? <Layout><EditPool /></Layout> : <Navigate to="/" />} />
+            <Route path="/my-pools" element={user ? <Layout><MyPools /></Layout> : <Navigate to="/" />} />
+            <Route path="/profile" element={user ? <Layout><ProfilePage /></Layout> : <Navigate to="/" />} />
+            <Route path="/wallet" element={user ? <Layout><Wallet /></Layout> : <Navigate to="/" />} />
+            <Route path="/admin" element={user ? <Layout><AdminDashboard /></Layout> : <Navigate to="/" />} />
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        );
+      })()}
     </HashRouter>
   );
 };
