@@ -58,8 +58,15 @@ const AppContent: React.FC = () => {
     }
 
     if (!bootRef.current) {
-      if (f) f.save("APP: v1.6 Adaptive Boot! Loading=" + loading + " User=" + (user ? "Sim" : "Não"));
+      if (f) f.save("APP: v1.8 Adaptive Boot! Loading=" + loading + " User=" + (user ? "Sim" : "Não"));
       bootRef.current = true;
+
+      // RESET SURVIVAL COUNTERS: We reached this point, so we are stable.
+      try {
+        localStorage.removeItem('ios_reload_count');
+        sessionStorage.removeItem('rn_cnt');
+        if (f) f.save("APP: Contadores de sobrevivência resetados (Sucesso).");
+      } catch (e) { }
     }
   }, [user, loading]);
 
