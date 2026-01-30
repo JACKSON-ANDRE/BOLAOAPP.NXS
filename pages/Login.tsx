@@ -20,6 +20,9 @@ const Login: React.FC = () => {
     setLoading(true);
     setError(null);
 
+    // Salva a preferência de persistência para o ControlledStorage
+    localStorage.setItem('bt_remember', rememberMe ? 'true' : 'false');
+
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,

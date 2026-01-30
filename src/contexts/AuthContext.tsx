@@ -179,14 +179,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } catch (error) {
             console.error("Erro ao sair:", error);
         } finally {
-            // 🧹 FAXINA NUCLEAR: Limpa TUDO
+            // 🧹 FAXINA NUCLEAR: Limpa TUDO no navegador
             localStorage.clear();
             sessionStorage.clear();
 
-            if ((window as any).Forensic) (window as any).Forensic.save("AUTH: Logout concluído. Forçando limpeza de memória...");
+            // Tenta limpar IndexedDB (Bancos locais onde o Supabase pode guardar tokens silênciosos)
+            if (window.indexedDB && window.indexedDB.databases) {
+                window.indexedDB.databases().then(dbs => {
+                    dbs.forEach(db => window.indexedDB.deleteDatabase(db.name || ''));
+                });
+            }
+
+            if ((window as any).Forensic) (window as any).Forensic.save("AUTH: Logout concluído. Memória incinerada.");
 
             // 🚀 FORCE RELOAD: Mata o processo atual do React e limpa a memória global.
-            // Redireciona para a raiz SEM o hash do login para garantir um boot limpo.
             window.location.href = window.location.origin + window.location.pathname;
         }
     };

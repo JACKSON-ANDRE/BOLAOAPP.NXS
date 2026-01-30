@@ -8,9 +8,31 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Supabase env vars are missing. Check VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY');
 }
 
+// 🛡️ CONTROLLED STORAGE PROXY
+// Decide entre localStorage (persistente) ou sessionStorage (temporário)
+// com base no checkbox "Manter conectado"
+const ControlledStorage = {
+  getItem: (key: string) => {
+    return localStorage.getItem(key) || sessionStorage.getItem(key);
+  },
+  setItem: (key: string, value: string) => {
+    const shouldPersist = localStorage.getItem('bt_remember') === 'true';
+    if (shouldPersist) {
+      localStorage.setItem(key, value);
+    } else {
+      sessionStorage.setItem(key, value);
+    }
+  },
+  removeItem: (key: string) => {
+    localStorage.removeItem(key);
+    sessionStorage.removeItem(key);
+  },
+};
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    persistSession: true,
+    persistSession: true, // Sempre habilitado, mas o ControlledStorage decide ONDE salvar
+    storage: ControlledStorage as any,
     autoRefreshToken: true,
     detectSessionInUrl: true
   }
