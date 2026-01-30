@@ -45,7 +45,7 @@
 
   <script>
     (function () {
-      // --- FORENSIC BLACKBOX ---
+      // --- FORENSIC BLACKBOX (LEGACY SYNTAX FOR OLD iOS) ---
       window.Forensic = {
         save: function (msg) {
           try {
@@ -61,7 +61,7 @@
           var panel = document.getElementById('forensic-panel');
           var content = document.getElementById('forensic-content');
           if (panel && content) {
-            content.innerText = log.map(i => "[" + i.t + "] " + i.m).join('\n');
+            content.innerText = log.map(function (i) { return "[" + i.t + "] " + i.m; }).join('\n');
             panel.style.display = 'block';
           }
         },
@@ -71,7 +71,7 @@
         }
       };
 
-      window.Forensic.save("BOOT: Iniciando carregamento do index.html");
+      window.Forensic.save("BOOT: Iniciando carregamento do index.html (v1.4 Legacy)");
 
       // 1. FLASH/LOOP KILLER
       var now = Date.now();
@@ -87,63 +87,56 @@
       localStorage.setItem('ios_last_reload', now);
       localStorage.setItem('ios_reload_count', reloadCount);
 
-      if (reloadCount > 4) {
+      if (reloadCount > 10) {
         window.Forensic.save("FATAL: Bloqueando Loop Infinito.");
-        document.body.innerHTML = `
-          <div style="background:red; color:white; padding:40px; text-align:center; height:100vh; font-family:sans-serif;">
-            <h1>⚠️ LOOP DETECTADO</h1>
-            <p>O aplicativo recarregou muitas vezes seguidas e foi bloqueado.</p>
-            <button onclick="localStorage.clear(); location.reload();" style="padding:15px; background:white; color:red; border:none; border-radius:10px; font-weight:bold;">LIMPAR TUDO</button>
-          </div>
-        `;
+        document.body.innerHTML = '<div style="background:red; color:white; padding:40px; text-align:center; height:100vh; font-family:sans-serif;"><h1>⚠️ LOOP DETECTADO</h1><p>Limpe o cache na página /check.html</p></div>';
         window.stop();
         return;
       }
 
-      // 2. SW POISON - UNREGISTER & BLOCK ALL FUTURE REGISTRATIONS
+      // 2. SW POISON
       if ('serviceWorker' in navigator) {
-        // Unregister existing
         navigator.serviceWorker.getRegistrations().then(function (registrations) {
-          for (var registration of registrations) {
-            registration.unregister();
-            window.Forensic.save("PWA: Unregistered rogue SW");
+          for (var i = 0; i < registrations.length; i++) {
+            registrations[i].unregister();
+            window.Forensic.save("PWA: Unregistered SW " + i);
           }
         });
 
-        // Prevent new registrations (Vaccine)
+        var originalRegister = navigator.serviceWorker.register;
         navigator.serviceWorker.register = function () {
-          window.Forensic.save("PWA: Tentativa de registro de SW bloqueada.");
-          return new Promise(function (res, rej) {
-            rej(new Error("Service Worker Disabled"));
-          });
+          window.Forensic.save("PWA: Registro bloqueado.");
+          return new Promise(function (res, rej) { rej(new Error("Disabled")); });
         };
       }
 
-      // 3. ERROR LOGGING (EXISTING)
-      var debug = document.getElementById('ios-debug');
-      var msg = document.getElementById('ios-msg');
+      // 3. UNIVERSAL ERROR CATCHER
       function showErr(m, stack) {
-        if (!debug) return;
-        debug.style.display = 'block';
-        var text = m + "\n" + (stack || "");
         window.Forensic.save("RUNTIME ERROR: " + m);
-        msg.innerHTML += "<b>[" + new Date().toLocaleTimeString() + "]</b> " + m + "\n" + (stack || "") + "\n\n";
+        var debug = document.getElementById('ios-debug');
+        var msg = document.getElementById('ios-msg');
+        if (debug && msg) {
+          debug.style.display = 'block';
+          msg.innerHTML += "<b>[" + new Date().toLocaleTimeString() + "]</b> " + m + "\n" + (stack || "") + "\n\n";
+        }
       }
+
       window.onerror = function (m, u, l, c, e) {
-        showErr(m, (e && e.stack) ? e.stack : "Arquivo: " + u + " L:" + l);
+        showErr(m, (e && e.stack) ? e.stack : "Arquivo: " + u + " Linha:" + l);
         return false;
       };
+
       window.onunhandledrejection = function (e) {
         showErr("Promessa Rejeitada: " + e.reason);
       };
 
-      // 4. DEBUG GESTURE (TRIPLE TAP)
+      // 4. DEBUG GESTURE
       var taps = 0;
       var lastTap = 0;
       window.addEventListener('touchstart', function () {
-        var now = Date.now();
-        if (now - lastTap < 400) taps++; else taps = 1;
-        lastTap = now;
+        var now_t = Date.now();
+        if (now_t - lastTap < 400) taps++; else taps = 1;
+        lastTap = now_t;
         if (taps >= 6) window.Forensic.show();
       });
     })();

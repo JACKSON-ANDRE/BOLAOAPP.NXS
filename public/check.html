@@ -45,14 +45,14 @@
     </div>
 
     <script>
-        // Kill Service Workers on Load
+        // Kill Service Workers on Load (Legacy Syntax)
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(function (registrations) {
                 if (registrations.length === 0) {
                     document.getElementById('sw-status').innerText = "Memória Limpa. Pronto para prosseguir.";
                 }
-                for (let registration of registrations) {
-                    registration.unregister();
+                for (var i = 0; i < registrations.length; i++) {
+                    registrations[i].unregister();
                     document.getElementById('sw-status').innerText = "Lixo removido! Clique no botão abaixo.";
                 }
             });
@@ -60,14 +60,16 @@
 
         function hardReset() {
             // 1. Clear Storage
-            localStorage.clear();
-            sessionStorage.clear();
+            try {
+                localStorage.clear();
+                sessionStorage.clear();
+            } catch (e) { }
 
             // 2. Kill SW again for safety
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.getRegistrations().then(function (registrations) {
-                    for (let registration of registrations) {
-                        registration.unregister();
+                    for (var i = 0; i < registrations.length; i++) {
+                        registrations[i].unregister();
                     }
                 });
             }
