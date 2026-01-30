@@ -251,351 +251,242 @@ const PoolDetails: React.FC = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Info */}
-        <div className="lg:col-span-2 space-y-8">
-          <div id="tour-pool-info" className="bg-[#141417] border border-[#27272A] rounded-2xl md:rounded-3xl p-4 md:p-8">
-            <div className="flex justify-between items-start mb-4 md:mb-6">
-              <span className="bg-[#10B981]/10 text-[#10B981] px-3 py-1 md:px-4 md:py-1.5 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-widest">
-                {pool.modality}
-              </span>
-              <span className={`px-3 py-1 md:px-4 md:py-1.5 rounded-full text-[10px] md:text-xs font-bold uppercase ${pool.status === 'open' && (!pool.bets_deadline || new Date() < new Date(pool.bets_deadline))
-                ? 'bg-blue-500/10 text-blue-500'
-                : 'bg-zinc-500/10 text-zinc-500'
-                }`}>
-                {pool.status === 'open' && (!pool.bets_deadline || new Date() < new Date(pool.bets_deadline))
-                  ? 'Aberto'
-                  : 'Encerrado'}
-              </span>
+      <div className="flex flex-col gap-6">
+        {/* SECTION 1: INFO CARD */}
+        <div id="tour-pool-info" className="bg-[#141417] border border-[#27272A] rounded-2xl p-4 md:p-6 shadow-xl">
+          <div className="flex justify-between items-center mb-4">
+            <span className="bg-[#10B981]/10 text-[#10B981] px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+              {pool.modality}
+            </span>
+            <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${pool.status === 'open' && (!pool.bets_deadline || new Date() < new Date(pool.bets_deadline))
+              ? 'bg-emerald-500/10 text-emerald-500'
+              : 'bg-zinc-500/10 text-zinc-500'
+              }`}>
+              {pool.status === 'open' && (!pool.bets_deadline || new Date() < new Date(pool.bets_deadline))
+                ? 'Aberto'
+                : 'Encerrado'}
+            </span>
+          </div>
+
+          <h1 className="text-xl md:text-3xl font-black text-white mb-4 leading-tight">{pool.title}</h1>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+            <div className="bg-[#0A0A0B] p-3 rounded-xl border border-[#27272A]">
+              <Calendar size={14} className="text-[#10B981] mb-1" />
+              <p className="text-[8px] text-zinc-500 uppercase font-black tracking-tighter">DATA</p>
+              <p className="text-xs text-white font-bold">
+                {new Date(pool.scheduled_at).toLocaleDateString('pt-BR')} {new Date(pool.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+              </p>
             </div>
-
-            <h1 className="text-2xl md:text-4xl font-black text-white mb-4 md:mb-6 leading-tight">{pool.title}</h1>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-              <div className="bg-[#0A0A0B] p-3 md:p-4 rounded-xl md:rounded-2xl border border-[#27272A]">
-                <Calendar size={16} className="text-[#10B981] mb-1 md:mb-2 md:w-[18px]" />
-                <p className="text-[8px] md:text-[10px] text-zinc-500 uppercase font-bold">
-                  {/ufc|mma|boxe|luta|vale\s*tudo/i.test(pool.modality) ? 'Data Luta' : pool.modality === 'Big Brother Brasil' ? 'Data do Paredão' : 'Data Jogo'}
-                </p>
-                <p className="text-xs md:text-sm text-white font-bold">
-                  {new Date(pool.scheduled_at).toLocaleDateString('pt-BR')} {new Date(pool.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                </p>
+            {pool.bets_deadline && (
+              <div className="bg-[#0A0A0B] p-3 rounded-xl border border-[#27272A]">
+                <Clock size={14} className="text-red-500 mb-1" />
+                <p className="text-[8px] text-zinc-500 uppercase font-black tracking-tighter">LIMITE</p>
+                <p className="text-xs text-white font-bold">{new Date(pool.bets_deadline).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
               </div>
-              {pool.bets_deadline && (
-                <div className="bg-[#0A0A0B] p-3 md:p-4 rounded-xl md:rounded-2xl border border-[#27272A]">
-                  <Clock size={16} className="text-red-500 mb-1 md:mb-2 md:w-[18px]" />
-                  <p className="text-[8px] md:text-[10px] text-zinc-500 uppercase font-bold">Fim Apostas</p>
-                  <p className="text-xs md:text-sm text-white font-bold">{new Date(pool.bets_deadline).toLocaleDateString('pt-BR')} {new Date(pool.bets_deadline).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
-                </div>
-              )}
-              <div className="bg-[#0A0A0B] p-3 md:p-4 rounded-xl md:rounded-2xl border border-[#27272A]">
-                <Wallet size={16} className="text-[#10B981] mb-1 md:mb-2 md:w-[18px]" />
-                <p className="text-[8px] md:text-[10px] text-zinc-500 uppercase font-bold">Prêmio Líq.</p>
-                <div className="flex flex-col">
-                  <p className="text-xs md:text-sm text-[#10B981] font-black">R$ {netPrize.toFixed(2)}</p>
-                  {totalGross > 0 && (
-                    <p className="text-[8px] md:text-[10px] text-zinc-600 line-through">R$ {totalGross.toFixed(2)}</p>
-                  )}
-                </div>
-              </div>
-              <div className="bg-[#0A0A0B] p-3 md:p-4 rounded-xl md:rounded-2xl border border-[#27272A]">
-                <Users size={16} className="text-[#10B981] mb-1 md:mb-2 md:w-[18px]" />
-                <p className="text-[8px] md:text-[10px] text-zinc-500 uppercase font-bold">Apostas</p>
-                <p className="text-xs md:text-sm text-white font-bold">{bets.length}</p>
-              </div>
+            )}
+            <div className="bg-[#0A0A0B] p-3 rounded-xl border border-[#27272A]">
+              <Wallet size={14} className="text-[#10B981] mb-1" />
+              <p className="text-[8px] text-zinc-500 uppercase font-black tracking-tighter">PRÊMIO</p>
+              <p className="text-xs text-[#10B981] font-black">R$ {netPrize.toFixed(2)}</p>
+            </div>
+            <div className="bg-[#0A0A0B] p-3 rounded-xl border border-[#27272A]">
+              <Users size={14} className="text-[#10B981] mb-1" />
+              <p className="text-[8px] text-zinc-500 uppercase font-black tracking-tighter">APOSTAS</p>
+              <p className="text-xs text-white font-bold">{bets.length}</p>
             </div>
           </div>
 
-          <div className="bg-[#141417] border border-[#27272A] rounded-3xl p-8">
-
-            {/* MANAGER AREA */}
-            {canManage && pool.status === 'open' && (
-              <div className="mb-8 p-6 bg-yellow-500/10 border border-yellow-500/20 rounded-2xl">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-yellow-500 text-black rounded-xl flex items-center justify-center">
-                    <Gavel size={20} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-white">Painel do Organizador</h3>
-                    <p className="text-xs text-zinc-400">Você tem permissão para encerrar este bolão.</p>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => setShowFinishModal(true)}
-                  disabled={new Date() < new Date(pool.scheduled_at)}
-                  className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-black py-3 rounded-xl flex items-center justify-center gap-2 mb-3 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed"
-                  title={new Date() < new Date(pool.scheduled_at) ? "Aguarde a data do evento para finalizar" : "Finalizar Bolão"}
-                >
-                  <Crown size={18} />
-                  {new Date() < new Date(pool.scheduled_at) ? 'AGUARDANDO DATA DO JOGO' : 'FINALIZAR BOLÃO E DECLARAR VENCEDOR'}
-                </button>
-
+          {/* GESTÃO DO BOLÃO - COMPACTA */}
+          {canManage && (
+            <div className="mt-4 p-3 bg-zinc-900/50 border border-zinc-800 rounded-xl flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
+              <div className="flex items-center gap-2">
+                <Gavel size={14} className="text-zinc-500" />
+                <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest whitespace-nowrap">Gestão</span>
+              </div>
+              <div className="flex gap-2">
+                {pool?.status === 'open' && (
+                  <button
+                    onClick={() => navigate(`/pools/${pool.id}/edit`)}
+                    className="bg-[#27272A] text-white font-bold py-1.5 px-3 rounded-lg text-[9px] uppercase whitespace-nowrap"
+                  >
+                    Editar
+                  </button>
+                )}
+                {bets.length > 0 && pool?.status === 'open' && (
+                  <button
+                    onClick={() => setShowFinishModal(true)}
+                    disabled={new Date() < new Date(pool.scheduled_at)}
+                    className="bg-[#10B981] text-[#0A0A0B] font-black py-1.5 px-3 rounded-lg text-[9px] uppercase whitespace-nowrap disabled:opacity-50"
+                  >
+                    Finalizar
+                  </button>
+                )}
                 {isAdmin && (
                   <button
                     onClick={async () => {
-                      if (window.confirm("ATENÇÃO: Tem certeza que deseja EXCLUIR este bolão? Todas as apostas serão devolvidas. Essa ação é irreversível.")) {
-                        setLoading(true);
+                      if (window.confirm('Excluir este bolão?')) {
                         try {
-                          const { error } = await supabase.rpc('delete_pool_with_refund', {
-                            p_pool_id: pool.id
-                          });
-
+                          const { error } = await supabase.rpc('delete_pool_with_refund', { p_pool_id: pool.id });
                           if (error) throw error;
-
-                          alert("Bolão excluído e apostas devolvidas.");
-                          navigate('/');
-                        } catch (err: any) {
-                          alert("Erro ao excluir: " + err.message);
-                        } finally {
-                          setLoading(false);
-                        }
+                          alert('Bolão excluído!'); navigate('/');
+                        } catch (error: any) { alert(error.message); }
                       }
                     }}
-                    className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-500 font-black py-3 rounded-xl flex items-center justify-center gap-2"
+                    className="bg-red-500/10 text-red-500 font-bold py-1.5 px-3 rounded-lg text-[9px] uppercase whitespace-nowrap"
                   >
-                    <AlertCircle size={18} />
-                    EXCLUIR BOLÃO (CANCELAR)
+                    Excluir
                   </button>
                 )}
               </div>
-            )}
-
-            <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-              <Trophy size={20} className="text-yellow-500" />
-              Escolha seu Lado
-            </h3>
-
-            <div id="tour-pool-options" className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-              {pool.options.map((option) => (
-                <button
-                  key={option}
-                  disabled={!!hasBet || pool.status !== 'open' || (pool.bets_deadline && new Date() > new Date(pool.bets_deadline))}
-                  onClick={() => setSelectedOption(option)}
-                  className={`
-                    p-3 md:p-6 rounded-xl md:rounded-2xl border transition-all text-center flex flex-col justify-between h-full min-h-[100px]
-                    ${selectedOption === option
-                      ? 'border-[#10B981] bg-[#10B981]/5 text-white'
-                      : 'border-[#27272A] bg-[#0A0A0B] text-zinc-400 hover:border-zinc-500'}
-                    ${hasBet?.selected_option === option ? 'border-[#10B981] bg-[#10B981]/5 text-[#10B981]' : ''}
-                  `}
-                >
-                  <p className="font-bold text-sm md:text-lg break-words leading-tight">{option}</p>
-                  <p className="text-[10px] uppercase mt-2 text-zinc-500 bg-zinc-900/50 rounded-lg py-1">
-                    {bets.filter(b => b.selected_option === option).length} apostas
-                  </p>
-                </button>
-              ))}
             </div>
-
-            {!hasBet && pool.status === 'open' && (!pool.bets_deadline || new Date() < new Date(pool.bets_deadline)) && (
-              <div className="mt-8 space-y-4">
-                <div className="flex items-center gap-2 text-zinc-500 text-xs">
-                  <ShieldCheck size={16} />
-                  Ao confirmar, R$ {pool.entry_fee.toFixed(2)} serão debitados imediatamente.
-                </div>
-                {maintenanceMode && profile?.role !== 'admin' ? (
-                  <div className="bg-yellow-500/10 border border-yellow-500/50 p-4 rounded-xl flex gap-3">
-                    <AlertCircle className="text-yellow-500 shrink-0" size={20} />
-                    <p className="text-sm text-yellow-200 font-bold">
-                      Apostas temporariamente suspensas para manutenção.
-                    </p>
-                  </div>
-                ) : (
-                  <button
-                    id="tour-pool-bet-button"
-                    onClick={handlePlaceBetClick}
-                    disabled={!selectedOption || betting}
-                    className="w-full bg-[#10B981] hover:bg-[#059669] text-[#0A0A0B] font-black py-4 rounded-2xl transition-all shadow-lg shadow-[#10B981]/10 flex items-center justify-center gap-2 disabled:opacity-50 disabled:grayscale"
-                  >
-                    {betting ? <Loader2 className="animate-spin" /> : 'Confirmar Palpite'}
-                  </button>
-                )}
-              </div>
-            )}
-
-            {hasBet && (
-              <div className="mt-8 space-y-4">
-                <div className="p-6 bg-[#10B981]/10 border border-[#10B981]/20 rounded-2xl flex items-center gap-4">
-                  <div className="w-12 h-12 bg-[#10B981] rounded-xl flex items-center justify-center text-[#0A0A0B]">
-                    <Trophy size={24} />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-white">Você já apostou neste bolão!</h4>
-                    <p className="text-sm text-zinc-400">Seu palpite: <span className="text-[#10B981] font-bold uppercase">{hasBet.selected_option}</span></p>
-                    {hasBet.update_count === 0 ? (
-                      <p className="text-[10px] text-zinc-500 mt-1">Você ainda pode alterar seu palpite 1 vez.</p>
-                    ) : (
-                      <p className="text-[10px] text-red-500 mt-1">Limite de alterações atingido.</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Update Bet Section */}
-                {pool.status === 'open' && hasBet.update_count === 0 && (!pool.bets_deadline || new Date() < new Date(pool.bets_deadline)) && (
-                  <div className="pt-4 border-t border-[#27272A]">
-                    <p className="text-sm text-zinc-400 mb-3">Deseja mudar de ideia?</p>
-
-                    <div className="flex gap-3 items-center">
-                      <select
-                        value={selectedOption || ''}
-                        onChange={(e) => setSelectedOption(e.target.value)}
-                        className="bg-[#0A0A0B] border border-[#27272A] rounded-xl px-4 py-3 text-white flex-1 focus:border-[#10B981] outline-none"
-                      >
-                        <option value="" disabled>Selecione novo palpite...</option>
-                        {pool.options.filter(o => o !== hasBet.selected_option).map(opt => (
-                          <option key={opt} value={opt}>{opt}</option>
-                        ))}
-                      </select>
-
-                      {maintenanceMode && profile?.role !== 'admin' ? (
-                        <button disabled className="bg-zinc-800 text-zinc-500 font-bold p-3 rounded-xl cursor-not-allowed">
-                          <AlertCircle size={20} />
-                        </button>
-                      ) : (
-                        <button
-                          onClick={handleUpdateBet}
-                          disabled={!selectedOption || betting || selectedOption === hasBet.selected_option}
-                          className="bg-[#27272A] hover:bg-[#3F3F46] text-white font-bold p-3 rounded-xl disabled:opacity-50"
-                          title="Alterar Palpite"
-                        >
-                          {betting ? <Loader2 className="animate-spin" /> : <RefreshCw size={20} />}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          )}
         </div>
 
-        {/* Participants Side List */}
-        <div className="space-y-8">
+        {/* SECTION 2: BETTING CARD */}
+        <div className="bg-[#141417] border border-[#27272A] rounded-2xl p-5 md:p-6 shadow-xl relative overflow-hidden">
+          <h3 className="text-sm font-black text-white mb-4 flex items-center gap-2 uppercase tracking-widest">
+            <Trophy size={16} className="text-yellow-500" />
+            Escolha seu Lado
+          </h3>
 
-          {/* Actions for Organizer/Admin */}
-          {canManage && (
-            <div className="bg-[#141417] border border-[#27272A] rounded-3xl p-6 space-y-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Gavel className="text-zinc-500" size={18} />
-                <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Gestão do Bolão</h3>
-              </div>
+          <div id="tour-pool-options" className="grid grid-cols-2 gap-3">
+            {pool.options.map((option) => (
+              <button
+                key={option}
+                disabled={!!hasBet || pool.status !== 'open' || (pool.bets_deadline && new Date() > new Date(pool.bets_deadline))}
+                onClick={() => setSelectedOption(option)}
+                className={`
+                  p-4 rounded-xl border-2 transition-all text-center flex flex-col items-center justify-center gap-1 min-h-[80px]
+                  ${selectedOption === option
+                    ? 'border-[#10B981] bg-[#10B981]/10 text-white shadow-[0_0_15px_rgba(16,185,129,0.2)]'
+                    : 'border-[#27272A] bg-[#0A0A0B] text-zinc-500 hover:border-zinc-700'}
+                  ${hasBet?.selected_option === option ? 'border-[#10B981] bg-[#10B981]/20 text-[#10B981]' : ''}
+                `}
+              >
+                <p className="font-black text-xs uppercase break-words leading-tight">{option}</p>
+                <p className="text-[8px] font-bold text-zinc-600">
+                  {bets.filter(b => b.selected_option === option).length} apostas
+                </p>
+              </button>
+            ))}
+          </div>
 
-              {/* EDIT BUTTON (Only if Open) */}
-              {pool?.status === 'open' && (
+          {!hasBet && pool.status === 'open' && (!pool.bets_deadline || new Date() < new Date(pool.bets_deadline)) && (
+            <div className="mt-6">
+              {maintenanceMode && profile?.role !== 'admin' ? (
+                <div className="bg-yellow-500/10 border border-yellow-500/20 p-3 rounded-xl flex gap-2">
+                  <AlertCircle className="text-yellow-500 shrink-0" size={14} />
+                  <p className="text-[10px] text-yellow-200">Em manutenção.</p>
+                </div>
+              ) : (
                 <button
-                  onClick={() => navigate(`/pools/${pool.id}/edit`)}
-                  className="w-full bg-[#27272A] hover:bg-zinc-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 text-xs transition-colors"
+                  id="tour-pool-bet-button"
+                  onClick={handlePlaceBetClick}
+                  disabled={!selectedOption || betting}
+                  className="w-full bg-[#10B981] hover:bg-[#059669] text-[#0A0A0B] font-black py-4 rounded-xl transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 disabled:opacity-30 uppercase text-xs"
                 >
-                  EDITAR BOLÃO
-                </button>
-              )}
-
-              {/* DECLARE WINNER BUTTON (If bets > 0 and Open) */}
-              {bets.length > 0 && pool?.status === 'open' && (
-                <button
-                  onClick={() => setShowFinishModal(true)}
-                  disabled={new Date() < new Date(pool.scheduled_at)}
-                  className="w-full bg-[#10B981] hover:bg-[#059669] text-[#0A0A0B] font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 text-xs transition-colors disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed"
-                  title={new Date() < new Date(pool.scheduled_at) ? "Aguarde a data do evento" : "Declarar Vencedor"}
-                >
-                  <Crown size={18} />
-                  DECLARAR VENCEDOR
-                </button>
-              )}
-
-              {/* ADMIN DELETE BUTTON */}
-              {isAdmin && (
-                <button
-                  onClick={async () => {
-                    if (window.confirm('ATENÇÃO: Tem certeza que deseja excluir este bolão? Isso irá REEMBOLSAR automaticamente todos os apostadores e enviará uma notificação informando o cancelamento.')) {
-                      try {
-                        const { error } = await supabase.rpc('delete_pool_with_refund', {
-                          p_pool_id: pool.id
-                        });
-
-                        if (error) throw error;
-
-                        alert('Bolão excluído e reembolsos processados com sucesso!');
-                        navigate('/');
-                      } catch (error: any) {
-                        alert('Erro ao excluir e reembolsar: ' + error.message);
-                      }
-                    }
-                  }}
-                  className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-500 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 text-xs transition-colors border border-red-500/20"
-                >
-                  EXCLUIR BOLÃO
+                  {betting ? <Loader2 className="animate-spin" size={18} /> : 'Confirmar Palpite'}
                 </button>
               )}
             </div>
           )}
 
+          {hasBet && (
+            <div className="mt-4 p-4 bg-[#10B981]/5 border border-[#10B981]/20 rounded-xl flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-[#10B981] rounded-lg flex items-center justify-center text-[#0A0A0B]">
+                  <CheckCircle size={18} strokeWidth={3} />
+                </div>
+                <div>
+                  <h4 className="font-black text-[10px] text-white uppercase">Sua Aposta</h4>
+                  <p className="text-xs text-[#10B981] font-black uppercase">{hasBet.selected_option}</p>
+                </div>
+              </div>
 
-          {/* POOL CHAT */}
-          <div id="tour-pool-chat">
-            <PoolChat
-              poolId={pool.id}
-              category={pool.modality}
-              hasBet={!!hasBet}
-              isAdmin={!!isAdmin}
-            />
-          </div>
-
-          <div className="bg-[#141417] border border-[#27272A] rounded-3xl p-6">
-            <h3 className="text-lg font-bold text-white mb-6">Apostadores</h3>
-            <div className="space-y-4">
-              {bets.length === 0 ? (
-                <p className="text-sm text-zinc-500 italic">Ainda não há apostadores.</p>
-              ) : (
-                bets.map((bet) => (
-                  <div key={bet.id} className="flex items-center gap-3 p-3 bg-[#0A0A0B] rounded-xl border border-[#27272A]">
-                    <div className="w-10 h-10 rounded-full bg-zinc-800 border-2 border-[#27272A] flex items-center justify-center text-xs font-bold text-zinc-400 overflow-hidden">
-                      {(bet as any).profiles?.role === 'admin' ? (
-                        <div className="bg-[#10B981] w-full h-full flex items-center justify-center text-black">
-                          <ShieldCheck size={20} />
-                        </div>
-                      ) : (bet as any).profiles?.avatar_url ? (
-                        <img
-                          src={`https://vucvouxutompqoqhxzmi.supabase.co/storage/v1/object/public/avatars/${(bet as any).profiles.avatar_url}`}
-                          alt="Avatar"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        (bet as any).profiles?.full_name?.charAt(0).toUpperCase() || 'U'
-                      )}
-                    </div>
-                    <div className="flex-1 overflow-hidden">
-                      <p className={`text-xs truncate font-medium ${(bet as any).profiles?.role === 'admin' ? 'text-[#10B981] font-black' : 'text-white'}`}>
-                        {(bet as any).profiles?.role === 'admin' ? 'BOLÃO APP' : (bet as any).profiles?.full_name || 'Usuário Desconhecido'}
-                      </p>
-                      <p className="text-[10px] text-zinc-500 uppercase">{bet.selected_option}</p>
-                    </div>
-                  </div>
-                ))
+              {pool.status === 'open' && hasBet.update_count === 0 && (!pool.bets_deadline || new Date() < new Date(pool.bets_deadline)) && (
+                <div className="flex gap-2">
+                  <select
+                    value={selectedOption || ''}
+                    onChange={(e) => setSelectedOption(e.target.value)}
+                    className="bg-[#0A0A0B] border border-[#27272A] rounded-lg px-3 py-2 text-[10px] text-white flex-1 outline-none"
+                  >
+                    <option value="" disabled>Novo palpite...</option>
+                    {pool.options.filter(o => o !== hasBet.selected_option).map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={handleUpdateBet}
+                    disabled={!selectedOption || betting || selectedOption === hasBet.selected_option}
+                    className="bg-zinc-800 text-white p-2 rounded-lg disabled:opacity-30"
+                  >
+                    <RefreshCw size={14} className={betting ? "animate-spin" : ""} />
+                  </button>
+                </div>
               )}
             </div>
+          )}
+        </div>
+
+        {/* SECTION 3: CHAT DATA */}
+        <div id="tour-pool-chat" className="bg-[#141417] border border-[#27272A] rounded-2xl p-1 shadow-xl">
+          <PoolChat
+            poolId={pool.id}
+            category={pool.modality}
+            hasBet={!!hasBet}
+            isAdmin={!!isAdmin}
+          />
+        </div>
+
+        {/* SECTION 4: BETHORS LIST */}
+        <div className="bg-[#141417] border border-[#27272A] rounded-2xl p-5 shadow-xl">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
+              <Users size={16} className="text-[#10B981]" />
+              Apostadores
+            </h3>
+            <span className="text-[10px] font-black text-zinc-500 bg-zinc-900 px-2 py-0.5 rounded-lg">{bets.length}</span>
           </div>
 
-
-
-          <div className="bg-[#141417] border border-[#27272A] rounded-3xl p-6">
-            <h3 className="text-lg font-bold text-white mb-4">Regras Gerais</h3>
-            <ul className="space-y-3 text-xs text-zinc-400 leading-relaxed">
-              <li className="flex gap-2">
-                <span className="text-[#10B981] font-bold">•</span>
-                O prêmio total é dividido igualmente entre todos os que acertarem o resultado.
-              </li>
-              <li className="flex gap-2">
-                <span className="text-[#10B981] font-bold">•</span>
-                Taxa conforme foi acordado por todos os participantes do bolão.
-              </li>
-              <li className="flex gap-2">
-                <span className="text-[#10B981] font-bold">•</span>
-                Cancelamento só é possível se o evento não ocorrer.
-              </li>
-            </ul>
+          <div className="grid grid-cols-1 gap-2 max-h-[200px] overflow-y-auto no-scrollbar">
+            {bets.length === 0 ? (
+              <p className="text-[10px] text-zinc-600 text-center py-4 uppercase">Ninguém apostou ainda.</p>
+            ) : (
+              bets.map((bet) => (
+                <div key={bet.id} className="flex items-center gap-3 p-2 bg-[#0A0A0B] rounded-lg border border-[#27272A]">
+                  <div className="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center text-[8px] font-black text-zinc-400 overflow-hidden ring-1 ring-[#27272A]">
+                    {(bet as any).profiles?.role === 'admin' ? (
+                      <ShieldCheck size={14} className="text-[#10B981]" />
+                    ) : (bet as any).profiles?.avatar_url ? (
+                      <img src={`https://vucvouxutompqoqhxzmi.supabase.co/storage/v1/object/public/avatars/${(bet as any).profiles.avatar_url}`} className="w-full h-full object-cover" />
+                    ) : (bet as any).profiles?.full_name?.charAt(0).toUpperCase()}
+                  </div>
+                  <p className={`text-[10px] flex-1 truncate font-black ${(bet as any).profiles?.role === 'admin' ? 'text-[#10B981]' : 'text-zinc-300'}`}>
+                    {(bet as any).profiles?.role === 'admin' ? 'BOLÃO APP' : (bet as any).profiles?.full_name}
+                  </p>
+                  <span className="text-[8px] font-black text-[#10B981] bg-[#10B981]/10 px-1.5 py-0.5 rounded uppercase">{bet.selected_option}</span>
+                </div>
+              ))
+            )}
           </div>
+        </div>
+
+        {/* SECTION 5: RULES COMPACT */}
+        <div className="bg-[#141417]/50 border border-[#27272A] rounded-2xl p-5 shadow-lg">
+          <h3 className="text-[10px] font-black text-zinc-500 mb-3 uppercase tracking-widest">Regras Gerais</h3>
+          <ul className="space-y-2">
+            {[
+              'Prêmio dividido entre os que acertarem o resultado.',
+              'Taxas aplicadas conforme acordado na mesa.',
+              'Cancelamento somente em caso do evento não ocorrer.'
+            ].map((regra, i) => (
+              <li key={i} className="flex gap-2 text-[9px] text-zinc-500 font-medium">
+                <span className="text-[#10B981] font-black">•</span>
+                {regra}
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
 

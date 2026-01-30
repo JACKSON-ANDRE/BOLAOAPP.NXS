@@ -6,6 +6,11 @@ export const notifyAdmin = async (title: string, message: string) => {
         // and let the function filter for admins (after we update the function)
         // OR pass a specific flag.
 
+        if (window.location.hostname === 'localhost') {
+            console.log('Skipping admin notification on localhost (CORS prevention)');
+            return;
+        }
+
         await supabase.functions.invoke('send-push', {
             body: {
                 title,
