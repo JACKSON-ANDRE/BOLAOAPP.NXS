@@ -108,7 +108,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const nextProfileJson = JSON.stringify(newData);
 
             if (currentProfileJson !== nextProfileJson) {
-                if ((window as any).Forensic) (window as any).Forensic.save("AUTH: Perfil atualizado (Dados mudaram)");
+                // if ((window as any).Forensic) (window as any).Forensic.save("AUTH: Perfil atualizado (Dados mudaram)");
                 setProfile({ ...newData });
                 setAuthError(null);
             } else {
@@ -212,7 +212,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!user) return;
 
         const interval = setInterval(() => {
-            if ((window as any).Forensic) (window as any).Forensic.save("AUTH: Polling de 5s iniciado.");
+            // if ((window as any).Forensic) (window as any).Forensic.save("AUTH: Polling de 5s iniciado.");
             refreshProfile();
         }, 5000);
 

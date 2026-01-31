@@ -169,17 +169,7 @@ const Profile: React.FC = () => {
           <p className="text-red-500 text-xs font-bold mt-2 uppercase animate-pulse">Foto Obrigatória</p>
         )}
 
-        <p className="text-[8px] text-zinc-600 mt-1 uppercase">v1.2 Active</p>
-        <button
-          onClick={() => {
-            if (confirm("Deseja verificar se há uma versão mais nova do app? Isso irá recarregar a página.")) {
-              window.location.href = window.location.pathname + '?v=' + Date.now() + window.location.hash;
-            }
-          }}
-          className="text-[#10B981] text-[8px] font-bold mt-1 underline uppercase"
-        >
-          Limpar Cache e Sincronizar
-        </button>
+
 
         <h1 className="mt-6 text-2xl font-black text-white">
           {profile?.full_name?.toUpperCase() || "USUÁRIO"}
