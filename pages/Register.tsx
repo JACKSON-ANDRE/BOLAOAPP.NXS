@@ -1,15 +1,17 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { subscribeToPushNotifications } from '../src/utils/pushNotifications';
 import { notifyAdmin } from '../src/utils/adminNotification';
-import { TrendingUp, Mail, Lock, User, Loader2, CheckCircle2, Camera, Bell } from 'lucide-react';
+import { TrendingUp, Mail, Lock, User, Loader2, CheckCircle2, Camera, Bell, Phone, MapPin } from 'lucide-react';
 import { processImage } from '../src/utils/imageUtils';
 
 const Register: React.FC = () => {
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
+  const [whatsapp, setWhatsapp] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
   const [password, setPassword] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(true); // Default to true
@@ -31,6 +33,15 @@ const Register: React.FC = () => {
     e.preventDefault();
     if (!termsAccepted) {
       setError("Você precisa aceitar os termos de uso.");
+      return;
+    }
+    if (!whatsapp || !city || !state || !fullName || !email || !password) {
+      setError("Por favor, preencha todos os campos obrigatórios (*).");
+      return;
+    }
+
+    if (!avatarFile) {
+      setError("A foto de perfil é obrigatória para segurança do PIX.");
       return;
     }
 
@@ -55,6 +66,8 @@ const Register: React.FC = () => {
     }
 
     if (data.user) {
+      let uploadedAvatarUrl = null;
+
       // 2. Upload do Avatar (Se houver)
       if (avatarFile) {
         try {
@@ -70,15 +83,33 @@ const Register: React.FC = () => {
             });
 
           if (!uploadError) {
-            // 3. Atualizar perfil com a URL
-            await supabase
-              .from('profiles')
-              .update({ avatar_url: fileName })
-              .eq('id', data.user.id);
+            uploadedAvatarUrl = fileName;
           }
         } catch (uploadErr) {
           console.error("Erro ao subir foto, mas conta criada:", uploadErr);
         }
+      }
+
+      // 3. Atualizar perfil com todos os dados (Foto, WhatsApp, Cidade, Estado)
+      try {
+        const profileUpdates: any = {
+          whatsapp,
+          city,
+          state,
+          updated_at: new Date()
+        };
+        if (uploadedAvatarUrl) profileUpdates.avatar_url = uploadedAvatarUrl;
+
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update(profileUpdates)
+          .eq('id', data.user.id);
+
+        if (updateError) throw updateError;
+
+      } catch (profileErr) {
+        console.error("Erro ao atualizar perfil inicial:", profileErr);
+        // Não bloqueamos o fluxo, mas logamos o erro
       }
 
       // 4. Solicitar Notificações (Opcional - mas sugerido)
@@ -91,7 +122,7 @@ const Register: React.FC = () => {
       }
 
       // 5. Notify Admin
-      notifyAdmin("Novo Usuário!", `O usuário ${fullName} acabou de criar uma conta.`);
+      notifyAdmin("Novo Usuário V2!", `O usuário ${fullName} (${city}/${state}) criou uma conta completa.`);
 
       const intendedPath = sessionStorage.getItem('intended_path');
       if (intendedPath) {
@@ -116,17 +147,17 @@ const Register: React.FC = () => {
               className="w-24 h-24 rounded-2xl shadow-lg shadow-emerald-500/20"
             />
           </div>
-          <h1 className="text-3xl font-bold text-white">Criar Conta</h1>
+          <h1 className="text-3xl font-bold text-white">Criar Conta Premium</h1>
           <p className="text-zinc-500 mt-2">Junte-se à maior comunidade de bolões</p>
         </div>
 
         <div className="bg-[#141417] border border-[#27272A] p-8 rounded-3xl shadow-xl">
-          <form onSubmit={handleRegister} className="space-y-5">
+          <form onSubmit={handleRegister} className="space-y-4">
 
             {/* AVATAR UPLOAD */}
-            <div className="flex justify-center mb-4">
+            <div className="flex justify-center mb-6">
               <div className="relative group cursor-pointer">
-                <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-[#27272A] group-hover:border-[#10B981] transition-colors bg-[#0A0A0B] flex items-center justify-center">
+                <div className={`w-24 h-24 rounded-full overflow-hidden border-2 transition-colors bg-[#0A0A0B] flex items-center justify-center ${previewUrl ? 'border-[#10B981]' : 'border-red-500/50 group-hover:border-red-500'}`}>
                   {previewUrl ? (
                     <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
                   ) : (
@@ -143,10 +174,11 @@ const Register: React.FC = () => {
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 />
               </div>
+              {!previewUrl && <p className="absolute mt-28 text-[10px] text-red-500 uppercase tracking-wider font-bold">Foto Obrigatória *</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-2">Nome Completo</label>
+              <label className="block text-xs font-bold text-zinc-500 uppercase mb-1">Nome Completo</label>
               <div className="relative">
                 <User className="absolute left-3 top-3.5 text-zinc-600" size={18} />
                 <input
@@ -155,13 +187,13 @@ const Register: React.FC = () => {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-[#10B981] transition-colors"
-                  placeholder="João da Silva"
+                  placeholder="Seu nome real"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-2">E-mail</label>
+              <label className="block text-xs font-bold text-zinc-500 uppercase mb-1">E-mail</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-3.5 text-zinc-600" size={18} />
                 <input
@@ -175,17 +207,62 @@ const Register: React.FC = () => {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-2">Senha</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3.5 text-zinc-600" size={18} />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-[#10B981] uppercase mb-1">WhatsApp *</label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-3.5 text-zinc-600" size={18} />
+                  <input
+                    type="tel"
+                    required
+                    value={whatsapp}
+                    onChange={(e) => setWhatsapp(e.target.value)}
+                    className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-[#10B981] transition-colors"
+                    placeholder="(00) 00000"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-zinc-500 uppercase mb-1">Senha</label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3.5 text-zinc-600" size={18} />
+                  <input
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-[#10B981] transition-colors"
+                    placeholder="******"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div className="col-span-2">
+                <label className="block text-xs font-bold text-[#10B981] uppercase mb-1">Cidade *</label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-3.5 text-zinc-600" size={18} />
+                  <input
+                    type="text"
+                    required
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-[#10B981] transition-colors"
+                    placeholder="Sua cidade"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-[#10B981] uppercase mb-1">UF *</label>
                 <input
-                  type="password"
+                  type="text"
                   required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-[#10B981] transition-colors"
-                  placeholder="Mínimo 6 caracteres"
+                  maxLength={2}
+                  value={state}
+                  onChange={(e) => setState(e.target.value.toUpperCase())}
+                  className="w-full bg-[#0A0A0B] border border-[#27272A] rounded-xl py-3 px-4 text-center text-white focus:outline-none focus:border-[#10B981] transition-colors uppercase"
+                  placeholder="UF"
                 />
               </div>
             </div>
@@ -199,7 +276,7 @@ const Register: React.FC = () => {
                 <CheckCircle2 size={20} fill={termsAccepted ? 'currentColor' : 'none'} />
               </button>
               <label className="text-xs text-zinc-500 leading-relaxed cursor-pointer" onClick={() => setTermsAccepted(!termsAccepted)}>
-                Eu aceito os <span className="text-[#10B981]">Termos de Uso</span> e a <span className="text-[#10B981]">Política de Privacidade</span> do Bolão App.
+                Eu aceito os <span className="text-[#10B981]">Termos</span> e a <span className="text-[#10B981]">Privacidade</span>.
               </label>
             </div>
 
@@ -220,8 +297,6 @@ const Register: React.FC = () => {
               </button>
             </div>
 
-
-
             {error && (
               <div className="bg-red-500/10 border border-red-500 text-red-500 text-sm p-4 rounded-xl text-center">
                 {error}
@@ -233,7 +308,7 @@ const Register: React.FC = () => {
               disabled={loading}
               className="w-full bg-[#10B981] hover:bg-[#059669] text-[#0A0A0B] font-bold py-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? <Loader2 className="animate-spin" size={20} /> : 'Criar minha Conta'}
+              {loading ? <Loader2 className="animate-spin" size={20} /> : 'CRIAR CONTA COMPLETA'}
             </button>
           </form>
 
