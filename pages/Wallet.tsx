@@ -636,7 +636,7 @@ const WalletPage: React.FC = () => {
 
           <div className="w-full h-[220px] relative mt-auto mb-4 md:mb-6 flex justify-center">
             {mounted && (stats.totalBet > 0 || stats.totalWon > 0) ? (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minHeight={200}>
                 <RechartsPieChart>
                   <Pie
                     data={chartData}

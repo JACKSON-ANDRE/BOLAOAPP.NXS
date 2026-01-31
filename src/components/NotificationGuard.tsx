@@ -134,6 +134,12 @@ const NotificationGuard: React.FC<NotificationGuardProps> = ({ children }) => {
                         User: {user?.email} | Direct: {directUserEmail}
                     </div>
                 </div>
+                <button
+                    onClick={() => setHasSubscription(true)}
+                    className="mt-4 text-xs text-zinc-600 hover:text-zinc-400 underline"
+                >
+                    Continuar sem ativar (Não recomendado)
+                </button>
             </div>
         );
     }

@@ -80,19 +80,19 @@ const AppContent: React.FC = () => {
               : (isStandalone ? <Navigate to="/login" replace /> : <Gateway />)
           }
         />
-        <Route path="/community" element={user ? <NotificationGuard><Layout><Community /></Layout></NotificationGuard> : <Navigate to="/" />} />
-        <Route path="/pools/new" element={user ? <NotificationGuard><Layout><CreatePool /></Layout></NotificationGuard> : <Navigate to="/" />} />
+        <Route path="/community" element={user ? <Layout><Community /></Layout> : <Navigate to="/" />} />
+        <Route path="/pools/new" element={user ? <Layout><CreatePool /></Layout> : <Navigate to="/" />} />
         {/* Deep Link para Bolão (Híbrido) */}
         <Route path="/pools/:id" element={
           user
-            ? <NotificationGuard><Layout><PoolDetails /></Layout></NotificationGuard>
+            ? <Layout><PoolDetails /></Layout>
             : <PoolDetails />
         } />
-        <Route path="/pools/:id/edit" element={user ? <NotificationGuard><Layout><EditPool /></Layout></NotificationGuard> : <Navigate to="/" />} />
-        <Route path="/my-pools" element={user ? <NotificationGuard><Layout><MyPools /></Layout></NotificationGuard> : <Navigate to="/" />} />
-        <Route path="/profile" element={user ? <NotificationGuard><Layout><ProfilePage /></Layout></NotificationGuard> : <Navigate to="/" />} />
-        <Route path="/wallet" element={user ? <NotificationGuard><Layout><Wallet /></Layout></NotificationGuard> : <Navigate to="/" />} />
-        <Route path="/admin" element={user ? <NotificationGuard><Layout><AdminDashboard /></Layout></NotificationGuard> : <Navigate to="/" />} />
+        <Route path="/pools/:id/edit" element={user ? <Layout><EditPool /></Layout> : <Navigate to="/" />} />
+        <Route path="/my-pools" element={user ? <Layout><MyPools /></Layout> : <Navigate to="/" />} />
+        <Route path="/profile" element={user ? <Layout><ProfilePage /></Layout> : <Navigate to="/" />} />
+        <Route path="/wallet" element={user ? <Layout><Wallet /></Layout> : <Navigate to="/" />} />
+        <Route path="/admin" element={user ? <Layout><AdminDashboard /></Layout> : <Navigate to="/" />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </HashRouter>
