@@ -22,6 +22,8 @@ const EditPool: React.FC = () => {
         scheduled_at: '',
     });
 
+    const [includeDraw, setIncludeDraw] = useState(false);
+
     const [hasBets, setHasBets] = useState(false);
     const [originalPool, setOriginalPool] = useState<any>(null);
     const [isFormValid, setIsFormValid] = useState(false);
@@ -90,11 +92,15 @@ const EditPool: React.FC = () => {
             modality: pool.modality,
             title: pool.title,
             teamA: pool.options[0] || '',
-            teamB: pool.options[1] || '',
+            teamB: (pool.modality === 'Futebol' && pool.options[1] === 'Empate') ? pool.options[2] : (pool.options[1] || ''),
             entry_fee: pool.entry_fee.toString(),
             bets_deadline: toLocalISO(pool.bets_deadline),
             scheduled_at: toLocalISO(pool.scheduled_at),
         });
+
+        // Check if draw is included
+        const hasDraw = pool.options.includes('Empate');
+        setIncludeDraw(hasDraw);
 
         setLoading(false);
     };
@@ -134,7 +140,9 @@ const EditPool: React.FC = () => {
         const updates: any = {
             modality: formData.modality,
             title: formData.title,
-            options: [formData.teamA, formData.teamB],
+            options: includeDraw
+                ? [formData.teamA, 'Empate', formData.teamB]
+                : [formData.teamA, formData.teamB],
             scheduled_at: scheduledAtISO,
             bets_deadline: betsDeadlineISO,
         };
@@ -230,6 +238,24 @@ const EditPool: React.FC = () => {
                                     className="w-full mt-1 bg-[#0A0A0B] border border-[#27272A] rounded-xl p-3 text-white"
                                 />
                             </div>
+
+                            {/* Enable Draw Toggle - Only visible if Modality is Football (or always? User asked for option in modal. Let's show for all or just football to avoid confusion? 
+                            User said "ALWAYS WHEN MODALITY IS FOOTBALL" in first prompt, but now "IN EDIT MODAL OPTION TO ENABLE".
+                            To be safe and clean, let's show it if Modality is Futebol. */}
+                            {formData.modality === 'Futebol' && (
+                                <div className="col-span-2 bg-[#27272A]/50 p-3 rounded-xl flex items-center gap-3 border border-[#27272A]">
+                                    <input
+                                        type="checkbox"
+                                        checked={includeDraw}
+                                        onChange={(e) => setIncludeDraw(e.target.checked)}
+                                        className="w-5 h-5 accent-[#10B981] rounded cursor-pointer"
+                                        id="drawToggle"
+                                    />
+                                    <label htmlFor="drawToggle" className="text-sm text-zinc-300 font-bold cursor-pointer select-none">
+                                        Habilitar opção "Empate"?
+                                    </label>
+                                </div>
+                            )}
 
                             <div>
                                 <label className="text-xs text-zinc-400">VALOR APOSTA (R$) *</label>

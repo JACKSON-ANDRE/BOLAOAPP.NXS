@@ -81,7 +81,6 @@ const WalletPage: React.FC = () => {
           event: 'UPDATE',
           schema: 'public',
           table: 'deposits',
-          filter: `user_id=eq.${profile.id}`
         }, (payload) => {
           if (payload.new.status === 'approved') {
             setPaymentStatus('approved');
@@ -194,8 +193,6 @@ const WalletPage: React.FC = () => {
 
       if (insertError) throw insertError;
 
-      notifyAdmin("Novo Depósito Manual", `O usuário ${profile.full_name} enviou um comprovante de R$ ${amount}.`);
-
       setAmount('');
       setReceiptFile(null);
       fetchHistory();
@@ -268,8 +265,6 @@ const WalletPage: React.FC = () => {
         status: 'pending',
       });
       if (error) throw error;
-
-      notifyAdmin("Solicitação de Saque", `O usuário ${profile.full_name} solicitou um saque de R$ ${amountNum}.`);
 
       setWithdrawAmount('');
       setWithdrawPixKey('');
@@ -526,9 +521,22 @@ const WalletPage: React.FC = () => {
               <p className="text-sm">Carregando extrato...</p>
             </div>
           ) : paginatedItems.length === 0 ? (
-            <div className="text-center py-20 bg-[#0A0A0B] rounded-2xl border border-[#27272A]">
+            <div className="text-center py-20 bg-[#0A0A0B] rounded-2xl border border-[#27272A] px-4">
               <History className="mx-auto text-zinc-700 mb-4" size={48} />
-              <p className="text-zinc-500 text-sm">Nenhuma movimentação neste período.</p>
+              <p className="text-white font-bold mb-1">Nenhuma movimentação neste período.</p>
+              <p className="text-zinc-500 text-xs max-w-sm mx-auto">
+                {historyItems.length > 0
+                  ? "Experimente mudar o filtro de mês ou ano acima para ver registros de outros períodos."
+                  : "Você ainda não possui movimentações em sua conta."}
+              </p>
+              {historyItems.length > 0 && selectedMonth === new Date().getMonth() && (
+                <button
+                  onClick={() => setSelectedMonth(prev => prev === 0 ? 11 : prev - 1)}
+                  className="mt-6 px-4 py-2 bg-[#10B981]/10 text-[#10B981] border border-[#10B981]/20 rounded-xl text-xs font-black uppercase hover:bg-[#10B981]/20 transition"
+                >
+                  Ver Mês Anterior
+                </button>
+              )}
             </div>
           ) : (
             <>

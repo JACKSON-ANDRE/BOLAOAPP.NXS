@@ -58,7 +58,7 @@ const AppContent: React.FC = () => {
   if (loading || booting) {
     return (
       <div style={{ background: '#0A0A0B', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ width: '30px', height: '30px', border: '2px solid #10B981', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <div style={{ width: '40px', height: '40px', border: '3px solid #10B981', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
@@ -76,7 +76,7 @@ const AppContent: React.FC = () => {
           path="/"
           element={
             user
-              ? <NotificationGuard><Layout><Home /></Layout></NotificationGuard>
+              ? <Layout><Home /></Layout>
               : (isStandalone ? <Navigate to="/login" replace /> : <Gateway />)
           }
         />

@@ -136,6 +136,14 @@ BEGIN
 
     INSERT INTO transactions (user_id, amount, type, status, reference_id, created_by, balance_type, created_at)
     VALUES (v_deposit_request.user_id, v_deposit_request.amount, 'deposit', 'approved', p_deposit_request_id, p_admin_id, 'balance', now());
+    -- Push Notification para o Celular
+    PERFORM public.trigger_pwa_push(
+        p_user_id := v_deposit_request.user_id,
+        p_title := 'Depósito Aprovado! 💰',
+        p_body := 'Seu depósito de R$ ' || v_deposit_request.amount || ' foi confirmado manualmente.',
+        p_url := '/wallet'
+    );
+
   END IF;
 END;
 $$;

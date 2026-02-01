@@ -50,31 +50,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return;
         }
 
-        // 1. TENTA VIA JS CLIENT (COM TIMEOUT DE 2s)
-        // Se o Client travar (como estava acontecendo), o timeout aborta
-        let clientData = null;
-        try {
-            const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('TIMEOUT')), 6000)
-            );
+        // 🛡️ CIRCUIT BREAKER: 5 Second Timeout
+        // Garante que o app NUNCA trave por mais de 5s esperando o banco
+        const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('TIMEOUT_DB')), 5000)
+        );
 
-            // Corrida: Quem chegar primeiro ganha. Se o Client demorar > 2s, o Timeout ganha.
-            const result: any = await Promise.race([
+        let clientData = null;
+
+        // 1. TENTATIVA RÁPIDA (Supabase Client)
+        try {
+            // Corrida: Banco vs Relógio
+            const { data, error } = await Promise.race([
                 supabase.from('profiles').select('*').eq('id', u.id).single(),
                 timeoutPromise
-            ]);
+            ]) as any;
 
-            clientData = result.data;
-        } catch (err) {
-            // Silencioso: Se der timeout ou erro, seguimos para o Plano B (REST)
+            if (!error && data) {
+                clientData = data;
+                // if ((window as any).Forensic) (window as any).Forensic.save("AUTH: Perfil carregado (Fast Path)");
+            }
+        } catch (err: any) {
+            console.warn("AuthContext: Banco demorou ou falhou (" + err.message + "), ativando Plano B...");
         }
 
-        let newData = null;
+        let newData = clientData;
 
-        if (clientData) {
-            newData = clientData;
-        } else {
-            // 2. FALLBACK: REST API (Silencioso e Invisível)
+        // 2. PLANO B: REST API (Se o Client falhou ou deu timeout)
+        if (!newData) {
             try {
                 const url = import.meta.env.VITE_SUPABASE_URL;
                 const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -91,28 +94,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         const restData = await response.json();
                         if (restData && restData.length > 0) {
                             newData = restData[0];
+                            // if ((window as any).Forensic) (window as any).Forensic.save("AUTH: Perfil salvo via REST API (Fallback)");
                         }
                     }
                 }
-            } catch (restErr) { }
-
-            // 3. RECUPERAÇÃO DE CONTA (Sync)
-            if (!newData) {
-                newData = await syncProfile(u);
+            } catch (restErr) {
+                console.error("AuthContext: REST API falhou também.", restErr);
             }
+        }
+
+        // 3. RECUPERAÇÃO DE CONTA (Último caso: Cria o perfil se não existir)
+        if (!newData) {
+            newData = await syncProfile(u);
         }
 
         if (newData) {
             // Só atualiza se for diferente para evitar "blink"
-            const currentProfileJson = JSON.stringify(profile);
-            const nextProfileJson = JSON.stringify(newData);
-
-            if (currentProfileJson !== nextProfileJson) {
-                // if ((window as any).Forensic) (window as any).Forensic.save("AUTH: Perfil atualizado (Dados mudaram)");
+            // Simple deep check to avoid JSON overhead if possibly undefined keys
+            if (JSON.stringify(profile) !== JSON.stringify(newData)) {
                 setProfile({ ...newData });
                 setAuthError(null);
-            } else {
-                // if ((window as any).Forensic) (window as any).Forensic.save("AUTH: Perfil checado (Sem mudanças)");
             }
         }
     };
@@ -212,9 +213,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!user) return;
 
         const interval = setInterval(() => {
-            // if ((window as any).Forensic) (window as any).Forensic.save("AUTH: Polling de 5s iniciado.");
+            // if ((window as any).Forensic) (window as any).Forensic.save("AUTH: Polling de 15s iniciado.");
             refreshProfile();
-        }, 5000);
+        }, 15000);
 
         return () => clearInterval(interval);
     }, [user]);

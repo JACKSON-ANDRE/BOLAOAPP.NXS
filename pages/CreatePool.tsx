@@ -29,6 +29,8 @@ const CreatePool: React.FC = () => {
     scheduled_at: '',
   });
 
+  const [includeDraw, setIncludeDraw] = useState(false); // Default false, set by effect based on modality
+
   const [isFormValid, setIsFormValid] = useState(false);
 
   useEffect(() => {
@@ -62,8 +64,22 @@ const CreatePool: React.FC = () => {
       isValid = false;
     }
 
+    // Prevent Duplicate Teams
+    if (isValid && formData.teamA.trim().toLowerCase() === formData.teamB.trim().toLowerCase()) {
+      isValid = false;
+    }
+
     setIsFormValid(isValid);
   }, [formData]);
+
+  // Auto-enable Draw for Football
+  useEffect(() => {
+    if (formData.modality === 'Futebol') {
+      setIncludeDraw(true);
+    } else {
+      setIncludeDraw(false);
+    }
+  }, [formData.modality]);
 
   const handlePreSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,7 +118,9 @@ const CreatePool: React.FC = () => {
       scheduled_at: scheduledAtISO,
       entry_fee: entryFee,
       bets_deadline: betsDeadlineISO,
-      options: [formData.teamA, formData.teamB],
+      options: includeDraw
+        ? [formData.teamA, 'Empate', formData.teamB]
+        : [formData.teamA, formData.teamB],
       status: 'open',
       service_fee: 0,
       gross_amount: 0,
@@ -212,6 +230,21 @@ const CreatePool: React.FC = () => {
                   className="w-full mt-1 bg-[#0A0A0B] border border-[#27272A] rounded-lg md:rounded-xl p-2 md:p-3 text-sm text-white"
                   placeholder="Ex: Beta"
                 />
+              </div>
+
+              {/* DRAW OPTION TOGGLE */}
+              <div className="col-span-2 bg-[#0A0A0B] border border-[#27272A] rounded-lg md:rounded-xl p-3 flex items-center justify-between">
+                <div>
+                  <label className="text-sm font-bold text-white">Adicionar opção "Empate"?</label>
+                  <p className="text-[10px] text-zinc-500">Útil para futebol e esportes que podem terminar empatados.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIncludeDraw(!includeDraw)}
+                  className={`w-12 h-6 rounded-full transition-colors relative ${includeDraw ? 'bg-[#10B981]' : 'bg-zinc-700'}`}
+                >
+                  <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-all ${includeDraw ? 'left-7' : 'left-1'}`} />
+                </button>
               </div>
 
               <div>

@@ -65,6 +65,23 @@ serve(async (req) => {
                 payment_method_id: 'pix',
                 external_reference: external_reference,
                 notification_url: "https://vucvouxutompqoqhxzmi.supabase.co/functions/v1/mercado-pago-webhook",
+                additional_info: {
+                    items: [
+                        {
+                            id: external_reference,
+                            title: "Créditos Bolão App",
+                            description: "Adição de saldo para participação em bolões",
+                            category_id: "games",
+                            quantity: 1,
+                            unit_price: Number(amount)
+                        }
+                    ],
+                    payer: {
+                        first_name: user.user_metadata?.full_name?.split(' ')[0] || 'Usuário',
+                        last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || 'Bolão App',
+                        registration_date: user.created_at
+                    }
+                },
                 payer: {
                     email: user.email,
                     first_name: user.user_metadata?.full_name?.split(' ')[0] || 'Usuário',

@@ -232,10 +232,10 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
                                 <button
                                     onClick={() => onApprove(transaction.id)}
                                     disabled={isProcessing}
-                                    className="flex-1 bg-[#10B981] hover:bg-[#059669] text-black font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 shadow-lg shadow-[#10B981]/20"
+                                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 shadow-lg shadow-blue-500/20"
                                 >
                                     {isProcessing ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle2 size={18} />}
-                                    APROVAR
+                                    APROVAR E ENVIAR PIX
                                 </button>
                             )}
                         </div>

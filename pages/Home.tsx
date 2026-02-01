@@ -267,14 +267,24 @@ const Home: React.FC = () => {
                       </div>
                     )}
 
-                    {/* TEAMS DISPLAY */}
-                    {pool.options && pool.options.length >= 2 && (
-                      <div className="flex items-center justify-between bg-[#0A0A0B] rounded-lg md:rounded-xl p-2 md:p-3 mb-2 md:mb-4 border border-[#27272A]">
-                        <span className="text-[10px] md:text-xs font-bold text-zinc-300 truncate w-[40%] text-center">{pool.options[0]}</span>
-                        <span className="text-[8px] md:text-[10px] font-black text-[#10B981]">VS</span>
-                        <span className="text-[10px] md:text-xs font-bold text-zinc-300 truncate w-[40%] text-center">{pool.options[1]}</span>
-                      </div>
-                    )}
+                    {/* TEAMS DISPLAY (IGNORING 'EMPATE') */}
+                    {(() => {
+                      const displayOptions = (pool.options || []).filter((opt: string) => {
+                        const val = opt.toLowerCase();
+                        // Aggressive check: Remove if it contains 'empate' or 'draw' anywhere
+                        return !val.includes('empate') && !val.includes('draw');
+                      });
+
+                      if (displayOptions.length < 2) return null;
+
+                      return (
+                        <div className="flex items-center justify-between bg-[#0A0A0B] rounded-lg md:rounded-xl p-2 md:p-3 mb-2 md:mb-4 border border-[#27272A]">
+                          <span className="text-[10px] md:text-xs font-bold text-zinc-300 truncate w-[40%] text-center">{displayOptions[0]}</span>
+                          <span className="text-[8px] md:text-[10px] font-black text-[#10B981]">VS</span>
+                          <span className="text-[10px] md:text-xs font-bold text-zinc-300 truncate w-[40%] text-center">{displayOptions[1]}</span>
+                        </div>
+                      );
+                    })()}
 
                     <div className="flex flex-col gap-2 mb-4 bg-zinc-900/50 p-2 rounded-lg">
                       <div className="flex items-center justify-between text-xs text-zinc-400">

@@ -42,8 +42,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [isNotifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [pushStatus, setPushStatus] = useState<PermissionState | 'denied'>('prompt');
-  const [hasDbSubscription, setHasDbSubscription] = useState<boolean>(true); // Start true to avoid flicker
 
   const navItems = [
     { label: 'Início', path: '/', icon: Home },
@@ -109,75 +107,32 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   useEffect(() => {
-    if (typeof Notification !== 'undefined') {
-      if (Notification.permission === 'granted') {
-        setPushStatus('granted');
-      } else if (Notification.permission === 'denied') {
-        setPushStatus('denied');
-      }
-    }
-
-    // Check DB for existing subscription to avoid annoying active users
-    if (user) {
-      supabase.from('user_push_subscriptions')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle()
-        .then(({ data }) => {
-          setHasDbSubscription(!!data);
-        });
-    } else {
-      setHasDbSubscription(false);
-    }
-  }, [user]);
-
-  const handleEnableNotifications = async () => {
-    if (!user) return;
-    try {
-      const { subscribeToPushNotifications } = await import('../src/utils/pushNotifications');
-      const success = await subscribeToPushNotifications(user.id);
-      if (success) {
-        setPushStatus('granted');
-        alert('Notificações ativadas com sucesso!');
-      } else {
-        alert('Para ativar, autorize as notificações nas configurações do seu navegador.');
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  useEffect(() => {
     if (!user) return;
 
     fetchNotifications();
 
     // REALTIME SUBSCRIPTION
+    console.log('🔔 Iniciando Realtime para usuário:', user.id);
     const channel = supabase
-      .channel('user-notifications-realtime') // Nome mais específico
+      .channel(`user-notifications-${user.id}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'user_notifications',
-          filter: `user_id=eq.${user.id}`
         },
         (payload) => {
-          if (payload.eventType === 'DELETE') {
-            // Se foi deletado no banco, removemos da lista local imediatamente
-            setNotifications(prev => prev.filter(n => n.id !== payload.old.id));
-          } else {
-            // INSERT ou UPDATE (como o deleted_at)
-            fetchNotifications();
-          }
+          console.log('✨ Mudança detectada no sininho:', payload.eventType);
+          fetchNotifications();
         }
       )
       .subscribe((status) => {
-        // Status da conexão Realtime: status
+        console.log('📡 Status da conexão sininho:', status);
       });
 
     return () => {
+      console.log('🔕 Cancelando Realtime do sininho');
       supabase.removeChannel(channel);
     };
   }, [user]);
@@ -191,24 +146,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
       )}
 
-      {pushStatus !== 'granted' && !hasDbSubscription && (
-        <div
-          style={{ paddingTop: 'env(safe-area-inset-top)' }}
-          className={`fixed ${maintenanceMode ? 'top-8' : 'top-0'} left-0 right-0 bg-[#10B981] text-[#0A0A0B] z-[90] px-4 py-2 flex items-center justify-between gap-4 font-black transition-all animate-in slide-in-from-top duration-500 shadow-lg`}
-        >
-          <div className="flex items-center gap-2 py-1">
-            <Bell size={18} className="animate-bounce" />
-            <span className="text-[10px] md:text-xs uppercase tracking-tight leading-tight">Ative as notificações para receber avisos de prêmios e resultados!</span>
-          </div>
-          <button
-            onClick={handleEnableNotifications}
-            className="bg-white px-3 py-1.5 rounded-full text-[10px] uppercase shadow-md active:scale-95 transition-transform shrink-0"
-          >
-            Ativar Agora
-          </button>
-        </div>
-      )}
-
       <button
         className="hidden lg:flex fixed top-4 left-4 z-50 p-2 bg-[#141417] rounded-lg border border-[#27272A]"
         onClick={() => setSidebarOpen(!isSidebarOpen)}
@@ -218,8 +155,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
       {location.pathname !== '/admin' && (
         <button
-          className={`fixed ${maintenanceMode || (pushStatus !== 'granted' && !hasDbSubscription) ? 'top-16 md:top-24' : 'top-3 md:top-4'} right-14 md:right-16 z-50 p-1.5 md:p-2 bg-[#141417] rounded-lg border border-[#27272A] hover:border-[#10B981] transition-all duration-300 group`}
-          style={{ marginTop: pushStatus !== 'granted' && !hasDbSubscription ? 'env(safe-area-inset-top)' : '0px' }}
+          className={`fixed ${maintenanceMode ? 'top-16 md:top-24' : 'top-3 md:top-4'} right-14 md:right-16 z-50 p-1.5 md:p-2 bg-[#141417] rounded-lg border border-[#27272A] hover:border-[#10B981] transition-all duration-300 group`}
           onClick={() => startOnboardingTour(location.pathname)}
           title="Tour Guiado"
         >
@@ -228,11 +164,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       )}
 
       <button
-        className={`fixed ${maintenanceMode || (pushStatus !== 'granted' && !hasDbSubscription) ? 'top-16 md:top-24' : 'top-3 md:top-4'} right-3 md:right-4 z-50 p-1.5 md:p-2 bg-[#141417] rounded-lg border border-[#27272A] transition-all duration-300 ${pushStatus !== 'granted' && !hasDbSubscription ? 'border-[#10B981] shadow-lg shadow-[#10B981]/20' : ''}`}
-        style={{ marginTop: pushStatus !== 'granted' && !hasDbSubscription ? 'env(safe-area-inset-top)' : '0px' }}
+        className={`fixed ${maintenanceMode ? 'top-16 md:top-24' : 'top-3 md:top-4'} right-3 md:right-4 z-50 p-1.5 md:p-2 bg-[#141417] rounded-lg border border-[#27272A] transition-all duration-300`}
         onClick={() => setNotifOpen(!isNotifOpen)}
       >
-        <Bell className={`w-4 h-4 md:w-5 md:h-5 ${pushStatus !== 'granted' && !hasDbSubscription ? 'text-[#10B981] animate-pulse' : 'text-white'}`} />
+        <Bell className="w-4 h-4 md:w-5 md:h-5 text-white" />
         {notifications.length > 0 && (
           <span className="absolute -top-1 -right-1 bg-[#10B981] text-black text-[8px] md:text-xs font-bold rounded-full px-1">
             {notifications.length}

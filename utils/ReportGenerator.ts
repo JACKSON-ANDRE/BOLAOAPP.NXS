@@ -252,6 +252,75 @@ export const generateFinancialListReport = (
     doc.save(`${title.toLowerCase().replace(/\s+/g, '_')}_${period.replace(/\//g, '-')}.pdf`);
 };
 
+export const generateLedgerReport = (
+    period: string,
+    items: any[],
+    stats: { totalVolume: number; totalCount: number }
+) => {
+    const doc = new jsPDF();
+    const title = 'Extrato Geral de Movimentações';
+
+    // Title
+    doc.setFontSize(22);
+    doc.setTextColor(40, 40, 40);
+    doc.text(title, 14, 22);
+
+    doc.setFontSize(12);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Período: ${period}`, 14, 32);
+    doc.text(`Gerado em: ${new Date().toLocaleString()}`, 14, 38);
+
+    // Stats Summary Box
+    doc.setDrawColor(200, 200, 200);
+    doc.setFillColor(245, 245, 245);
+    doc.rect(14, 45, 180, 20, 'F');
+
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+    doc.text('Total de Registros', 20, 52);
+    doc.setFontSize(14);
+    doc.setTextColor(0, 0, 0);
+    doc.text(stats.totalCount.toString(), 20, 60);
+
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+    doc.text('Volume Movimentado (Absoluto)', 80, 52);
+    doc.setFontSize(14);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`R$ ${stats.totalVolume.toFixed(2)}`, 80, 60);
+
+    // Table
+    const tableData = items.map(item => {
+        const date = new Date(item.created_at).toLocaleString();
+        const user = item.profiles?.full_name || 'Desconhecido';
+        const typeHtml = translateType(item.type);
+        const amount = `R$ ${item.amount.toFixed(2)}`;
+        const balance = (item.balance_before !== undefined && item.balance_after !== undefined)
+            ? `R$ ${item.balance_before.toFixed(2)} -> R$ ${item.balance_after.toFixed(2)}`
+            : '-';
+
+        return [date, user, typeHtml, amount, balance];
+    });
+
+    autoTable(doc, {
+        head: [['Data', 'Usuário', 'Tipo', 'Valor', 'Audit. Saldo']],
+        body: tableData,
+        startY: 75,
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [20, 20, 23] },
+        alternateRowStyles: { fillColor: [248, 248, 248] },
+        columnStyles: {
+            0: { cellWidth: 35 },
+            1: { cellWidth: 40 },
+            2: { cellWidth: 30 },
+            3: { cellWidth: 25 },
+            4: { cellWidth: 50 },
+        }
+    });
+
+    doc.save(`extrato_geral_${period.replace(/\//g, '-')}.pdf`);
+};
+
 function translateType(type: string): string {
     switch (type) {
         case 'deposit': return 'Depósito';

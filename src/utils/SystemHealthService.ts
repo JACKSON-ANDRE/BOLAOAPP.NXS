@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../lib/supabase';
 
 export interface HealthIssue {
     type: 'integrity' | 'financial' | 'operational';
@@ -11,13 +11,17 @@ export interface HealthIssue {
 export interface HealthReport {
     status: 'healthy' | 'warning' | 'critical';
     checked_at: string;
-    issues: HealthIssue[];
+    issues: string[];
     metrics: {
-        orphan_bets: number;
-        orphan_pools: number;
         negative_balances: number;
+        orphan_bets: number;
         stuck_deposits: number;
+        stuck_withdraws: number;
+        duplicate_deposits: number;
+        orphan_txs?: number;
     };
+    fixPrompt?: string; // Optional client-side added
+    totalLoss?: number; // Optional client-side added
 }
 
 export const SystemHealthService = {
@@ -28,10 +32,12 @@ export const SystemHealthService = {
         try {
             const { data, error } = await supabase.rpc('get_system_health_report');
             if (error) throw error;
+
+            // Map RPC result to TypeScript interface
+            // The RPC returns underscores, the interface uses underscores. Direct cast.
             return data as HealthReport;
         } catch (err) {
             console.error('Failed to run system check:', err);
-            // Fallback for safety if RPC fails
             return null;
         }
     },
@@ -49,9 +55,7 @@ export const SystemHealthService = {
 
         prompt += `ISSUES FOUND:\n`;
         report.issues.forEach((issue, index) => {
-            prompt += `${index + 1}. [${issue.severity.toUpperCase()}] ${issue.message}\n`;
-            prompt += `   Table: ${issue.table}\n`;
-            prompt += `   Suggested Fix: ${issue.fix_hint}\n`;
+            prompt += `${index + 1}. ${issue}\n`;
         });
 
         prompt += `\nINSTRUCTIONS FOR AI:\n`;
