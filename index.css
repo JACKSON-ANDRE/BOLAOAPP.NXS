@@ -5,14 +5,23 @@
 @source "./index.html";
 
 /* 🛡️ GPU SHIELD & iOS STABILITY */
-@media (max-width: 768px) {
-    * {
-        /* Desativa animações de entrada que engasgam a GPU do iPhone */
-        animation-duration: 0.001ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.001ms !important;
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
+/* 🛡️ GPU SHIELD & iOS STABILITY - REMOVED AGGRESSIVE BLOCK */
+
+/* Loading Spinner */
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(16, 185, 129, 0.3);
+    /* Emerald-500 optimized opacity */
+    border-top-color: #10B981;
+    /* Emerald-500 */
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
     }
 }
 

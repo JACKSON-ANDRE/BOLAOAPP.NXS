@@ -57,9 +57,10 @@ const AppContent: React.FC = () => {
   // Visual feedback during initial boot only
   if (loading || booting) {
     return (
-      <div style={{ background: '#0A0A0B', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ width: '40px', height: '40px', border: '3px solid #10B981', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <div style={{ background: '#0A0A0B', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
+        <div className="loading-spinner" />
+        <span style={{ color: '#52525B', fontFamily: 'monospace', fontSize: '12px', animation: 'pulse 2s infinite' }}>Carregando...</span>
+        <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }`}</style>
       </div>
     );
   }
