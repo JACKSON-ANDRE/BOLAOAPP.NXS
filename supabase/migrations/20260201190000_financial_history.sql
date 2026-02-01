@@ -17,6 +17,8 @@ END $$;
 
 -- 2. Update process_withdraw_request (Withdrawals)
 -- Explicitly inserts history. Profile is updated BEFORE insert.
+DROP FUNCTION IF EXISTS public.process_withdraw_request(uuid, uuid, text, text);
+
 CREATE OR REPLACE FUNCTION public.process_withdraw_request(
   p_withdraw_id uuid,
   p_admin_id uuid,
@@ -118,6 +120,8 @@ $$;
 
 -- 3. Update finish_pool (Winnings)
 -- Explicitly inserts history. Profile is updated BEFORE insert.
+DROP FUNCTION IF EXISTS public.finish_pool(uuid, text, uuid);
+
 CREATE OR REPLACE FUNCTION public.finish_pool(
     p_pool_id uuid,
     p_winning_option text,

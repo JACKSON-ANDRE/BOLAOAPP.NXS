@@ -86,7 +86,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         let newData = clientData;
 
-        // 2. PLANO B: REST API (Se o Client falhou ou deu timeout)
+        // 2. PLANO B: REST API
         if (!newData) {
             try {
                 const url = import.meta.env.VITE_SUPABASE_URL;
@@ -104,7 +104,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         const restData = await response.json();
                         if (restData && restData.length > 0) {
                             newData = restData[0];
-                            // if ((window as any).Forensic) (window as any).Forensic.save("AUTH: Perfil salvo via REST API (Fallback)");
                         }
                     }
                 }
@@ -113,14 +112,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
         }
 
-        // 3. RECUPERAÇÃO DE CONTA (Último caso: Cria o perfil se não existir)
+        // 3. RECUPERAÇÃO DE CONTA
         if (!newData) {
             newData = await syncProfile(u);
         }
 
         if (newData) {
-            // Só atualiza se for diferente para evitar "blink"
-            // Simple deep check to avoid JSON overhead if possibly undefined keys
+            // ✅ CACHE UPDATE: Salva os dados fresquinhos no cache local
+            try {
+                localStorage.setItem('bolao_profile_cache', JSON.stringify(newData));
+                if ((window as any).Forensic) (window as any).Forensic.save("AUTH: Cache local atualizado.");
+            } catch (e) { console.error("Cache Save Error", e); }
+
             if (JSON.stringify(profile) !== JSON.stringify(newData)) {
                 setProfile({ ...newData });
                 setAuthError(null);
@@ -144,11 +147,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     useEffect(() => {
-        // 🔒 SAFETY BREAK: Força o fim do loading após 5 segundos caso algo trave
+        // 🔒 SAFETY BREAK: Aumentado para 10s para dar chance ao banco em conexões lentas
         const safetyTimeout = setTimeout(() => {
-            if ((window as any).Forensic) (window as any).Forensic.save("AUTH: Safety Timeout disparado (5s)");
+            if ((window as any).Forensic) (window as any).Forensic.save("AUTH: Safety Timeout disparado (10s)");
             setLoading(false);
-        }, 5000);
+        }, 10000);
 
         // Fetch maintenance settings
         fetchSettings().catch(console.error);
@@ -163,7 +166,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUser(currentUser);
 
             if (currentUser) {
-                // Ensure profile is fetched 
+                // 🚀 INSTANT LOAD: Tenta carregar do cache PRIMEIRO para liberar a UI
+                try {
+                    const cached = localStorage.getItem('bolao_profile_cache');
+                    if (cached) {
+                        const parsed = JSON.parse(cached);
+                        if (parsed && parsed.id === currentUser.id) {
+                            setProfile(parsed);
+                            if (event === 'INITIAL_SESSION') {
+                                setLoading(false); // Libera a tela IMEDIATAMENTE com dados do cache
+                                if ((window as any).Forensic) (window as any).Forensic.save("AUTH: UI Liberada via CACHE (Instant Load).");
+                            }
+                        }
+                    }
+                } catch (e) { console.error("Cache Load Error", e); }
+
+                // Ensure profile is fetched fresh in background
                 await fetchProfile(currentUser).catch(console.error);
             } else {
                 setProfile(null);
