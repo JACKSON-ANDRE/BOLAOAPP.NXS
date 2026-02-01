@@ -827,19 +827,17 @@ const AdminDashboard: React.FC = () => {
       // Standard supabase.functions.invoke hits the CLOUD Project URL.
       // We want to hit localhost:54321 where your keys and logic are running.
 
-      const response = await fetch('http://127.0.0.1:54321/functions/v1/create-withdrawal', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ request_id: withdraw.id })
+      // ⚡ OFFICIAL SUPABASE FUNCTION INVOKE (Handles URL automatically)
+      const { data: res, error } = await supabase.functions.invoke('create-withdrawal', {
+        body: { request_id: withdraw.id }
       });
 
-      const res = await response.json();
+      if (error) {
+        throw new Error(error.message || 'Erro na função');
+      }
 
-      if (!response.ok) {
-        throw new Error(res.error || res.message || 'Erro na função');
+      if (res?.error) {
+        throw new Error(res.error);
       }
 
       alert(`✅ Sucesso! ${res.message || 'Pagamento enviado.'}`);

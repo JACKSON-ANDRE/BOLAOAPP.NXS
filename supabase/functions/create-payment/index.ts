@@ -36,14 +36,14 @@ serve(async (req) => {
             throw new Error('Invalid user token')
         }
 
-        // 2. Get amount from request body
+        // 2. Get data from request body
         const body = await req.json().catch(() => ({}))
-        const { amount } = body
+        const { amount, device_id } = body
 
         if (!amount || amount < 1) throw new Error('Valor inválido. Mínimo R$ 1,00')
 
         const external_reference = `DEP-${crypto.randomUUID()}`
-        console.log(`Generating payment for ${user.email} - Amount: ${amount} - Ref: ${external_reference}`)
+        console.log(`Generating payment for ${user.email} - Amount: ${amount} - Ref: ${external_reference} - Device: ${device_id}`)
 
         // 3. Call Mercado Pago API
         const mpAccessToken = Deno.env.get('MP_ACCESS_TOKEN')
@@ -57,11 +57,12 @@ serve(async (req) => {
             headers: {
                 'Authorization': `Bearer ${mpAccessToken}`,
                 'Content-Type': 'application/json',
-                'X-Idempotency-Key': external_reference
+                'X-Idempotency-Key': external_reference,
+                'X-Meli-Session-Id': device_id || '' // 🛡️ DEVICE ID / FINGERPRINT
             },
             body: JSON.stringify({
                 transaction_amount: Number(amount),
-                description: `Depósito Bolão App - Ref: ${external_reference}`,
+                description: `Saldos para Bolão - Bolão App`,
                 payment_method_id: 'pix',
                 external_reference: external_reference,
                 notification_url: "https://vucvouxutompqoqhxzmi.supabase.co/functions/v1/mercado-pago-webhook",
@@ -69,23 +70,36 @@ serve(async (req) => {
                     items: [
                         {
                             id: external_reference,
-                            title: "Créditos Bolão App",
-                            description: "Adição de saldo para participação em bolões",
-                            category_id: "games",
+                            title: "Saldo para Jogos",
+                            description: "Crédito para participar de sorteios e bolões no app",
+                            category_id: "entertainment",
                             quantity: 1,
                             unit_price: Number(amount)
                         }
                     ],
                     payer: {
-                        first_name: user.user_metadata?.full_name?.split(' ')[0] || 'Usuário',
-                        last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || 'Bolão App',
-                        registration_date: user.created_at
+                        first_name: user.user_metadata?.full_name?.split(' ')[0] || 'Cliente',
+                        last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || 'Futebol',
+                        registration_date: user.created_at,
+                        phone: {
+                            area_code: "55",
+                            number: user.user_metadata?.phone || "000000000"
+                        },
+                        address: {
+                            zip_code: "00000000",
+                            street_name: "Usuario App",
+                            street_number: 100
+                        }
                     }
                 },
                 payer: {
                     email: user.email,
-                    first_name: user.user_metadata?.full_name?.split(' ')[0] || 'Usuário',
-                    last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || 'Bolão App'
+                    first_name: user.user_metadata?.full_name?.split(' ')[0] || 'Cliente',
+                    last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || 'Futebol',
+                    identification: {
+                        type: "CPF",
+                        number: user.user_metadata?.cpf || "00000000000"
+                    }
                 }
             })
         })

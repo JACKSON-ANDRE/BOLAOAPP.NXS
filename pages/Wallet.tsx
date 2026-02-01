@@ -215,8 +215,23 @@ const WalletPage: React.FC = () => {
     setPaymentStatus('pending');
 
     try {
+      // 🛡️ CAPTURAR DEVICE ID (FINGERPRINT) - REQUISITO MP QUALITY
+      let deviceId = '';
+      try {
+        const publicKey = import.meta.env.VITE_MP_PUBLIC_KEY;
+        if (publicKey && (window as any).MercadoPago) {
+          const mp = new (window as any).MercadoPago(publicKey);
+          deviceId = await mp.getFingerprint();
+        }
+      } catch (fErr) {
+        console.warn('Erro ao gerar fingerprint MP:', fErr);
+      }
+
       const { data, error } = await supabase.functions.invoke('create-payment', {
-        body: { amount: Number(autoPixAmount) }
+        body: {
+          amount: Number(autoPixAmount),
+          device_id: deviceId
+        }
       });
 
       if (error) throw error;
