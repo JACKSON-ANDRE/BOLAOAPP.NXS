@@ -50,28 +50,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return;
         }
 
-        // 🛡️ CIRCUIT BREAKER: 5 Second Timeout
-        // Garante que o app NUNCA trave por mais de 5s esperando o banco
+        // 🛡️ CIRCUIT BREAKER: 12 Second Timeout (Aumentado de 5s para evitar Falsos Positivos)
+        // Garante que o app NUNCA trave infinitamente esperando o banco
         const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('TIMEOUT_DB')), 5000)
+            setTimeout(() => reject(new Error('TIMEOUT_DB')), 12000)
         );
 
         let clientData = null;
 
         // 1. TENTATIVA RÁPIDA (Supabase Client)
         try {
+            if ((window as any).Forensic) (window as any).Forensic.save("AUTH: Iniciando busca de perfil - User ID: " + u.id);
+            const startTime = Date.now();
+
             // Corrida: Banco vs Relógio
             const { data, error } = await Promise.race([
                 supabase.from('profiles').select('*').eq('id', u.id).single(),
                 timeoutPromise
             ]) as any;
 
-            if (!error && data) {
+            if (error) {
+                if ((window as any).Forensic) (window as any).Forensic.save("AUTH: Erro no Client Path: " + error.message);
+                throw error;
+            }
+
+            if (data) {
                 clientData = data;
-                // if ((window as any).Forensic) (window as any).Forensic.save("AUTH: Perfil carregado (Fast Path)");
+                const duration = Date.now() - startTime;
+                if ((window as any).Forensic) (window as any).Forensic.save(`AUTH: Perfil carregado (Client Path) em ${duration}ms`);
             }
         } catch (err: any) {
             console.warn("AuthContext: Banco demorou ou falhou (" + err.message + "), ativando Plano B...");
+            if ((window as any).Forensic) (window as any).Forensic.save("AUTH: Ativando Plano B (REST API) devido a: " + err.message);
         }
 
         let newData = clientData;

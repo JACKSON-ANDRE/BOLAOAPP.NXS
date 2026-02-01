@@ -74,15 +74,70 @@ serve(async (req) => {
                     console.log(`Payment ${paymentId} status: ${status} | Ref: ${externalReference}`);
 
                     // 2. Update our database
-                    // This will trigger the SQL on_deposit_approved function automatically
-                    // Update if pending OR expired (user might have closed modal before payment)
-                    const { error } = await supabaseClient
+                    const { data: updatedDeposit, error: updateError } = await supabaseClient
                         .from('deposits')
                         .update({ status: status })
                         .eq('external_reference', externalReference)
-                        .in('status', ['pending', 'expired']);
+                        .in('status', ['pending', 'expired'])
+                        .select('user_id, amount')
+                        .single();
 
-                    if (error) console.error('Error updating deposit:', error);
+                    if (updateError) {
+                        console.error('Error updating deposit:', updateError);
+                    } else if (status === 'approved' && updatedDeposit) {
+                        console.log('✅ Pagamento aprovado. Disparando notificações (User + Admin).');
+
+                        // 1. NOTIFICAR O USUÁRIO
+                        try {
+                            await supabaseClient.from('user_notifications').insert({
+                                user_id: updatedDeposit.user_id,
+                                title: 'Pix Aprovado! 🚀',
+                                message: `Seu depósito de R$ ${updatedDeposit.amount} foi confirmado e já está na sua carteira.`,
+                                type: 'success'
+                            });
+                        } catch (userNotifyErr) {
+                            console.error('Erro ao notificar usuário:', userNotifyErr);
+                        }
+
+                        // 2. NOTIFICAR O ADMIN (Texto Exato Solicitado)
+                        try {
+                            // Buscar nome do usuário para a mensagem
+                            const { data: userProfile } = await supabaseClient
+                                .from('profiles')
+                                .select('full_name')
+                                .eq('id', updatedDeposit.user_id)
+                                .single();
+
+                            const userName = userProfile?.full_name || 'USUÁRIO';
+                            const adminMsg = `${userName.toUpperCase()} ACABA DE DEPOSITAR ( ${updatedDeposit.amount} )`;
+
+                            const { data: admins } = await supabaseClient
+                                .from('profiles')
+                                .select('id')
+                                .eq('role', 'admin');
+
+                            if (admins) {
+                                for (const admin of admins) {
+                                    await supabaseClient.from('user_notifications').insert({
+                                        user_id: admin.id,
+                                        title: '💰 Novo Depósito',
+                                        message: adminMsg,
+                                        type: 'success'
+                                    });
+                                }
+
+                                // Tenta Enviar Push também
+                                await supabaseClient.rpc('trigger_pwa_push', {
+                                    p_title: '💰 Novo Depósito',
+                                    p_body: adminMsg,
+                                    p_target: 'admins',
+                                    p_url: '/admin'
+                                });
+                            }
+                        } catch (adminNotifyErr) {
+                            console.error('Erro ao notificar admins:', adminNotifyErr);
+                        }
+                    }
                 }
             }
         }

@@ -3145,7 +3145,7 @@ const AdminDashboard: React.FC = () => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <button
                       onClick={() => {
                         if (!rejectionReason.trim()) {
@@ -3159,8 +3159,9 @@ const AdminDashboard: React.FC = () => {
                         });
                         setSelectedTransactionDetail(null);
                       }}
-                      className="bg-red-500/10 hover:bg-red-500/20 text-red-500 font-black py-5 rounded-2xl transition-all border border-red-500/10"
+                      className="bg-red-500/10 hover:bg-red-500/20 text-red-500 font-black py-4 rounded-xl transition-all border border-red-500/10 flex items-center justify-center gap-2"
                     >
+                      <XCircle size={18} />
                       REJEITAR
                     </button>
 
@@ -3176,13 +3177,33 @@ const AdminDashboard: React.FC = () => {
                           });
                           setSelectedTransactionDetail(null);
                         }}
-                        className="bg-[#10B981] hover:bg-[#059669] text-black font-black py-5 rounded-2xl transition-all shadow-lg shadow-[#10B981]/20"
+                        className="bg-[#10B981] hover:bg-[#059669] text-black font-black py-4 rounded-xl transition-all shadow-lg shadow-[#10B981]/20 col-span-2 md:col-span-2 flex items-center justify-center gap-2"
                       >
-                        APROVAR
+                        <CheckCircle2 size={20} />
+                        APROVAR DEPÓSITO
                       </button>
                     )}
 
-                    {/* Botão de Pagamento PIX (Apenas Saques) - Substitui o Aprovar Manual */}
+                    {/* RESTAURADO: Botão de Aprovação Manual (Saques) */}
+                    {detailModalType === 'withdraw' && selectedTransactionDetail.status === 'pending' && (
+                      <button
+                        onClick={() => {
+                          setRejectionReason('');
+                          setConfirmAction({
+                            id: selectedTransactionDetail.id,
+                            action: 'approve',
+                            type: detailModalType
+                          });
+                          setSelectedTransactionDetail(null);
+                        }}
+                        className="bg-[#10B981]/10 hover:bg-[#10B981]/20 text-[#10B981] font-black py-4 rounded-xl transition-all border border-[#10B981]/20 flex items-center justify-center gap-2"
+                      >
+                        <CheckCircle2 size={18} />
+                        MANUAL
+                      </button>
+                    )}
+
+                    {/* Botão de Pagamento PIX (Apenas Saques) */}
                     {detailModalType === 'withdraw' && selectedTransactionDetail.status === 'pending' && (
                       <button
                         onClick={() => handleProcessPayment(selectedTransactionDetail)}

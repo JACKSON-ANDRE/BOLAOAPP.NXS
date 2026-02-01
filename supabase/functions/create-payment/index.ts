@@ -36,6 +36,13 @@ serve(async (req) => {
             throw new Error('Invalid user token')
         }
 
+        // 1.5 Fetch full user profile for better metadata
+        const { data: profile } = await supabaseClient
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single()
+
         // 2. Get data from request body
         const body = await req.json().catch(() => ({}))
         const { amount, device_id } = body
@@ -52,6 +59,17 @@ serve(async (req) => {
             throw new Error('Configuração de pagamento ausente no servidor. Verifique as chaves do Mercado Pago.')
         }
 
+        // Preparation of names (Avoid "Cliente App" if possible)
+        const fullName = profile?.full_name || user.user_metadata?.full_name || '';
+        const nameParts = fullName.trim().split(/\s+/);
+        const firstName = nameParts[0] || 'Usuario';
+        const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : 'Bolao';
+
+        // Clean CPF and Phone (Mandatory for MP quality)
+        const cleanCpf = (profile?.cpf || user.user_metadata?.cpf || "").replace(/\D/g, '');
+        const rawPhone = (profile?.whatsapp || user.user_metadata?.phone || "").replace(/\D/g, '');
+        const cleanPhone = rawPhone.length >= 8 ? rawPhone.slice(-9) : ""; // Only send if valid size
+
         const mpResponse = await fetch('https://api.mercadopago.com/v1/payments', {
             method: 'POST',
             headers: {
@@ -62,44 +80,41 @@ serve(async (req) => {
             },
             body: JSON.stringify({
                 transaction_amount: Number(amount),
-                description: `Saldos para Bolão - Bolão App`,
+                description: `Deposito Bolao - ${user.email}`,
                 payment_method_id: 'pix',
                 external_reference: external_reference,
                 notification_url: "https://vucvouxutompqoqhxzmi.supabase.co/functions/v1/mercado-pago-webhook",
+                statement_descriptor: "BOLAOAPP",
+                binary_mode: true,
                 additional_info: {
                     items: [
                         {
-                            id: external_reference,
-                            title: "Saldo para Jogos",
-                            description: "Crédito para participar de sorteios e bolões no app",
-                            category_id: "entertainment",
+                            id: "CREDIT-BOLAO",
+                            title: "Creditos Bolao App",
+                            description: "Adicao de saldo para participacao em boloes esportivos via Pix no Bolao App.",
+                            category_id: "others",
                             quantity: 1,
                             unit_price: Number(amount)
                         }
                     ],
                     payer: {
-                        first_name: user.user_metadata?.full_name?.split(' ')[0] || 'Cliente',
-                        last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || 'Futebol',
+                        first_name: firstName,
+                        last_name: lastName,
                         registration_date: user.created_at,
-                        phone: {
+                        phone: cleanPhone ? {
                             area_code: "55",
-                            number: user.user_metadata?.phone || "000000000"
-                        },
-                        address: {
-                            zip_code: "00000000",
-                            street_name: "Usuario App",
-                            street_number: 100
-                        }
+                            number: cleanPhone
+                        } : undefined
                     }
                 },
                 payer: {
                     email: user.email,
-                    first_name: user.user_metadata?.full_name?.split(' ')[0] || 'Cliente',
-                    last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || 'Futebol',
-                    identification: {
+                    first_name: firstName,
+                    last_name: lastName,
+                    identification: cleanCpf ? {
                         type: "CPF",
-                        number: user.user_metadata?.cpf || "00000000000"
-                    }
+                        number: cleanCpf
+                    } : undefined
                 }
             })
         })
@@ -135,6 +150,10 @@ serve(async (req) => {
             console.error('Database Insert Error:', dbError)
             throw dbError
         }
+
+        // 🔔 NOTIFICAÇÃO removida daqui para evitar duplicidade.
+        // O trigger no banco de dados cuidará disso se necessário,
+        // mas geralmente notificamos apenas na confirmação (webhook).
 
         console.log('Payment created successfully')
 

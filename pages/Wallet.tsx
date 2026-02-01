@@ -215,16 +215,31 @@ const WalletPage: React.FC = () => {
     setPaymentStatus('pending');
 
     try {
-      // 🛡️ CAPTURAR DEVICE ID (FINGERPRINT) - REQUISITO MP QUALITY
-      let deviceId = '';
-      try {
-        const publicKey = import.meta.env.VITE_MP_PUBLIC_KEY;
-        if (publicKey && (window as any).MercadoPago) {
-          const mp = new (window as any).MercadoPago(publicKey);
-          deviceId = await mp.getFingerprint();
+      // 🛡️ INICIALIZAR SDK PARA VINCULAR SESSÃO (REQUISITO MP QUALITY)
+      const publicKey = import.meta.env.VITE_MP_PUBLIC_KEY;
+      if (publicKey && (window as any).MercadoPago) {
+        // Inicializa o objeto MP para "ativar" o rastreio da sessão no frontend
+        new (window as any).MercadoPago(publicKey, { locale: 'pt-BR' });
+      }
+
+      // 🛡️ CAPTURAR DEVICE ID (FINGERPRINT)
+      // Se não estiver pronto, espera até 2s (Mercado Pago Security Script demora um pouco)
+      let deviceId = (window as any).MP_DEVICE_SESSION_ID;
+
+      if (!deviceId) {
+        console.log('⏳ MP Fingerprint não disponível, aguardando...');
+        // Polling de 100ms até 2s
+        for (let i = 0; i < 20; i++) {
+          await new Promise(r => setTimeout(r, 100));
+          deviceId = (window as any).MP_DEVICE_SESSION_ID;
+          if (deviceId) break;
         }
-      } catch (fErr) {
-        console.warn('Erro ao gerar fingerprint MP:', fErr);
+      }
+
+      if (deviceId) {
+        console.log('✅ MP Fingerprint capturado:', deviceId);
+      } else {
+        console.warn('⚠️ MP Fingerprint não capturado. Score de aprovação será afetado.');
       }
 
       const { data, error } = await supabase.functions.invoke('create-payment', {

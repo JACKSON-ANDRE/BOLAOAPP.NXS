@@ -1,6 +1,9 @@
--- INSPECT TRIGGERS ON TRANSACTIONS
 SELECT 
-    tgname as trigger_name,
-    pg_get_triggerdef(oid) as definition
-FROM pg_trigger
-WHERE tgrelid = 'transactions'::regclass;
+    event_object_table AS table_name, 
+    trigger_name, 
+    event_manipulation, 
+    action_statement 
+FROM 
+    information_schema.triggers 
+WHERE 
+    event_object_table IN ('bets', 'transactions');
