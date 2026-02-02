@@ -150,14 +150,20 @@ const HomePremium: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 md:gap-4">
-                    <div className="bg-[#141417] border border-white/5 rounded-xl md:rounded-2xl p-3 md:p-6 flex flex-col justify-center">
-                        <p className="text-[8px] md:text-[10px] text-zinc-500 font-black uppercase mb-1">Abertos</p>
+                    <div
+                        onClick={() => setActiveListTab('open')}
+                        className={`bg-[#141417] border border-white/5 rounded-xl md:rounded-2xl p-3 md:p-6 flex flex-col justify-center cursor-pointer transition-all hover:bg-white/5 ${activeListTab === 'open' ? 'border-[#10B981]/30 bg-[#10B981]/5' : ''}`}
+                    >
+                        <p className="text-[8px] md:text-[10px] text-zinc-500 font-black uppercase mb-1">Bolões Ativos</p>
                         <div className="flex items-center gap-1.5 md:gap-2 leading-none">
                             <Activity size={14} className="text-[#10B981] md:w-[18px]" />
                             <p className="text-base md:text-2xl font-black text-white">{String(openPools.length)}</p>
                         </div>
                     </div>
-                    <div className="bg-[#141417] border border-white/5 rounded-xl md:rounded-2xl p-3 md:p-6 flex flex-col justify-center leading-none">
+                    <div
+                        onClick={() => setActiveListTab('waiting')}
+                        className={`bg-[#141417] border border-white/5 rounded-xl md:rounded-2xl p-3 md:p-6 flex flex-col justify-center leading-none cursor-pointer transition-all hover:bg-white/5 ${activeListTab === 'waiting' ? 'border-orange-500/30 bg-orange-500/5' : ''}`}
+                    >
                         <p className="text-[8px] md:text-[10px] text-zinc-500 font-black uppercase mb-1">Aguardando Encerramento</p>
                         <div className="flex items-center gap-1.5 md:gap-2">
                             <Bell size={14} className="text-orange-400 md:w-[18px]" />
@@ -344,10 +350,10 @@ const HomePremium: React.FC = () => {
                                             if (displayOptions.length < 2) return null;
 
                                             return (
-                                                <div className="flex items-center justify-between bg-[#0A0A0B] rounded-lg md:rounded-xl p-2 md:p-3 mb-2 md:mb-4 border border-[#27272A]">
-                                                    <span className="text-[10px] md:text-xs font-bold text-zinc-100 truncate w-[40%] text-center font-black uppercase tracking-tight">{displayOptions[0]}</span>
-                                                    <span className="text-[8px] md:text-[10px] font-black text-[#10B981]">VS</span>
-                                                    <span className="text-[10px] md:text-xs font-bold text-zinc-100 truncate w-[40%] text-center font-black uppercase tracking-tight">{displayOptions[1]}</span>
+                                                <div className="flex items-center justify-between bg-[#0A0A0B] rounded-lg md:rounded-xl p-2 md:p-3 mb-2 md:mb-4 border border-[#27272A] gap-2">
+                                                    <span className="flex-1 min-w-0 text-[10px] md:text-xs font-bold text-zinc-100 text-center font-black uppercase tracking-tight leading-tight break-words whitespace-normal">{displayOptions[0]}</span>
+                                                    <span className="text-[8px] md:text-[10px] font-black text-[#10B981] shrink-0 px-1">VS</span>
+                                                    <span className="flex-1 min-w-0 text-[10px] md:text-xs font-bold text-zinc-100 text-center font-black uppercase tracking-tight leading-tight break-words whitespace-normal">{displayOptions[1]}</span>
                                                 </div>
                                             );
                                         })()}

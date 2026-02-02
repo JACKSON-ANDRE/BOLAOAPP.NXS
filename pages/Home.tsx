@@ -278,10 +278,10 @@ const Home: React.FC = () => {
                       if (displayOptions.length < 2) return null;
 
                       return (
-                        <div className="flex items-center justify-between bg-[#0A0A0B] rounded-lg md:rounded-xl p-2 md:p-3 mb-2 md:mb-4 border border-[#27272A]">
-                          <span className="text-[10px] md:text-xs font-bold text-zinc-300 truncate w-[40%] text-center">{displayOptions[0]}</span>
-                          <span className="text-[8px] md:text-[10px] font-black text-[#10B981]">VS</span>
-                          <span className="text-[10px] md:text-xs font-bold text-zinc-300 truncate w-[40%] text-center">{displayOptions[1]}</span>
+                        <div className="flex items-center justify-between bg-[#0A0A0B] rounded-lg md:rounded-xl p-2 md:p-3 mb-2 md:mb-4 border border-[#27272A] gap-2">
+                          <span className="flex-1 min-w-0 text-[10px] md:text-sm font-black text-white text-center uppercase leading-tight break-words whitespace-normal">{displayOptions[0]}</span>
+                          <span className="text-[10px] md:text-xs font-black text-[#10B981] shrink-0 px-1">VS</span>
+                          <span className="flex-1 min-w-0 text-[10px] md:text-sm font-black text-white text-center uppercase leading-tight break-words whitespace-normal">{displayOptions[1]}</span>
                         </div>
                       );
                     })()}

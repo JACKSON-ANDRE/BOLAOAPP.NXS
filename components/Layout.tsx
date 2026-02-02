@@ -315,7 +315,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 >
                   <item.icon size={18} strokeWidth={isActive ? 2.5 : 2} />
                   <span className={`text-[8px] font-black uppercase tracking-widest transition-all ${isActive ? 'opacity-100' : 'opacity-40'}`}>
-                    {item.label === 'Carteira' ? 'Wallet' : item.label === 'Meu Perfil' ? 'Perfil' : 'Admin'}
+                    {item.label === 'Carteira' ? 'Carteira' : item.label === 'Meu Perfil' ? 'Perfil' : 'Admin'}
                   </span>
                 </Link>
               );
